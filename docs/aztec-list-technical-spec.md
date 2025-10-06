@@ -1285,3 +1285,18 @@ For soft‑removed listings (if implemented), optionally return **410 Gone** fro
 - **Performance smoke:** Simple load test of `/api/listings` with realistic filters and pagination to catch N+1 queries and ensure indexes are effective.
 
 **Release criteria:** All automated tests pass, Postman collection verified end‑to‑end, and no open critical defects in error handling or authorization.
+
+---
+
+### 5) E2E UI Testing (future)
+**When to add:** once the web UI is stable enough to exercise login → listing CRUD → images → profile flows.
+
+**Scope:** 
+- **Smoke (PR):** login, create listing, set thumbnail, edit+view listing, logout (<2m).
+- **Regression (nightly):** filters/sorting/pagination, profile updates, admin actions, access control.
+
+**Data & Auth:** seed known users/items; use programmatic login (hit `/api/auth/login`) and store the JWT to localStorage to skip UI auth.
+
+**CI:** run smoke on every PR, full suite nightly; record video on failure only; parallelize if tests grow.
+
+**Tooling:** Cypress **or** Playwright (tool‑agnostic for now). Use stable `data-test` selectors in the UI.
