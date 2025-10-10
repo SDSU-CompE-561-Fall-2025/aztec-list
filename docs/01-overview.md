@@ -6,7 +6,7 @@ Aztec List
 
 ## Description
 
-In essence, this is an offerup clone geared towards college students. It will allow students to post items they want to sell, and allow other students to purchase items they might need from others at prices lower than msrp. They will be able to post photos of their items with a description connected to a messaging system to organize the sell. 
+In essence, this is an offerup clone geared towards college students. It will allow students to post items they want to sell, and allow other students to purchase items they might need from others at prices lower than msrp. They will be able to post photos of their items with a description connected to a messaging system to organize the sell.
 
 ## Main Features & Functionality
 

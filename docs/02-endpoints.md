@@ -1,4 +1,4 @@
-# Part 2: API Endpoints 
+# Part 2: API Endpoints
 
 <mark>Endpoint URL</mark>: `/api/listings` <br>
 HTTP Method : `GET` <br>
@@ -17,7 +17,7 @@ Query (all optional)
 - `sort` (enum: recent, price_asc, price_desc; default recent): Sort order.
 
 Response Structures <br>
-**200 OK** 
+**200 OK**
 ```
 {
   "items": [
@@ -59,7 +59,7 @@ Request Parameters<br>
 Path: `listing_id`: unique identifier of the listing to fetch
 
 Response Structure <br>
-**200 OK** 
+**200 OK**
 ```
 {
   "id": "uuid",
@@ -237,7 +237,7 @@ HTTP Method: `GET`<br>
 Description: `Retrieve all active listings posted by a specific user`<br>
 
 Request Parameters<br>
-Path<br> 
+Path<br>
 `user_id`: ID of seller whos listings to retrieve
 Query (optional)<br>
 - `limit` (int, 1–100, default 20): Max listings per page.
