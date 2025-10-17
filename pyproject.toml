@@ -2,7 +2,10 @@
 name = "aztec-list"
 version = "0.1.0"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "fastapi[standard]>=0.119.0",
+    "sqlalchemy>=2.0.44",
+]
 
 [dependency-groups]
 dev = [
@@ -16,7 +19,11 @@ indent-width = 4
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["E501"]
+ignore = [
+    "E501", # line too long (handled by line-length)
+    "T201", # print found
+    "D1",   # ignore all "missing docstring" rules
+]
 
 [tool.ruff.format]
 quote-style = "double"
