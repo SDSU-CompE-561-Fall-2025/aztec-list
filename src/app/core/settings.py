@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,14 +10,27 @@ class AppMeta(BaseModel):
     redoc_url: str | None = "/redoc"
 
 
+class DatabaseSettings(BaseModel):
+    database_url: str = Field(
+        default="sqlite:///./aztec_list.db",
+        description="Database connection URL (PostgreSQL, SQLite, etc.)",
+    )
+    echo: bool = Field(
+        default=False,
+        description="Echo SQL statements to console (useful for debugging)",
+    )
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_nested_delimiter="__",  # allows APP__TITLE style vars
         case_sensitive=False,
+        extra="ignore",  # ignore extra fields from .env
     )
 
     app: AppMeta = AppMeta()
+    db: DatabaseSettings = DatabaseSettings()
 
 
 settings = Settings()
