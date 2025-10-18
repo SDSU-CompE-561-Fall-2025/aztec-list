@@ -4,7 +4,7 @@ from pydantic import BaseModel, EmailStr
 class UserBase(BaseModel):
     """Base user schema."""
 
-    display_name: str
+    username: str
     email: EmailStr
 
 
@@ -17,7 +17,7 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     """Schema for user response."""
 
-    display_name: str | None = None
+    username: str | None = None
     email: EmailStr | None = None
     is_verified: bool | None = None
 

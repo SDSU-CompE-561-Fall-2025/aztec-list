@@ -9,7 +9,7 @@ class User(Base):
 
     # need to update to use UUID or some hash of user id (but integer works for now)
     id = Column(Integer, primary_key=True, index=True, nullable=False)
-    display_name = Column(String, unique=False, nullable=False)
+    username = Column(String, unique=True, nullable=False)
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     is_verified = Column(Boolean, default=False)
