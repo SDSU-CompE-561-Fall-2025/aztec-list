@@ -21,12 +21,13 @@ indent-width = 4
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-    "E501", # line too long (handled by line-length)
+    "E501",   # line too long (handled by line-length)
     "COM812", # missing trailing comma (handled by formatter)
-    "T201", # print found
-    "D203", # no blank line before class docstrings
-    "D213", # keep summary on first line
-    "D1",   # ignore all "missing docstring" rules
+    "T201",   # print found
+    "D203",   # no blank line before class docstrings
+    "D212",   # keep summary on first line
+    "D413",   # blank line after last docs section
+    "D1",     # ignore all "missing docstring" rules
 ]
 
 [tool.ruff.format]
