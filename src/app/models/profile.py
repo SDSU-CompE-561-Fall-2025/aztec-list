@@ -33,9 +33,4 @@ class Profile(Base):
     )
 
     # Relationships
-    user = relationship(
-        "User",
-        back_populates="profile",
-        uselist=False,
-        cascade="all, delete-orphan",  # ensure Profile records are cleaned up when a User is deleted
-    )
+    user = relationship("User", back_populates="profile")
