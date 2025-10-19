@@ -124,12 +124,7 @@ class UserService:
         Returns:
             User | None: Authenticated user if credentials are valid, None otherwise
         """
-        # Try to find user by email first
-        user = UserRepository.get_by_email(db, username)
-
-        # If not found by email, try username
-        if not user:
-            user = UserRepository.get_by_username(db, username)
+        user = UserRepository.get_by_email_or_username(db, username)
 
         # If user not found or password incorrect, return None
         if not user:

@@ -4,6 +4,7 @@ User repository.
 This module provides data access layer for user operations.
 """
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.models.user import User
@@ -40,6 +41,24 @@ class UserRepository:
             User | None: User if found, None otherwise
         """
         return db.query(User).filter(User.username == username).first()
+
+    @staticmethod
+    def get_by_email_or_username(db: Session, identifier: str) -> User | None:
+        """
+        Get user by email or username in a single query.
+
+        Args:
+            db: Database session
+            identifier: User email or username
+
+        Returns:
+            User | None: User if found, None otherwise
+        """
+        return (
+            db.query(User)
+            .filter(or_(User.email == identifier, User.username == identifier))
+            .first()
+        )
 
     @staticmethod
     def get_by_id(db: Session, user_id: int) -> User | None:
