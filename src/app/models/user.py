@@ -1,9 +1,15 @@
-from datetime import UTC, datetime
+from __future__ import annotations
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, String
-from sqlalchemy.orm import relationship
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING
+
+from sqlalchemy import DateTime, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.profile import Profile
 
 
 class User(Base):
@@ -17,17 +23,18 @@ class User(Base):
     __tablename__ = "users"
 
     # need to update to use UUID or some hash of user id (but integer works for now)
-    id = Column(Integer, primary_key=True, index=True, nullable=False)
-    username = Column(String, unique=True, index=True, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    is_verified = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    username: Mapped[str] = mapped_column(String, unique=True, index=True)
+    email: Mapped[str] = mapped_column(String, unique=True, index=True)
+    hashed_password: Mapped[str] = mapped_column(String)
+    is_verified: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
 
     # Relationships
-    profile = relationship(
-        "Profile",
+    profile: Mapped[Profile | None] = relationship(
         back_populates="user",
-        uselist=False,
         cascade="all, delete-orphan",  # Delete profile when user is deleted
+        single_parent=True,
     )
