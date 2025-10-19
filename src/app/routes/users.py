@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.models.user import User
 from app.schemas.user import UserPublic
 from app.services.user import user_service
 
@@ -13,11 +14,11 @@ user_router = APIRouter(
 )
 
 
-@user_router.get("/{user_id}")
+@user_router.get("/{user_id}", response_model=UserPublic)
 async def get_user(
     user_id: int,
     db: Annotated[Session, Depends(get_db)],
-) -> UserPublic:
+) -> User:
     """
     Get public user profile by ID.
 
