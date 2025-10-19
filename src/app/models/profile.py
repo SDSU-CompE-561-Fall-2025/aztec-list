@@ -1,10 +1,16 @@
-from datetime import UTC, datetime
+from __future__ import annotations
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING
+
+from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 class Profile(Base):
@@ -18,19 +24,22 @@ class Profile(Base):
     __tablename__ = "profiles"
 
     # need to update to use UUID or some hash of user id (but integer works for now)
-    id = Column(Integer, primary_key=True, index=True, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False, index=True)
-    name = Column(String, nullable=False)
-    campus = Column(String, nullable=True)
-    contact_info = Column(JSON, nullable=True)  # dict with "email", "phone", etc.
-    profile_picture_url = Column(String, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
-    updated_at = Column(
-        DateTime,
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String)
+    campus: Mapped[str | None] = mapped_column(String, nullable=True)
+    contact_info: Mapped[dict[str, str] | None] = mapped_column(
+        JSON, nullable=True
+    )  # dict with "email", "phone", etc.
+    profile_picture_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
         onupdate=lambda: datetime.now(UTC),
-        nullable=False,
     )
 
     # Relationships
-    user = relationship("User", back_populates="profile")
+    user: Mapped[User] = relationship(back_populates="profile")

@@ -4,7 +4,7 @@ User repository.
 This module provides data access layer for user operations.
 """
 
-from sqlalchemy import or_
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.models.user import User
@@ -26,7 +26,8 @@ class UserRepository:
         Returns:
             User | None: User if found, None otherwise
         """
-        return db.query(User).filter(User.email == email).first()
+        stmt = select(User).where(User.email == email)
+        return db.scalars(stmt).first()
 
     @staticmethod
     def get_by_username(db: Session, username: str) -> User | None:
@@ -40,7 +41,8 @@ class UserRepository:
         Returns:
             User | None: User if found, None otherwise
         """
-        return db.query(User).filter(User.username == username).first()
+        stmt = select(User).where(User.username == username)
+        return db.scalars(stmt).first()
 
     @staticmethod
     def get_by_email_or_username(db: Session, identifier: str) -> User | None:
@@ -54,11 +56,8 @@ class UserRepository:
         Returns:
             User | None: User if found, None otherwise
         """
-        return (
-            db.query(User)
-            .filter(or_(User.email == identifier, User.username == identifier))
-            .first()
-        )
+        stmt = select(User).where(or_(User.email == identifier, User.username == identifier))
+        return db.scalars(stmt).first()
 
     @staticmethod
     def get_by_id(db: Session, user_id: int) -> User | None:
@@ -72,7 +71,7 @@ class UserRepository:
         Returns:
             User | None: User if found, None otherwise
         """
-        return db.query(User).filter(User.id == user_id).first()
+        return db.get(User, user_id)
 
     @staticmethod
     def create(db: Session, user: UserCreate, hashed_password: str) -> User:

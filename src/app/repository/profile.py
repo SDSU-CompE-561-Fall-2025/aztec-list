@@ -4,6 +4,7 @@ Profile repository.
 This module provides data access layer for profile operations.
 """
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.profile import Profile
@@ -25,7 +26,8 @@ class ProfileRepository:
         Returns:
             Profile | None: Profile if found, None otherwise
         """
-        return db.query(Profile).filter(Profile.user_id == user_id).first()
+        stmt = select(Profile).where(Profile.user_id == user_id)
+        return db.scalars(stmt).first()
 
     @staticmethod
     def get_by_id(db: Session, profile_id: int) -> Profile | None:
@@ -90,8 +92,13 @@ class ProfileRepository:
         if "contact_info" in update_data and update_data["contact_info"] is not None:
             update_data["contact_info"] = update_data["contact_info"].model_dump(exclude_none=True)
 
-        for field, value in update_data.items():
-            setattr(db_profile, field, value)
+        # Direct assignment with SQLAlchemy 2.0 typed mappings
+        if "name" in update_data:
+            db_profile.name = update_data["name"]
+        if "campus" in update_data:
+            db_profile.campus = update_data["campus"]
+        if "contact_info" in update_data:
+            db_profile.contact_info = update_data["contact_info"]
 
         db.commit()
         db.refresh(db_profile)
@@ -110,7 +117,7 @@ class ProfileRepository:
         Returns:
             Profile: Updated profile
         """
-        db_profile.profile_picture_url = picture_url  # type: ignore[assignment]
+        db_profile.profile_picture_url = picture_url
         db.commit()
         db.refresh(db_profile)
         return db_profile
