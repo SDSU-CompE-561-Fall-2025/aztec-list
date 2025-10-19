@@ -1,3 +1,11 @@
+"""
+User schemas.
+
+This module contains Pydantic models for user request/response validation.
+"""
+
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr
 
 
@@ -25,6 +33,7 @@ class UserUpdate(BaseModel):
 class UserPublic(UserBase):
     id: int
     is_verified: bool
+    created_at: datetime
 
     model_config = {"from_attributes": True}
 
