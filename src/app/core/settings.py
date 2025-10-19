@@ -1,11 +1,5 @@
-import secrets
-
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-
-def _default_secret() -> str:
-    return secrets.token_urlsafe(32)
 
 
 class AppMeta(BaseModel):
@@ -18,9 +12,9 @@ class AppMeta(BaseModel):
 
 class Argon2Settings(BaseModel):
     secret_key: str = Field(
-        default_factory=_default_secret,
+        ...,
         min_length=32,
-        description="The secret key for JWT",
+        description="The secret key for JWT (configure via environment variable)",
     )
     algorithm: str = Field(
         default="HS256",
@@ -54,7 +48,11 @@ class Settings(BaseSettings):
 
     app: AppMeta = Field(default_factory=AppMeta)
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
-    a2: Argon2Settings = Field(default_factory=Argon2Settings)
+    a2: Argon2Settings
 
 
-settings = Settings()
+def load_settings() -> Settings:
+    return Settings()  # type: ignore[call-arg]
+
+
+settings = load_settings()
