@@ -6,7 +6,7 @@ This module contains Pydantic models for profile request/response validation.
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, EmailStr, Field, HttpUrl
 
 
 class ContactInfo(BaseModel):
@@ -41,7 +41,7 @@ class ProfilePublic(ProfileBase):
 
     id: int
     user_id: int
-    profile_picture_url: str | None = None
+    profile_picture_url: HttpUrl | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -52,7 +52,7 @@ class ProfilePictureResponse(BaseModel):
     """Schema for profile picture upload response."""
 
     user_id: int
-    profile_picture_url: str
+    profile_picture_url: HttpUrl
     updated_at: datetime
 
     model_config = {"from_attributes": True}

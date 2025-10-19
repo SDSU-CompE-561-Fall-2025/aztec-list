@@ -23,7 +23,7 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    """Schema for user response."""
+    """Schema for updating user fields."""
 
     username: str | None = None
     email: EmailStr | None = None
@@ -31,6 +31,8 @@ class UserUpdate(BaseModel):
 
 
 class UserPublic(UserBase):
+    """Schema for public user data in API responses."""
+
     id: int
     is_verified: bool
     created_at: datetime

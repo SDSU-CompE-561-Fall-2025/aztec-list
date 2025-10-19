@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 
+import app.models
 from app.api.v1.routes import api_router
 from app.core.database import Base, engine
 from app.core.settings import settings
-import app.models  # noqa: F401
 
 # Create database tables
 # If the tables do not exist, create them
