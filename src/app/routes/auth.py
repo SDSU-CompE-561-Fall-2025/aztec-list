@@ -1,7 +1,8 @@
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.core.auth import create_access_token
@@ -39,18 +40,16 @@ async def signup(
 
 @auth_router.post("/login")
 async def login(
-    username: Annotated[str, Form(description="Email or username")],
-    password: Annotated[str, Form()],
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[Session, Depends(get_db)],
 ) -> Token:
     """
     Authenticate user and return access token.
 
-    OAuth2 compatible token login - accepts email or username.
+    OAuth2 compatible token login - username field accepts email or username.
 
     Args:
-        username: User email or username
-        password: User password
+        form_data: OAuth2 form with username (email or username) and password
         db: Database session
 
     Returns:
@@ -59,7 +58,7 @@ async def login(
     Raises:
         HTTPException: 401 if credentials are invalid
     """
-    user = user_service.authenticate(db, username, password)
+    user = user_service.authenticate(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
