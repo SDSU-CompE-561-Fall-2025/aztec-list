@@ -1,8 +1,7 @@
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, Form, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.auth import create_access_token
@@ -40,30 +39,31 @@ async def signup(
 
 @auth_router.post("/login")
 async def login(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    username: Annotated[str, Form(description="Email or username")],
+    password: Annotated[str, Form()],
     db: Annotated[Session, Depends(get_db)],
 ) -> Token:
     """
     Authenticate user and return access token.
 
-    OAuth2 compatible token login - use email as username.
+    OAuth2 compatible token login - accepts email or username.
 
     Args:
-        form_data: OAuth2 form with username (email) and password
+        username: User email or username
+        password: User password
         db: Database session
 
     Returns:
         Token: JWT access token and token type
 
     Raises:
-        HTTPException: 401 if credentials are invalid, 500 on database error
+        HTTPException: 401 if credentials are invalid
     """
-    # OAuth2 spec uses "username" field, but we treat it as email
-    user = user_service.authenticate(db, form_data.username, form_data.password)
+    user = user_service.authenticate(db, username, password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="Incorrect email/username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
