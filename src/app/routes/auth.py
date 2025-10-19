@@ -46,24 +46,23 @@ async def login(
     """
     Authenticate user and return access token.
 
-    OAuth2 compatible token login - use email as username.
+    OAuth2 compatible token login - username field accepts email or username.
 
     Args:
-        form_data: OAuth2 form with username (email) and password
+        form_data: OAuth2 form with username (email or username) and password
         db: Database session
 
     Returns:
         Token: JWT access token and token type
 
     Raises:
-        HTTPException: 401 if credentials are invalid, 500 on database error
+        HTTPException: 401 if credentials are invalid
     """
-    # OAuth2 spec uses "username" field, but we treat it as email
     user = user_service.authenticate(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="Incorrect email/username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

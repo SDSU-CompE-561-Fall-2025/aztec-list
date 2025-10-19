@@ -112,22 +112,21 @@ class UserService:
         hashed_password = get_password_hash(user.password)
         return UserRepository.create(db, user, hashed_password)
 
-    def authenticate(self, db: Session, email: str, password: str) -> User | None:
+    def authenticate(self, db: Session, username: str, password: str) -> User | None:
         """
-        Authenticate user with email and password.
+        Authenticate user with username or email and password.
 
         Args:
             db: Database session
-            email: User email
+            username: User email or username
             password: Plain text password
 
         Returns:
             User | None: Authenticated user if credentials are valid, None otherwise
-
-        Raises:
-            HTTPException: If database error occurs
         """
-        user = UserRepository.get_by_email(db, email)
+        user = UserRepository.get_by_email_or_username(db, username)
+
+        # If user not found or password incorrect, return None
         if not user:
             return None
         if not verify_password(password, str(user.hashed_password)):
