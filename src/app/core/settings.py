@@ -1,5 +1,11 @@
+import secrets
+
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _default_secret() -> str:
+    return secrets.token_urlsafe(32)
 
 
 class AppMeta(BaseModel):
@@ -12,7 +18,8 @@ class AppMeta(BaseModel):
 
 class Argon2Settings(BaseModel):
     secret_key: str = Field(
-        default="your_secret_key",
+        default_factory=_default_secret,
+        min_length=32,
         description="The secret key for JWT",
     )
     algorithm: str = Field(
@@ -21,6 +28,7 @@ class Argon2Settings(BaseModel):
     )
     access_token_expire_minutes: int = Field(
         default=30,
+        ge=1,
         description="Access token expiration time in minutes",
     )
 
@@ -44,9 +52,9 @@ class Settings(BaseSettings):
         extra="ignore",  # ignore extra fields from .env
     )
 
-    app: AppMeta = AppMeta()
-    db: DatabaseSettings = DatabaseSettings()
-    a2: Argon2Settings = Argon2Settings()
+    app: AppMeta = Field(default_factory=AppMeta)
+    db: DatabaseSettings = Field(default_factory=DatabaseSettings)
+    a2: Argon2Settings = Field(default_factory=Argon2Settings)
 
 
 settings = Settings()
