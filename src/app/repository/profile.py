@@ -39,7 +39,7 @@ class ProfileRepository:
         Returns:
             Profile | None: Profile if found, None otherwise
         """
-        return db.query(Profile).filter(Profile.id == profile_id).first()
+        return db.get(Profile, profile_id)
 
     @staticmethod
     def create(db: Session, user_id: int, profile: ProfileCreate) -> Profile:
