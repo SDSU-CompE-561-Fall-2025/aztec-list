@@ -6,13 +6,13 @@ This module contains Pydantic models for profile request/response validation.
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 
 
 class ContactInfo(BaseModel):
     """Schema for contact information."""
 
-    email: str | None = None
+    email: EmailStr | None = None
     phone: str | None = None
 
 
