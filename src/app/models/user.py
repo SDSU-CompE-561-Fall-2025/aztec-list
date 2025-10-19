@@ -25,4 +25,9 @@ class User(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     # Relationships
-    profile = relationship("Profile", back_populates="user", uselist=False)
+    profile = relationship(
+        "Profile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",  # Delete profile when user is deleted
+    )
