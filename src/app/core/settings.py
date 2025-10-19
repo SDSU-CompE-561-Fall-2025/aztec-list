@@ -10,6 +10,21 @@ class AppMeta(BaseModel):
     redoc_url: str | None = "/redoc"
 
 
+class Argon2Settings(BaseModel):
+    secret_key: str = Field(
+        default="your_secret_key",
+        description="The secret key for JWT",
+    )
+    algorithm: str = Field(
+        default="HS256",
+        description="The algorithm used for JWT",
+    )
+    access_token_expire_minutes: int = Field(
+        default=30,
+        description="Access token expiration time in minutes",
+    )
+
+
 class DatabaseSettings(BaseModel):
     database_url: str = Field(
         default="sqlite:///./aztec_list.db",
@@ -31,6 +46,7 @@ class Settings(BaseSettings):
 
     app: AppMeta = AppMeta()
     db: DatabaseSettings = DatabaseSettings()
+    a2: Argon2Settings = Argon2Settings()
 
 
 settings = Settings()
