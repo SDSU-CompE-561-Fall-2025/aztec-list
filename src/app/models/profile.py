@@ -19,7 +19,7 @@ class Profile(Base):
 
     # need to update to use UUID or some hash of user id (but integer works for now)
     id = Column(Integer, primary_key=True, index=True, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False, index=True)
     name = Column(String, nullable=False)
     campus = Column(String, nullable=True)
     contact_info = Column(JSON, nullable=True)  # dict with "email", "phone", etc.
@@ -33,4 +33,9 @@ class Profile(Base):
     )
 
     # Relationships
-    user = relationship("User", back_populates="profile", uselist=False)
+    user = relationship(
+        "User",
+        back_populates="profile",
+        uselist=False,
+        cascade="all, delete-orphan",  # ensure Profile records are cleaned up when a User is deleted
+    )
