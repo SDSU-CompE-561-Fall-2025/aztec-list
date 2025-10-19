@@ -1,9 +1,11 @@
-"""User service.
+"""
+User service.
 
 This module contains business logic for user operations.
 """
 
 from fastapi import HTTPException, status
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.auth import get_password_hash, verify_password
@@ -15,11 +17,7 @@ from app.schemas.user import UserCreate
 class UserService:
     """Service for user business logic."""
 
-    def __init__(self) -> None:
-        """Initialize user service."""
-        self.repository = UserRepository()
-
-    def get_by_email(self, db: Session, email: str) -> User | None:
+    def get_by_email(self, db: Session, email: str) -> User:
         """
         Get user by email.
 
@@ -28,11 +26,27 @@ class UserService:
             email: User email
 
         Returns:
-            User | None: User if found, None otherwise
-        """
-        return self.repository.get_by_email(db, email)
+            User: User object
 
-    def get_by_id(self, db: Session, user_id: int) -> User | None:
+        Raises:
+            HTTPException: If user not found or database error occurs
+        """
+        try:
+            user = UserRepository.get_by_email(db, email)
+        except SQLAlchemyError as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database error occurred while fetching user",
+            ) from e
+        else:
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"User with email '{email}' not found",
+                )
+            return user
+
+    def get_by_id(self, db: Session, user_id: int) -> User:
         """
         Get user by ID.
 
@@ -41,9 +55,25 @@ class UserService:
             user_id: User ID
 
         Returns:
-            User | None: User if found, None otherwise
+            User: User object
+
+        Raises:
+            HTTPException: If user not found or database error occurs
         """
-        return self.repository.get_by_id(db, user_id)
+        try:
+            user = UserRepository.get_by_id(db, user_id)
+        except SQLAlchemyError as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database error occurred while fetching user",
+            ) from e
+        else:
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"User with ID {user_id} not found",
+                )
+            return user
 
     def create(self, db: Session, user: UserCreate) -> User:
         """
@@ -57,19 +87,25 @@ class UserService:
             User: Created user
 
         Raises:
-            HTTPException: If email already exists
+            HTTPException: If email already exists or database error occurs
         """
         # Check if user already exists
-        existing_user = self.repository.get_by_email(db, user.email)
+        existing_user = UserRepository.get_by_email(db, user.email)
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already registered",
             )
 
-        # Hash password and create user
-        hashed_password = get_password_hash(user.password)
-        return self.repository.create(db, user, hashed_password)
+        try:
+            # Hash password and create user
+            hashed_password = get_password_hash(user.password)
+            return UserRepository.create(db, user, hashed_password)
+        except SQLAlchemyError as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database error occurred while creating user",
+            ) from e
 
     def authenticate(self, db: Session, email: str, password: str) -> User | None:
         """
@@ -82,13 +118,23 @@ class UserService:
 
         Returns:
             User | None: Authenticated user if credentials are valid, None otherwise
+
+        Raises:
+            HTTPException: If database error occurs
         """
-        user = self.repository.get_by_email(db, email)
-        if not user:
-            return None
-        if not verify_password(password, str(user.hashed_password)):
-            return None
-        return user
+        try:
+            user = UserRepository.get_by_email(db, email)
+        except SQLAlchemyError as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database error occurred during authentication",
+            ) from e
+        else:
+            if not user:
+                return None
+            if not verify_password(password, str(user.hashed_password)):
+                return None
+            return user
 
 
 # Create a singleton instance
