@@ -27,11 +27,11 @@ class Profile(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True, index=True)
     name: Mapped[str] = mapped_column(String)
-    campus: Mapped[str | None] = mapped_column(String, nullable=True)
+    campus: Mapped[str | None] = mapped_column(String)
     contact_info: Mapped[dict[str, str] | None] = mapped_column(
-        JSON, nullable=True
+        JSON
     )  # dict with "email", "phone", etc.
-    profile_picture_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    profile_picture_url: Mapped[str | None] = mapped_column(String)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
