@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+import app.models
 from app.api.v1.routes import api_router
 from app.core.database import Base, engine
 from app.core.settings import settings
@@ -17,8 +18,3 @@ app = FastAPI(
 )
 
 app.include_router(api_router)
-
-
-@app.get("/")
-async def root() -> dict[str, str]:
-    return {"message": "Hello World"}

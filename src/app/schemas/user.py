@@ -1,3 +1,11 @@
+"""
+User schemas.
+
+This module contains Pydantic models for user request/response validation.
+"""
+
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr
 
 
@@ -15,7 +23,7 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    """Schema for user response."""
+    """Schema for updating user fields."""
 
     username: str | None = None
     email: EmailStr | None = None
@@ -23,8 +31,11 @@ class UserUpdate(BaseModel):
 
 
 class UserPublic(UserBase):
+    """Schema for public user data in API responses."""
+
     id: int
     is_verified: bool
+    created_at: datetime
 
     model_config = {"from_attributes": True}
 
