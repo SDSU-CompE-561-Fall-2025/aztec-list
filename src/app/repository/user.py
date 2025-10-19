@@ -55,6 +55,7 @@ class UserRepository:
             User: Created user
         """
         db_user = User(
+            username=user.username,
             email=user.email,
             hashed_password=hashed_password,
         )

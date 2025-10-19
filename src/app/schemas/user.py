@@ -24,7 +24,7 @@ class UserUpdate(BaseModel):
 
 class UserPublic(UserBase):
     id: int
-    is_verfied: bool
+    is_verified: bool
 
     model_config = {"from_attributes": True}
 
