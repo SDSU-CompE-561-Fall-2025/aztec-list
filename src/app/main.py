@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from app.api.v1.routes import api_router
 from app.core.database import Base, engine
 from app.core.settings import settings
+from app.models import Profile, User  # noqa: F401
 
 # Create database tables
 # If the tables do not exist, create them
@@ -17,8 +18,3 @@ app = FastAPI(
 )
 
 app.include_router(api_router)
-
-
-@app.get("/")
-async def root() -> dict[str, str]:
-    return {"message": "Hello World"}
