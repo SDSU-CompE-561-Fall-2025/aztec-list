@@ -1,3 +1,4 @@
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -16,14 +17,14 @@ user_router = APIRouter(
 
 @user_router.get("/{user_id}", response_model=UserPublic)
 async def get_user(
-    user_id: int,
+    user_id: uuid.UUID,
     db: Annotated[Session, Depends(get_db)],
 ) -> User:
     """
     Get public user profile by ID.
 
     Args:
-        user_id: The user's unique identifier
+        user_id: The user's unique identifier (UUID)
         db: Database session
 
     Returns:

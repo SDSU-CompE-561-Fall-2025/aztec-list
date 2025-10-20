@@ -4,6 +4,8 @@ User repository.
 This module provides data access layer for user operations.
 """
 
+import uuid
+
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
@@ -60,13 +62,13 @@ class UserRepository:
         return db.scalars(stmt).first()
 
     @staticmethod
-    def get_by_id(db: Session, user_id: int) -> User | None:
+    def get_by_id(db: Session, user_id: uuid.UUID) -> User | None:
         """
         Get user by ID.
 
         Args:
             db: Database session
-            user_id: User ID
+            user_id: User ID (UUID)
 
         Returns:
             User | None: User if found, None otherwise

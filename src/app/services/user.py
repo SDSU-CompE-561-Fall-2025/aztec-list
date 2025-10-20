@@ -4,6 +4,8 @@ User service.
 This module contains business logic for user operations.
 """
 
+import uuid
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -60,13 +62,13 @@ class UserService:
             )
         return user
 
-    def get_by_id(self, db: Session, user_id: int) -> User:
+    def get_by_id(self, db: Session, user_id: uuid.UUID) -> User:
         """
         Get user by ID.
 
         Args:
             db: Database session
-            user_id: User ID
+            user_id: User ID (UUID)
 
         Returns:
             User: User object
@@ -112,13 +114,13 @@ class UserService:
         hashed_password = get_password_hash(user.password)
         return UserRepository.create(db, user, hashed_password)
 
-    def delete(self, db: Session, user_id: int) -> None:
+    def delete(self, db: Session, user_id: uuid.UUID) -> None:
         """
         Delete a user by ID.
 
         Args:
             db: Database session
-            user_id: User ID to delete
+            user_id: User ID (UUID) to delete
 
         Raises:
             HTTPException: If user not found

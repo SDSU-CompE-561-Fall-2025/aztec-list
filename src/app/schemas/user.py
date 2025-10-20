@@ -4,6 +4,7 @@ User schemas.
 This module contains Pydantic models for user request/response validation.
 """
 
+import uuid
 from datetime import datetime
 
 from pydantic import BaseModel, EmailStr
@@ -33,7 +34,7 @@ class UserUpdate(BaseModel):
 class UserPublic(UserBase):
     """Schema for public user data in API responses."""
 
-    id: int
+    id: uuid.UUID
     is_verified: bool
     created_at: datetime
 
