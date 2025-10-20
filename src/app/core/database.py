@@ -1,6 +1,6 @@
 from collections.abc import Generator
 
-from sqlalchemy import create_engine
+from sqlalchemy import Enum, create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.core.settings import settings
@@ -29,3 +29,15 @@ def get_db() -> Generator[Session]:
         yield db
     finally:
         db.close()
+
+
+class Category(Enum):
+    pass
+
+
+class Condition(Enum):
+    NEW = "new"
+    LIKE_NEW = "like_new"
+    GOOD = "good"
+    FAIR = "fair"
+    POOR = "poor"
