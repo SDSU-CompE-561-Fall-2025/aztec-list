@@ -57,13 +57,13 @@ class ProfileService:
         if not profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Profile not found",
+                detail=f"Profile with ID {profile_id} not found",
             )
         return profile
 
     def create(self, db: Session, user_id: uuid.UUID, profile: ProfileCreate) -> Profile:
         """
-        Create a new profile for a user.
+        Create a new profile for a user with validation.
 
         Args:
             db: Database session
@@ -105,7 +105,7 @@ class ProfileService:
         if not db_profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Profile not found",
+                detail=f"Profile for user ID {user_id} not found",
             )
 
         return ProfileRepository.update(db, db_profile, profile)
@@ -129,7 +129,7 @@ class ProfileService:
         if not db_profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Profile not found",
+                detail=f"Profile for user ID {user_id} not found",
             )
 
         return ProfileRepository.update_profile_picture(db, db_profile, picture_url)
@@ -140,7 +140,7 @@ class ProfileService:
 
         Args:
             db: Database session
-            user_id: User ID whose profile to delete
+            user_id: User ID (UUID) whose profile to delete
 
         Raises:
             HTTPException: If profile not found
@@ -149,11 +149,11 @@ class ProfileService:
         if not db_profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Profile not found",
+                detail=f"Profile for user ID {user_id} not found",
             )
 
         ProfileRepository.delete(db, db_profile)
 
 
-# Create singleton instance
+# Create a singleton instance
 profile_service = ProfileService()
