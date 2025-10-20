@@ -28,8 +28,8 @@ class ProfileRepository:
         Returns:
             Profile | None: Profile if found, None otherwise
         """
-        stmt = select(Profile).where(Profile.user_id == user_id)
-        return db.scalars(stmt).first()
+        query = select(Profile).where(Profile.user_id == user_id)
+        return db.scalars(query).first()
 
     @staticmethod
     def get_by_id(db: Session, profile_id: uuid.UUID) -> Profile | None:
@@ -87,14 +87,10 @@ class ProfileRepository:
         Returns:
             Profile: Updated profile
         """
-        # Update only provided fields
+        # Convert ProfileUpdate model fields into dictionary
         update_data = profile.model_dump(exclude_unset=True)
 
-        # Handle contact_info conversion to dict
-        if "contact_info" in update_data and update_data["contact_info"] is not None:
-            update_data["contact_info"] = update_data["contact_info"].model_dump(exclude_none=True)
-
-        # Direct assignment with SQLAlchemy 2.0 typed mappings
+        # Update db with direct assignment
         if "name" in update_data:
             db_profile.name = update_data["name"]
         if "campus" in update_data:

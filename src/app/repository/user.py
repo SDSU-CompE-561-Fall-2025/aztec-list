@@ -28,8 +28,8 @@ class UserRepository:
         Returns:
             User | None: User if found, None otherwise
         """
-        stmt = select(User).where(User.email == email)
-        return db.scalars(stmt).first()
+        query = select(User).where(User.email == email)
+        return db.scalars(query).first()
 
     @staticmethod
     def get_by_username(db: Session, username: str) -> User | None:
@@ -43,8 +43,8 @@ class UserRepository:
         Returns:
             User | None: User if found, None otherwise
         """
-        stmt = select(User).where(User.username == username)
-        return db.scalars(stmt).first()
+        query = select(User).where(User.username == username)
+        return db.scalars(query).first()
 
     @staticmethod
     def get_by_email_or_username(db: Session, identifier: str) -> User | None:
@@ -58,8 +58,8 @@ class UserRepository:
         Returns:
             User | None: User if found, None otherwise
         """
-        stmt = select(User).where(or_(User.email == identifier, User.username == identifier))
-        return db.scalars(stmt).first()
+        query = select(User).where(or_(User.email == identifier, User.username == identifier))
+        return db.scalars(query).first()
 
     @staticmethod
     def get_by_id(db: Session, user_id: uuid.UUID) -> User | None:
