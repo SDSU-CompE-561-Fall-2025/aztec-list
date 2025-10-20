@@ -6,6 +6,7 @@ This module provides the data access layer for listing operations.
 
 import uuid
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.listing import Listing
@@ -16,27 +17,48 @@ class ListingRepository:
     """Repository for listing data access."""
 
     @staticmethod
-    def get_listings(db: Session) -> list[Listing]:
+    def get_listings(db: Session, number_of_listings_to_get: int) -> list[Listing] | None:
         pass
 
     @staticmethod
-    def get_listing_by_id(db: Session, listing_id: uuid.UUID) -> Listing:
-        pass
+    def get_listing_by_id(db: Session, listing_id: uuid.UUID) -> Listing | None:
+        query = select(Listing).where(Listing.id == listing_id)
+        return db.scalars(query).first()
 
     @staticmethod
-    def get_user_listings(db: Session, user_id: uuid.UUID) -> list[Listing]:
-        pass
+    def get_user_listings(db: Session, user_id: uuid.UUID) -> list[Listing] | None:
+        query = select(Listing).where(Listing.user_id == user_id)
+        return db.scalars(query)
 
     @staticmethod
     def create(db: Session, listing: ListingCreate) -> Listing:
-        pass
+        db_listing = Listing(
+            title=listing.title,
+            price=listing.price,
+            category=listing.category,
+            condition=listing.condition,
+            is_active=listing.is_active,
+            description=listing.description,
+            thumbnail_url=listing.thumbnail_url,
+        )
+        db.add(db_listing)
+        db.commit()
+        db.refresh(db_listing)
+        return db_listing
 
     @staticmethod
-    def update(
-        db: Session, listing_id: uuid.UUID, user_id: uuid.UUID, listing: ListingUpdate
-    ) -> Listing:
-        pass
+    def update(db: Session, listing: ListingUpdate) -> Listing:
+        db.commit()
+        db.refresh(listing)
+        return listing
 
     @staticmethod
-    def delete(db: Session, user_id: uuid.UUID, listing: Listing) -> None:
+    def delete(db: Session, listing: Listing) -> None:
+        db.delete(listing)
+        db.commit()
+
+    @staticmethod
+    def admin_delete(
+        db: Session, user_id: uuid.UUID, listing_id: uuid.UUID, listing: Listing
+    ) -> None:
         pass
