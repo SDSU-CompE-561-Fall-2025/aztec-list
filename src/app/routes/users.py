@@ -15,7 +15,7 @@ user_router = APIRouter(
 )
 
 
-@user_router.get("/{user_id}", response_model=UserPublic)
+@user_router.get("/{user_id}", summary="Get a user's public profile", response_model=UserPublic)
 async def get_user(
     user_id: uuid.UUID,
     db: Annotated[Session, Depends(get_db)],
