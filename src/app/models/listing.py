@@ -18,7 +18,7 @@ class Listing(Base):
     __tablename__ = "listings"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4, index=True)
-    seller_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
     title: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
     price: Mapped[Decimal] = mapped_column(float, default=Decimal("0.00"))
