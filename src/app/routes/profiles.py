@@ -7,7 +7,13 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.profile import Profile
 from app.models.user import User
-from app.schemas.profile import ProfileCreate, ProfilePictureResponse, ProfilePublic, ProfileUpdate
+from app.schemas.profile import (
+    ProfileCreate,
+    ProfilePictureResponse,
+    ProfilePictureUpdate,
+    ProfilePublic,
+    ProfileUpdate,
+)
 from app.services.profile import profile_service
 
 profile_router = APIRouter(
@@ -101,7 +107,7 @@ async def update_profile(
     response_model=ProfilePictureResponse,
 )
 async def update_profile_picture(
-    picture_url: str,
+    data: ProfilePictureUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Profile:
@@ -112,7 +118,7 @@ async def update_profile_picture(
     For actual file upload, use multipart/form-data with File upload.
 
     Args:
-        picture_url: URL of the profile picture
+        data: Profile picture update data with validated URL
         current_user: Authenticated user from JWT token
         db: Database session
 
@@ -120,6 +126,6 @@ async def update_profile_picture(
         ProfilePictureResponse: Updated profile picture information
 
     Raises:
-        HTTPException: 401 if not authenticated, 404 if profile not found
+        HTTPException: 400 if invalid URL format, 401 if not authenticated, 404 if profile not found
     """
-    return profile_service.update_profile_picture(db, current_user.id, picture_url)
+    return profile_service.update_profile_picture(db, current_user.id, str(data.picture_url))
