@@ -37,6 +37,12 @@ class ProfileUpdate(BaseModel):
     contact_info: ContactInfo | None = Field(None, description="Contact information (email, phone)")
 
 
+class ProfilePictureUpdate(BaseModel):
+    """Schema for updating profile picture URL."""
+
+    picture_url: HttpUrl = Field(..., description="Valid HTTP/HTTPS URL of the profile picture")
+
+
 class ProfilePublic(ProfileBase):
     """Schema for profile response."""
 
