@@ -28,7 +28,7 @@ class ListingRepository:
     @staticmethod
     def get_user_listings(db: Session, user_id: uuid.UUID) -> list[Listing] | None:
         query = select(Listing).where(Listing.user_id == user_id)
-        return db.scalars(query)
+        return db.scalars(query).all
 
     @staticmethod
     def create(db: Session, listing: ListingCreate) -> Listing:
@@ -47,10 +47,14 @@ class ListingRepository:
         return db_listing
 
     @staticmethod
-    def update(db: Session, listing: ListingUpdate) -> Listing:
+    def update(db: Session, db_listing: Listing, listing_update: ListingUpdate) -> Listing:
+        update_data = listing_update.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_listing, field, value)
+        db.add(db_listing)
         db.commit()
-        db.refresh(listing)
-        return listing
+        db.refresh(db_listing)
+        return db_listing
 
     @staticmethod
     def delete(db: Session, listing: Listing) -> None:
