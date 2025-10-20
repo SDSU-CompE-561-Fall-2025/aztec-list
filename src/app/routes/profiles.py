@@ -126,6 +126,6 @@ async def update_profile_picture(
         ProfilePictureResponse: Updated profile picture information
 
     Raises:
-        HTTPException: 400 if invalid URL format, 401 if not authenticated, 404 if profile not found
+        HTTPException: 401 if not authenticated, 404 if profile not found, 422 if invalid URL format
     """
     return profile_service.update_profile_picture(db, current_user.id, str(data.picture_url))
