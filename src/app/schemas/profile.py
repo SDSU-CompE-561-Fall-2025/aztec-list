@@ -4,6 +4,7 @@ Profile schemas.
 This module contains Pydantic models for profile request/response validation.
 """
 
+import uuid
 from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, Field, HttpUrl
@@ -39,8 +40,8 @@ class ProfileUpdate(BaseModel):
 class ProfilePublic(ProfileBase):
     """Schema for profile response."""
 
-    id: int
-    user_id: int
+    id: uuid.UUID
+    user_id: uuid.UUID
     profile_picture_url: HttpUrl | None = None
     created_at: datetime
     updated_at: datetime
@@ -51,7 +52,7 @@ class ProfilePublic(ProfileBase):
 class ProfilePictureResponse(BaseModel):
     """Schema for profile picture upload response."""
 
-    user_id: int
+    user_id: uuid.UUID
     profile_picture_url: HttpUrl
     updated_at: datetime
 

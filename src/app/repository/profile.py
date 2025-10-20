@@ -4,6 +4,8 @@ Profile repository.
 This module provides data access layer for profile operations.
 """
 
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -15,13 +17,13 @@ class ProfileRepository:
     """Repository for profile data access."""
 
     @staticmethod
-    def get_by_user_id(db: Session, user_id: int) -> Profile | None:
+    def get_by_user_id(db: Session, user_id: uuid.UUID) -> Profile | None:
         """
         Get profile by user ID.
 
         Args:
             db: Database session
-            user_id: User ID
+            user_id: User ID (UUID)
 
         Returns:
             Profile | None: Profile if found, None otherwise
@@ -30,13 +32,13 @@ class ProfileRepository:
         return db.scalars(stmt).first()
 
     @staticmethod
-    def get_by_id(db: Session, profile_id: int) -> Profile | None:
+    def get_by_id(db: Session, profile_id: uuid.UUID) -> Profile | None:
         """
         Get profile by ID.
 
         Args:
             db: Database session
-            profile_id: Profile ID
+            profile_id: Profile ID (UUID)
 
         Returns:
             Profile | None: Profile if found, None otherwise
@@ -44,7 +46,7 @@ class ProfileRepository:
         return db.get(Profile, profile_id)
 
     @staticmethod
-    def create(db: Session, user_id: int, profile: ProfileCreate) -> Profile:
+    def create(db: Session, user_id: uuid.UUID, profile: ProfileCreate) -> Profile:
         """
         Create a new profile for a user.
 

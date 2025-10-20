@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, String
+from sqlalchemy import DateTime, ForeignKey, String, Uuid
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,9 +24,8 @@ class Profile(Base):
 
     __tablename__ = "profiles"
 
-    # need to update to use UUID or some hash of user id (but integer works for now)
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True, index=True)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4, index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), unique=True, index=True)
     name: Mapped[str] = mapped_column(String)
     campus: Mapped[str | None] = mapped_column(String)
     contact_info: Mapped[dict[str, str] | None] = mapped_column(
