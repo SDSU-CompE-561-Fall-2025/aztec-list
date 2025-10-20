@@ -16,6 +16,7 @@ from app.schemas.listing import ListingCreate, ListingUpdate
 class ListingRepository:
     """Repository for listing data access."""
 
+    # figure out how to implement this pagination based retrieval we need to do
     @staticmethod
     def get_listings(db: Session, number_of_listings_to_get: int) -> list[Listing] | None:
         pass
@@ -25,6 +26,8 @@ class ListingRepository:
         query = select(Listing).where(Listing.id == listing_id)
         return db.scalars(query).first()
 
+    # may have to add some limiter and again how many listings do we display per page
+    # if the user has an insane amount of listings
     @staticmethod
     def get_user_listings(db: Session, user_id: uuid.UUID) -> list[Listing] | None:
         query = select(Listing).where(Listing.user_id == user_id)
@@ -61,6 +64,7 @@ class ListingRepository:
         db.delete(listing)
         db.commit()
 
+    # first have to go back into user and add an is_admin field to then do this
     @staticmethod
     def admin_delete(
         db: Session, user_id: uuid.UUID, listing_id: uuid.UUID, listing: Listing

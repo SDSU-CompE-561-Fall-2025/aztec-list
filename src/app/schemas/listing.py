@@ -33,7 +33,7 @@ class ListingUpdate(BaseModel):
 
 class ListingPublic(ListingBase):
     id: uuid.UUID
-    seller_id: uuid.UUID
+    user_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
 
