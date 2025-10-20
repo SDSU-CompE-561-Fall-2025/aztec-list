@@ -18,7 +18,12 @@ auth_router = APIRouter(
 )
 
 
-@auth_router.post("/signup", status_code=status.HTTP_201_CREATED, response_model=UserPublic)
+@auth_router.post(
+    "/signup",
+    summary="Register a new user",
+    status_code=status.HTTP_201_CREATED,
+    response_model=UserPublic,
+)
 async def signup(
     user: UserCreate,
     db: Annotated[Session, Depends(get_db)],
@@ -39,7 +44,7 @@ async def signup(
     return user_service.create(db, user)
 
 
-@auth_router.post("/login")
+@auth_router.post("/login", summary="Authenticate and obtain a JWT access token")
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[Session, Depends(get_db)],
@@ -69,7 +74,7 @@ async def login(
 
     access_token_expires = timedelta(minutes=settings.a2.access_token_expire_minutes)
     access_token = create_access_token(
-        data={"sub": str(user.email)},
+        data={"sub": str(user.id)},
         expires_delta=access_token_expires,
     )
 
