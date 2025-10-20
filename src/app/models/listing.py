@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum, ForeignKey, String, Uuid
@@ -20,7 +21,7 @@ class Listing(Base):
     seller_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
     title: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
-    price: Mapped[float] = mapped_column(float, default=0.0)
+    price: Mapped[Decimal] = mapped_column(float, default=Decimal("0.00"))
     category: Mapped[Category] = mapped_column(Enum(Category))
     condition: Mapped[Condition] = mapped_column(Enum(Condition))
     is_active: Mapped[bool] = mapped_column(bool, default=False)
