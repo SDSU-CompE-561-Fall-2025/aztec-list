@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
+from decimal import Decimal  # noqa: TC003
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Numeric, String, Text, Uuid
@@ -11,8 +12,6 @@ from app.core.database import Base
 from app.core.enums import Condition
 
 if TYPE_CHECKING:
-    from decimal import Decimal
-
     from app.models.user import User
 
 
