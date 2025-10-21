@@ -21,7 +21,7 @@ class Listing(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
     title: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
-    price: Mapped[Decimal] = mapped_column(float, default=Decimal("0.00"))
+    price: Mapped[Decimal] = mapped_column(Decimal, default=Decimal("0.00"))
     category: Mapped[Category] = mapped_column(Enum(Category))
     condition: Mapped[Condition] = mapped_column(Enum(Condition))
     is_active: Mapped[bool] = mapped_column(bool, default=False)

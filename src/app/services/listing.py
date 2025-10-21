@@ -29,11 +29,12 @@ class ListingService:
         if not listings:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Listing from this user not found",  # noqa: F541
+                detail="Listing from this user not found",
             )
         return listings
 
     def create(self, db: Session, listing: ListingCreate) -> Listing:
-        existing_listing = ListingRepository.get_listing_by_id(db, listing.id)
-        if existing_listing:
-            pass
+        pass
+
+    def delete(self, db: Session, listing: Listing) -> None:
+        pass

@@ -51,6 +51,7 @@ class ListingRepository:
 
     @staticmethod
     def update(db: Session, db_listing: Listing, listing_update: ListingUpdate) -> Listing:
+        # maybe change to direct assignment instead of for each loop -> later change
         update_data = listing_update.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(db_listing, field, value)
@@ -59,14 +60,8 @@ class ListingRepository:
         db.refresh(db_listing)
         return db_listing
 
+    # change to delete by id rather than the object
     @staticmethod
     def delete(db: Session, listing: Listing) -> None:
         db.delete(listing)
         db.commit()
-
-    # first have to go back into user and add an is_admin field to then do this
-    @staticmethod
-    def admin_delete(
-        db: Session, user_id: uuid.UUID, listing_id: uuid.UUID, listing: Listing
-    ) -> None:
-        pass
