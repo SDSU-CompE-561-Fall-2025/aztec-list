@@ -90,13 +90,9 @@ class ProfileRepository:
         # Convert ProfileUpdate model fields into dictionary
         update_data = profile.model_dump(exclude_unset=True)
 
-        # Update db with direct assignment
-        if "name" in update_data:
-            db_profile.name = update_data["name"]
-        if "campus" in update_data:
-            db_profile.campus = update_data["campus"]
-        if "contact_info" in update_data:
-            db_profile.contact_info = update_data["contact_info"]
+        # Update only the fields present in the request
+        for field, value in update_data.items():
+            setattr(db_profile, field, value)
 
         db.commit()
         db.refresh(db_profile)

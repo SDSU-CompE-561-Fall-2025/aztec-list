@@ -87,9 +87,11 @@ class ListingRepository:
         # Apply filters
         if params.q:
             # Full-text search over title and description
+            # Escape SQL wildcards (%, _) to prevent wildcard injection
+            escaped_query = params.q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
             search_filter = or_(
-                Listing.title.ilike(f"%{params.q}%"),
-                Listing.description.ilike(f"%{params.q}%"),
+                Listing.title.ilike(f"%{escaped_query}%", escape="\\"),
+                Listing.description.ilike(f"%{escaped_query}%", escape="\\"),
             )
             query = query.where(search_filter)
 
@@ -164,21 +166,9 @@ class ListingRepository:
         # Convert ListingUpdate model fields into dictionary
         update_data = listing.model_dump(exclude_unset=True)
 
-        # Update db with direct assignment
-        if "title" in update_data:
-            db_listing.title = update_data["title"]
-        if "description" in update_data:
-            db_listing.description = update_data["description"]
-        if "price" in update_data:
-            db_listing.price = update_data["price"]
-        if "category" in update_data:
-            db_listing.category = update_data["category"]
-        if "condition" in update_data:
-            db_listing.condition = update_data["condition"]
-        if "thumbnail_url" in update_data:
-            db_listing.thumbnail_url = update_data["thumbnail_url"]
-        if "is_active" in update_data:
-            db_listing.is_active = update_data["is_active"]
+        # Update only the fields present in the request
+        for field, value in update_data.items():
+            setattr(db_listing, field, value)
 
         db.commit()
         db.refresh(db_listing)
