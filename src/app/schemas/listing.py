@@ -39,6 +39,20 @@ class ListingUpdate(BaseModel):
     is_active: bool | None = None
 
 
+class ListingSearchParams(BaseModel):
+    """Schema for listing search/filter parameters."""
+
+    q: str | None = Field(None, description="Full-text search over title/description")
+    category: str | None = Field(None, description="Filter by category")
+    min_price: Decimal | None = Field(None, ge=0, description="Minimum price filter")
+    max_price: Decimal | None = Field(None, ge=0, description="Maximum price filter")
+    condition: Condition | None = Field(None, description="Filter by condition")
+    seller_id: uuid.UUID | None = Field(None, description="Filter by seller UUID")
+    limit: int = Field(20, ge=1, le=100, description="Page size (max 100)")
+    skip: int = Field(0, ge=0, description="Number of records to skip")
+    sort_by: str = Field("recent", description="Sort order: recent, price_asc, price_desc")
+
+
 class ListingPublic(ListingBase):
     """Schema for listing response."""
 
