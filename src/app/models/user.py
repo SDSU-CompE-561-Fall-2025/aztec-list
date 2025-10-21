@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 if TYPE_CHECKING:
+    from app.models.listing import Listing
     from app.models.profile import Profile
 
 
@@ -37,4 +38,7 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",  # Delete profile when user is deleted
         single_parent=True,
+    )
+    listings: Mapped[list[Listing]] = relationship(
+        back_populates="seller", cascade="all, delete-orphan"
     )
