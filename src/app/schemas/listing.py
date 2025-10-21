@@ -10,7 +10,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, HttpUrl
 
-from app.core.enums import Condition
+from app.core.enums import Condition, ListingSortOrder
 
 
 class ListingBase(BaseModel):
@@ -49,8 +49,29 @@ class ListingSearchParams(BaseModel):
     condition: Condition | None = Field(None, description="Filter by condition")
     seller_id: uuid.UUID | None = Field(None, description="Filter by seller UUID")
     limit: int = Field(20, ge=1, le=100, description="Page size (max 100)")
-    skip: int = Field(0, ge=0, description="Number of records to skip")
-    sort_by: str = Field("recent", description="Sort order: recent, price_asc, price_desc")
+    offset: int = Field(0, ge=0, description="Number of records to skip")
+    sort: ListingSortOrder = Field(ListingSortOrder.RECENT, description="Sort order")
+
+
+class ListingSearchResponse(BaseModel):
+    """Response schema for paginated listing search."""
+
+    items: list["ListingPublic"] = Field(..., description="List of listings")
+    next_cursor: str | None = Field(
+        None, description="Cursor for next page (null for offset pagination)"
+    )
+    count: int = Field(..., description="Number of items in current response")
+
+    model_config = {"from_attributes": True}
+
+
+class UserListingsParams(BaseModel):
+    """Schema for filtering user's listings."""
+
+    limit: int = Field(20, ge=1, le=100, description="Page size (max 100)")
+    offset: int = Field(0, ge=0, description="Number of records to skip")
+    sort: ListingSortOrder = Field(ListingSortOrder.RECENT, description="Sort order")
+    include_inactive: bool = Field(default=False, description="Include inactive listings")
 
 
 class ListingPublic(ListingBase):
