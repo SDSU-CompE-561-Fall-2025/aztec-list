@@ -14,3 +14,11 @@ class Condition(str, enum.Enum):
     LIKE_NEW = "like_new"
     GOOD = "good"
     FAIR = "fair"
+
+
+class ListingSortOrder(str, enum.Enum):
+    """Enum for listing sort order options."""
+
+    RECENT = "recent"
+    PRICE_ASC = "price_asc"
+    PRICE_DESC = "price_desc"
