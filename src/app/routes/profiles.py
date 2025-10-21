@@ -1,12 +1,12 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user_id
 from app.models.profile import Profile
-from app.models.user import User
 from app.schemas.profile import (
     ProfileCreate,
     ProfilePictureResponse,
@@ -30,7 +30,7 @@ profile_router = APIRouter(
 )
 async def create_profile(
     profile: ProfileCreate,
-    current_user: Annotated[User, Depends(get_current_user)],
+    user_id: Annotated[UUID, Depends(get_current_user_id)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Profile:
     """
@@ -38,7 +38,7 @@ async def create_profile(
 
     Args:
         profile: Profile creation data (name, campus, contact_info)
-        current_user: Authenticated user from JWT token
+        user_id: Authenticated user's ID from the JWT token
         db: Database session
 
     Returns:
@@ -47,21 +47,21 @@ async def create_profile(
     Raises:
         HTTPException: 400 if profile already exists, 401 if not authenticated
     """
-    return profile_service.create(db, current_user.id, profile)
+    return profile_service.create(db, user_id, profile)
 
 
 @profile_router.get(
     "/", summary="Get the authenticated user's profile", response_model=ProfilePublic
 )
 async def get_my_profile(
-    current_user: Annotated[User, Depends(get_current_user)],
+    user_id: Annotated[UUID, Depends(get_current_user_id)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Profile:
     """
     Retrieve the authenticated user's full profile.
 
     Args:
-        current_user: Authenticated user from JWT token
+        user_id: Authenticated user's ID from the JWT token
         db: Database session
 
     Returns:
@@ -70,7 +70,7 @@ async def get_my_profile(
     Raises:
         HTTPException: 401 if not authenticated, 404 if profile not found
     """
-    return profile_service.get_by_user_id(db, current_user.id)
+    return profile_service.get_by_user_id(db, user_id)
 
 
 @profile_router.patch(
@@ -78,7 +78,7 @@ async def get_my_profile(
 )
 async def update_profile(
     profile: ProfileUpdate,
-    current_user: Annotated[User, Depends(get_current_user)],
+    user_id: Annotated[UUID, Depends(get_current_user_id)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Profile:
     """
@@ -88,7 +88,7 @@ async def update_profile(
 
     Args:
         profile: Profile update data (name, campus, contact_info)
-        current_user: Authenticated user from JWT token
+        user_id: Authenticated user's ID from the JWT token
         db: Database session
 
     Returns:
@@ -97,7 +97,7 @@ async def update_profile(
     Raises:
         HTTPException: 401 if not authenticated, 404 if profile not found
     """
-    return profile_service.update(db, current_user.id, profile)
+    return profile_service.update(db, user_id, profile)
 
 
 @profile_router.post(
@@ -108,7 +108,7 @@ async def update_profile(
 )
 async def update_profile_picture(
     data: ProfilePictureUpdate,
-    current_user: Annotated[User, Depends(get_current_user)],
+    user_id: Annotated[UUID, Depends(get_current_user_id)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Profile:
     """
@@ -119,7 +119,7 @@ async def update_profile_picture(
 
     Args:
         data: Profile picture update data with validated URL
-        current_user: Authenticated user from JWT token
+        user_id: Authenticated user's ID from the JWT token
         db: Database session
 
     Returns:
@@ -128,4 +128,4 @@ async def update_profile_picture(
     Raises:
         HTTPException: 401 if not authenticated, 404 if profile not found, 422 if invalid URL format
     """
-    return profile_service.update_profile_picture(db, current_user.id, str(data.picture_url))
+    return profile_service.update_profile_picture(db, user_id, str(data.picture_url))
