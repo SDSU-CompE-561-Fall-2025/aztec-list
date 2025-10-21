@@ -78,4 +78,8 @@ async def login(
         expires_delta=access_token_expires,
     )
 
-    return Token(access_token=access_token, token_type="bearer")  # noqa: S106
+    return Token(
+        access_token=access_token,
+        token_type="bearer",  # noqa: S106
+        user=UserPublic.model_validate(user),
+    )
