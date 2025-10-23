@@ -137,6 +137,10 @@ class ListingRepository:
         Returns:
             Listing: Created listing
         """
+        thumbnail = listing.thumbnail_url
+        if thumbnail is not None:
+            thumbnail = str(thumbnail)
+
         db_listing = Listing(
             seller_id=seller_id,
             title=listing.title,
@@ -144,6 +148,7 @@ class ListingRepository:
             price=listing.price,
             category=listing.category,
             condition=listing.condition,
+            thumbnail_url=thumbnail,
         )
         db.add(db_listing)
         db.commit()
@@ -165,6 +170,9 @@ class ListingRepository:
         """
         # Convert ListingUpdate model fields into dictionary
         update_data = listing.model_dump(exclude_unset=True)
+
+        if "thumbnail_url" in update_data and update_data["thumbnail_url"] is not None:
+            update_data["thumbnail_url"] = str(update_data["thumbnail_url"])
 
         # Update only the fields present in the request
         for field, value in update_data.items():
