@@ -10,7 +10,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 if TYPE_CHECKING:
+<<<<<<< HEAD
     from app.models.listing import Listing
+=======
+    from app.models.admin import AdminAction
+>>>>>>> 78366a0 (back_populates)
     from app.models.profile import Profile
 
 
@@ -39,6 +43,24 @@ class User(Base):
         cascade="all, delete-orphan",  # Delete profile when user is deleted
         single_parent=True,
     )
+<<<<<<< HEAD
     listings: Mapped[list[Listing]] = relationship(
         back_populates="seller", cascade="all, delete-orphan"
+=======
+
+    # one-to-many → Admin actions performed by this user (when acting as admin)
+    admin_actions_performed: Mapped[list[AdminAction]] = relationship(
+        "AdminAction",
+        foreign_keys="AdminAction.admin_id",
+        back_populates="admin",
+        cascade="all, delete-orphan",
+    )
+
+    # one-to-many → Admin actions received by this user (when being moderated)
+    admin_actions_received: Mapped[list[AdminAction]] = relationship(
+        "AdminAction",
+        foreign_keys="AdminAction.target_user_id",
+        back_populates="target_user",
+        cascade="all, delete-orphan",
+>>>>>>> 78366a0 (back_populates)
     )

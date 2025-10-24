@@ -10,7 +10,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 if TYPE_CHECKING:
-    from app.models.admin import Admin
     from app.models.user import User
 
 AdminActionType = Enum(
@@ -22,18 +21,19 @@ AdminActionType = Enum(
 )
 
 
-class Admin(Base):
+class AdminAction(Base):
     """
-    Admin model for moderation actions.
+    AdminAction model for moderation actions.
 
-    The admin will have the ability to block individuals,
-    and give a short reason why.
+    Stores records of moderation actions (warnings, strikes, bans, listing removals)
+    performed by admin users. Each action is linked to the admin who performed it
+    and the user who received it.
     """
 
-    __tablename__ = "admin"
+    __tablename__ = "admin_actions"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4, index=True)
-    admin_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), unique=True, index=True)
+    admin_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     target_user_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -48,13 +48,14 @@ class Admin(Base):
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     # Relationships
+    # many-to-one → Each admin action is performed by one admin user
     admin: Mapped[User] = relationship(
         "User",
         foreign_keys=[admin_id],
         back_populates="admin_actions_performed",
     )
 
-    # many-to-one → Each admin action targets one user (the subject).
+    # many-to-one → Each admin action targets one user (the subject)
     target_user: Mapped[User] = relationship(
         "User",
         foreign_keys=[target_user_id],
