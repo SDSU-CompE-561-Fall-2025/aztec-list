@@ -85,10 +85,12 @@ class ListingRepository:
         query = select(Listing).where(Listing.is_active)
 
         # Apply filters
-        if params.q:
+        if params.search_text:
             # Full-text search over title and description
             # Escape SQL wildcards (%, _) to prevent wildcard injection
-            escaped_query = params.q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            escaped_query = (
+                params.search_text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            )
             search_filter = or_(
                 Listing.title.ilike(f"%{escaped_query}%", escape="\\"),
                 Listing.description.ilike(f"%{escaped_query}%", escape="\\"),

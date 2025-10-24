@@ -41,7 +41,7 @@ class ListingUpdate(BaseModel):
 class ListingSearchParams(BaseModel):
     """Schema for listing search/filter parameters."""
 
-    q: str | None = Field(None, description="Full-text search over title/description")
+    search_text: str | None = Field(None, description="Full-text search over title/description")
     category: str | None = Field(None, description="Filter by category")
     min_price: Decimal | None = Field(None, ge=0, description="Minimum price filter")
     max_price: Decimal | None = Field(None, ge=0, description="Maximum price filter")
