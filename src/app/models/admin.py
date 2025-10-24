@@ -52,7 +52,6 @@ class Admin(Base):
         "User",
         foreign_keys=[admin_id],
         back_populates="admin_actions_performed",
-        lazy="joined",
     )
 
     # many-to-one → Each admin action targets one user (the subject).
@@ -60,5 +59,4 @@ class Admin(Base):
         "User",
         foreign_keys=[target_user_id],
         back_populates="admin_actions_received",
-        lazy="joined",
     )
