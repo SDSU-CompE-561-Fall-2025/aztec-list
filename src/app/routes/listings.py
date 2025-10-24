@@ -10,6 +10,7 @@ from app.models import Listing
 from app.schemas.listing import (
     ListingCreate,
     ListingPublic,
+    ListingSearchParams,
     ListingUpdate,
 )
 from app.services.listing import listing_service
@@ -57,3 +58,14 @@ async def delete_listing_by_id(
     listing_id: uuid.UUID,
 ) -> None:
     listing_service.delete(db, listing_id)
+
+
+@listing_router.get(
+    "/",
+    response_model=list[ListingPublic],
+    status_code=status.HTTP_200_OK,
+)
+async def get_listings(
+    db: Annotated[Session, Depends(get_db)], params: Annotated[ListingSearchParams, Depends()]
+) -> list[Listing]:
+    return listing_service.search(db, params)
