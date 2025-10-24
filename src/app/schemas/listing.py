@@ -35,7 +35,6 @@ class ListingUpdate(BaseModel):
     price: Decimal | None = Field(None, ge=0, decimal_places=2)
     category: str | None = Field(None, min_length=1)
     condition: Condition | None = None
-    thumbnail_url: HttpUrl | None = None
     is_active: bool | None = None
 
 
