@@ -7,7 +7,7 @@ This module provides data access layer for admin action operations.
 import uuid
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.admin import AdminAction
@@ -216,7 +216,7 @@ class AdminActionRepository:
         if to_date:
             query = query.where(AdminAction.created_at <= to_date)
 
-        return db.scalar(select(AdminAction).count()) or 0
+        return db.scalar(select(func.count()).select_from(query.subquery())) or 0
 
     @staticmethod
     def create(db: Session, admin_id: uuid.UUID, action: AdminActionCreate) -> AdminAction:
