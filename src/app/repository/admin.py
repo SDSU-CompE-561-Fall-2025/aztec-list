@@ -70,20 +70,20 @@ class AdminActionRepository:
         return list(db.scalars(query).all())
 
     @staticmethod
-    def get_by_listing_id(db: Session, listing_id: uuid.UUID) -> list[AdminAction]:
+    def get_by_target_listing_id(db: Session, target_listing_id: uuid.UUID) -> list[AdminAction]:
         """
-        Get all admin actions for a specific listing.
+        Get all admin actions for a specific target listing.
 
         Args:
             db: Database session
-            listing_id: Listing ID (UUID)
+            target_listing_id: Target listing ID (UUID)
 
         Returns:
-            list[AdminAction]: List of admin actions for the listing
+            list[AdminAction]: List of admin actions for the target listing
         """
         query = (
             select(AdminAction)
-            .where(AdminAction.target_listing_id == listing_id)
+            .where(AdminAction.target_listing_id == target_listing_id)
             .order_by(AdminAction.created_at.desc())
         )
         return list(db.scalars(query).all())

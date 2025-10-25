@@ -60,6 +60,21 @@ class AdminActionService:
         """
         return AdminActionRepository.get_by_target_user_id(db, target_user_id)
 
+    def get_by_target_listing_id(
+        self, db: Session, target_listing_id: uuid.UUID
+    ) -> list[AdminAction]:
+        """
+        Get all admin actions for a specific target listing.
+
+        Args:
+            db: Database session
+            target_listing_id: Target listing ID (UUID)
+
+        Returns:
+            list[AdminAction]: List of admin actions targeting the listing
+        """
+        return AdminActionRepository.get_by_target_listing_id(db, target_listing_id)
+
     def get_filtered(  # noqa: PLR0913
         self,
         db: Session,

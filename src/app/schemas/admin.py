@@ -113,3 +113,22 @@ class AdminActionListResponse(BaseModel):
     items: list[AdminActionPublic]
     next_cursor: str | None = None
     count: int
+
+
+class AdminActionFilters(BaseModel):
+    """Query parameters for filtering admin actions."""
+
+    target_user_id: uuid.UUID | None = Field(None, description="Filter by target user ID")
+    admin_id: uuid.UUID | None = Field(None, description="Filter by admin user ID")
+    action_type: ActionType | None = Field(None, description="Filter by action type")
+    target_listing_id: uuid.UUID | None = Field(None, description="Filter by listing ID")
+    from_date: datetime | None = Field(
+        None, alias="from", description="Filter actions created on or after this date"
+    )
+    to_date: datetime | None = Field(
+        None, alias="to", description="Filter actions created on or before this date"
+    )
+    limit: int = Field(20, ge=1, le=100, description="Maximum number of results")
+    offset: int = Field(0, ge=0, description="Number of results to skip")
+
+    model_config = {"populate_by_name": True}
