@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.models.profile import Profile
 from app.repository.profile import ProfileRepository
-from app.schemas.profile import ProfileCreate, ProfileUpdate
+from app.schemas.profile import ProfileCreate, ProfilePictureUpdate, ProfileUpdate
 
 
 class ProfileService:
@@ -110,14 +110,16 @@ class ProfileService:
 
         return ProfileRepository.update(db, db_profile, profile)
 
-    def update_profile_picture(self, db: Session, user_id: uuid.UUID, picture_url: str) -> Profile:
+    def update_profile_picture(
+        self, db: Session, user_id: uuid.UUID, data: ProfilePictureUpdate
+    ) -> Profile:
         """
         Update profile picture URL for a user.
 
         Args:
             db: Database session
             user_id: User ID whose profile picture to update
-            picture_url: New profile picture URL
+            data: Profile picture update data with validated URL
 
         Returns:
             Profile: Updated profile
@@ -132,7 +134,7 @@ class ProfileService:
                 detail=f"Profile for user ID {user_id} not found",
             )
 
-        return ProfileRepository.update_profile_picture(db, db_profile, picture_url)
+        return ProfileRepository.update_profile_picture(db, db_profile, str(data.picture_url))
 
     def delete(self, db: Session, user_id: uuid.UUID) -> None:
         """
