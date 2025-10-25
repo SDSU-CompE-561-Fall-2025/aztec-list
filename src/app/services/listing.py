@@ -152,11 +152,7 @@ class ListingService:
                 detail=f"Listing with ID {listing_id} not found",
             )
 
-        # Soft delete by setting is_active to False
-        db_listing.is_active = False
-        db.commit()
-        db.refresh(db_listing)
-        return db_listing
+        return ListingRepository.deactivate(db, db_listing)
 
 
 # Create a singleton instance
