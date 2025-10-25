@@ -6,18 +6,10 @@ This module contains Pydantic models for admin action request/response validatio
 
 import uuid
 from datetime import datetime
-from enum import Enum
 
 from pydantic import BaseModel, Field
 
-
-class ActionType(str, Enum):
-    """Enum for admin action types."""
-
-    WARNING = "warning"
-    STRIKE = "strike"
-    BAN = "ban"
-    LISTING_REMOVAL = "listing_removal"
+from app.core.enums import ActionType
 
 
 class AdminActionBase(BaseModel):

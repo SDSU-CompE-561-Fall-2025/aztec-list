@@ -22,3 +22,12 @@ class ListingSortOrder(str, enum.Enum):
     RECENT = "recent"
     PRICE_ASC = "price_asc"
     PRICE_DESC = "price_desc"
+
+
+class ActionType(str, enum.Enum):
+    """Enum for admin action types."""
+
+    WARNING = "warning"
+    STRIKE = "strike"
+    BAN = "ban"
+    LISTING_REMOVAL = "listing_removal"

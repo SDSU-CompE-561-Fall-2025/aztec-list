@@ -6,11 +6,11 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.enums import ActionType
 from app.models.admin import AdminAction
 from app.models.user import User
 from app.repository.listing import ListingRepository
 from app.schemas.admin import (
-    ActionType,
     AdminActionBan,
     AdminActionCreate,
     AdminActionFilters,

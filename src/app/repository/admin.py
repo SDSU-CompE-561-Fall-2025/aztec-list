@@ -10,8 +10,9 @@ from datetime import datetime
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.enums import ActionType
 from app.models.admin import AdminAction
-from app.schemas.admin import ActionType, AdminActionCreate
+from app.schemas.admin import AdminActionCreate
 
 
 class AdminActionRepository:

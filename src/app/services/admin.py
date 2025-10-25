@@ -10,11 +10,11 @@ from datetime import datetime
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.enums import ActionType
 from app.models.admin import AdminAction
 from app.repository.admin import AdminActionRepository
 from app.repository.user import UserRepository
 from app.schemas.admin import (
-    ActionType,
     AdminActionBan,
     AdminActionCreate,
     AdminActionStrike,
