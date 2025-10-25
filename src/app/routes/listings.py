@@ -17,7 +17,7 @@ from app.services.listing import listing_service
 
 listing_router = APIRouter(
     prefix="/listings",
-    tags=["Listing"],
+    tags=["Listings"],
 )
 
 
