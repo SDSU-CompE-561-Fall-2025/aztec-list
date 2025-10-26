@@ -21,7 +21,7 @@ class Image(Base):
     Has a many-to-one relationship with Profile.
     """
 
-    __tablename__ = "images"
+    __tablename__ = "listing_images"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4, index=True)
     listing_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("listings.id"), nullable=False)
