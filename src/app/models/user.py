@@ -4,10 +4,11 @@ import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, String, Uuid
+from sqlalchemy import DateTime, Enum, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.core.enums import UserRole
 
 if TYPE_CHECKING:
     from app.models.admin import AdminAction
@@ -30,6 +31,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String, unique=True, index=True)
     hashed_password: Mapped[str] = mapped_column(String)
     is_verified: Mapped[bool] = mapped_column(default=False)
+    role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.USER, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )

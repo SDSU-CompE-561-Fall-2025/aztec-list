@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
-from app.core.enums import ActionType
+from app.core.dependencies import require_admin
+from app.core.enums import AdminActionType
 from app.models.admin import AdminAction
 from app.models.user import User
 from app.repository.listing import ListingRepository
@@ -27,6 +27,7 @@ from app.services.admin import admin_action_service
 admin_router = APIRouter(
     prefix="/admin",
     tags=["Admin"],
+    dependencies=[Depends(require_admin)],
 )
 
 
@@ -38,7 +39,7 @@ admin_router = APIRouter(
 )
 async def create_admin_action(
     action: AdminActionCreate,
-    current_user: Annotated[User, Depends(get_current_user)],
+    admin: Annotated[User, Depends(require_admin)],
     db: Annotated[Session, Depends(get_db)],
 ) -> AdminAction:
     """
@@ -48,7 +49,7 @@ async def create_admin_action(
 
     Args:
         action: Admin action creation data (target_user_id, action_type, reason, etc.)
-        current_user: Authenticated admin user from JWT token
+        admin: Authenticated admin user from JWT token
         db: Database session
 
     Returns:
@@ -57,7 +58,7 @@ async def create_admin_action(
     Raises:
         HTTPException: 401 if not authenticated, 403 if not admin, 404 if target user not found
     """
-    return admin_action_service.create(db, current_user.id, action)
+    return admin_action_service.create(db, admin.id, action)
 
 
 @admin_router.get(
@@ -66,7 +67,6 @@ async def create_admin_action(
 )
 async def list_admin_actions(
     filters: Annotated[AdminActionFilters, Depends()],
-    current_user: Annotated[User, Depends(get_current_user)],  # noqa: ARG001
     db: Annotated[Session, Depends(get_db)],
 ) -> AdminActionListResponse:
     """
@@ -76,7 +76,6 @@ async def list_admin_actions(
 
     Args:
         filters: Query parameters for filtering (target_user_id, admin_id, action_type, etc.)
-        current_user: Authenticated admin user from JWT token
         db: Database session
 
     Returns:
@@ -111,7 +110,6 @@ async def list_admin_actions(
 )
 async def get_admin_action(
     action_id: uuid.UUID,
-    current_user: Annotated[User, Depends(get_current_user)],  # noqa: ARG001
     db: Annotated[Session, Depends(get_db)],
 ) -> AdminAction:
     """
@@ -121,7 +119,6 @@ async def get_admin_action(
 
     Args:
         action_id: ID of the admin action to fetch
-        current_user: Authenticated admin user from JWT token
         db: Database session
 
     Returns:
@@ -140,7 +137,6 @@ async def get_admin_action(
 )
 async def delete_admin_action(
     action_id: uuid.UUID,
-    current_user: Annotated[User, Depends(get_current_user)],  # noqa: ARG001
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     """
@@ -150,7 +146,6 @@ async def delete_admin_action(
 
     Args:
         action_id: ID of the action to revoke
-        current_user: Authenticated admin user from JWT token
         db: Database session
 
     Returns:
@@ -171,7 +166,7 @@ async def delete_admin_action(
 async def warn_user(
     user_id: uuid.UUID,
     warning: AdminActionWarning,
-    current_user: Annotated[User, Depends(get_current_user)],
+    admin: Annotated[User, Depends(require_admin)],
     db: Annotated[Session, Depends(get_db)],
 ) -> AdminAction:
     """
@@ -182,7 +177,7 @@ async def warn_user(
     Args:
         user_id: ID of the user to warn
         warning: Warning data with optional reason
-        current_user: Authenticated admin user from JWT token
+        admin: Authenticated admin user from JWT token
         db: Database session
 
     Returns:
@@ -191,7 +186,7 @@ async def warn_user(
     Raises:
         HTTPException: 401 if not authenticated, 403 if not admin, 404 if user not found
     """
-    return admin_action_service.create_warning(db, current_user.id, user_id, warning)
+    return admin_action_service.create_warning(db, admin.id, user_id, warning)
 
 
 @admin_router.post(
@@ -203,7 +198,7 @@ async def warn_user(
 async def strike_user(
     user_id: uuid.UUID,
     strike: AdminActionStrike,
-    current_user: Annotated[User, Depends(get_current_user)],
+    admin: Annotated[User, Depends(require_admin)],
     db: Annotated[Session, Depends(get_db)],
 ) -> AdminAction:
     """
@@ -214,7 +209,7 @@ async def strike_user(
     Args:
         user_id: ID of the user to strike
         strike: Strike data with optional reason
-        current_user: Authenticated admin user from JWT token
+        admin: Authenticated admin user from JWT token
         db: Database session
 
     Returns:
@@ -223,7 +218,7 @@ async def strike_user(
     Raises:
         HTTPException: 401 if not authenticated, 403 if not admin, 404 if user not found
     """
-    return admin_action_service.create_strike(db, current_user.id, user_id, strike)
+    return admin_action_service.create_strike(db, admin.id, user_id, strike)
 
 
 @admin_router.post(
@@ -235,7 +230,7 @@ async def strike_user(
 async def ban_user(
     user_id: uuid.UUID,
     ban: AdminActionBan,
-    current_user: Annotated[User, Depends(get_current_user)],
+    admin: Annotated[User, Depends(require_admin)],
     db: Annotated[Session, Depends(get_db)],
 ) -> AdminAction:
     """
@@ -246,7 +241,7 @@ async def ban_user(
     Args:
         user_id: ID of the user to ban
         ban: Ban data with optional reason and expires_at
-        current_user: Authenticated admin user from JWT token
+        admin: Authenticated admin user from JWT token
         db: Database session
 
     Returns:
@@ -255,7 +250,7 @@ async def ban_user(
     Raises:
         HTTPException: 401 if not authenticated, 403 if not admin, 404 if user not found
     """
-    return admin_action_service.create_ban(db, current_user.id, user_id, ban)
+    return admin_action_service.create_ban(db, admin.id, user_id, ban)
 
 
 @admin_router.post(
@@ -266,7 +261,7 @@ async def ban_user(
 async def remove_listing(
     listing_id: uuid.UUID,
     removal: AdminListingRemoval,
-    current_user: Annotated[User, Depends(get_current_user)],
+    admin: Annotated[User, Depends(require_admin)],
     db: Annotated[Session, Depends(get_db)],
 ) -> AdminListingRemovalResponse:
     """
@@ -279,7 +274,7 @@ async def remove_listing(
     Args:
         listing_id: ID of the listing to remove
         removal: Removal data with reason
-        current_user: Authenticated admin user from JWT token
+        admin: Authenticated admin user from JWT token
         db: Database session
 
     Returns:
@@ -300,12 +295,12 @@ async def remove_listing(
     action_data = AdminActionCreate(
         target_user_id=listing.seller_id,  # The listing owner
         target_listing_id=listing_id,
-        action_type=ActionType.LISTING_REMOVAL,
+        action_type=AdminActionType.LISTING_REMOVAL,
         reason=removal.reason,
         expires_at=None,
     )
 
-    admin_action = admin_action_service.create(db, current_user.id, action_data)
+    admin_action = admin_action_service.create(db, admin.id, action_data)
 
     return AdminListingRemovalResponse(
         listing_id=listing_id,
@@ -321,7 +316,6 @@ async def remove_listing(
 )
 async def restore_listing(
     listing_id: uuid.UUID,
-    current_user: Annotated[User, Depends(get_current_user)],  # noqa: ARG001
     db: Annotated[Session, Depends(get_db)],
 ) -> AdminListingRestoreResponse:
     """
@@ -333,7 +327,6 @@ async def restore_listing(
 
     Args:
         listing_id: ID of the listing to restore
-        current_user: Authenticated admin user from JWT token
         db: Database session
 
     Returns:
@@ -345,7 +338,9 @@ async def restore_listing(
     """
     # Find the listing_removal action for this listing
     actions = admin_action_service.get_by_target_listing_id(db, listing_id)
-    removal_action = next((a for a in actions if a.action_type == ActionType.LISTING_REMOVAL), None)
+    removal_action = next(
+        (a for a in actions if a.action_type == AdminActionType.LISTING_REMOVAL), None
+    )
 
     if not removal_action:
         raise HTTPException(

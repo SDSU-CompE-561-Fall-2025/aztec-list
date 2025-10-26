@@ -9,14 +9,14 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from app.core.enums import ActionType
+from app.core.enums import AdminActionType
 
 
 class AdminActionBase(BaseModel):
     """Base admin action schema with common fields."""
 
     target_user_id: uuid.UUID = Field(..., description="User receiving the action")
-    action_type: ActionType = Field(..., description="Type of moderation action")
+    action_type: AdminActionType = Field(..., description="Type of moderation action")
     reason: str | None = Field(None, max_length=255, description="Brief explanation for audit log")
     target_listing_id: uuid.UUID | None = Field(
         None, description="Required if action_type is listing_removal"
@@ -36,7 +36,7 @@ class AdminActionPublic(BaseModel):
     id: uuid.UUID
     admin_id: uuid.UUID
     target_user_id: uuid.UUID
-    action_type: ActionType
+    action_type: AdminActionType
     reason: str | None = None
     target_listing_id: uuid.UUID | None = None
     created_at: datetime
@@ -112,7 +112,7 @@ class AdminActionFilters(BaseModel):
 
     target_user_id: uuid.UUID | None = Field(None, description="Filter by target user ID")
     admin_id: uuid.UUID | None = Field(None, description="Filter by admin user ID")
-    action_type: ActionType | None = Field(None, description="Filter by action type")
+    action_type: AdminActionType | None = Field(None, description="Filter by action type")
     target_listing_id: uuid.UUID | None = Field(None, description="Filter by listing ID")
     from_date: datetime | None = Field(
         None, alias="from", description="Filter actions created on or after this date"

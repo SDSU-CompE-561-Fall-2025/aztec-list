@@ -10,7 +10,7 @@ from datetime import datetime
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.enums import ActionType
+from app.core.enums import AdminActionType
 from app.models.admin import AdminAction
 from app.repository.admin import AdminActionRepository
 from app.repository.user import UserRepository
@@ -80,7 +80,7 @@ class AdminActionService:
         db: Session,
         target_user_id: uuid.UUID | None = None,
         admin_id: uuid.UUID | None = None,
-        action_type: ActionType | None = None,
+        action_type: AdminActionType | None = None,
         target_listing_id: uuid.UUID | None = None,
         from_date: datetime | None = None,
         to_date: datetime | None = None,
@@ -152,7 +152,7 @@ class AdminActionService:
             )
 
         # Validate listing_removal requires target_listing_id
-        if action.action_type == ActionType.LISTING_REMOVAL and not action.target_listing_id:
+        if action.action_type == AdminActionType.LISTING_REMOVAL and not action.target_listing_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="target_listing_id is required when action_type is listing_removal",
@@ -193,7 +193,7 @@ class AdminActionService:
         # Create AdminActionCreate from warning
         action = AdminActionCreate(
             target_user_id=target_user_id,
-            action_type=ActionType.WARNING,
+            action_type=AdminActionType.WARNING,
             reason=warning.reason,
             target_listing_id=None,
             expires_at=None,
@@ -230,7 +230,7 @@ class AdminActionService:
         # Create AdminActionCreate from strike
         action = AdminActionCreate(
             target_user_id=target_user_id,
-            action_type=ActionType.STRIKE,
+            action_type=AdminActionType.STRIKE,
             reason=strike.reason,
             target_listing_id=None,
             expires_at=None,
@@ -267,7 +267,7 @@ class AdminActionService:
         # Create AdminActionCreate from ban
         action = AdminActionCreate(
             target_user_id=target_user_id,
-            action_type=ActionType.BAN,
+            action_type=AdminActionType.BAN,
             reason=ban.reason,
             target_listing_id=None,
             expires_at=ban.expires_at,

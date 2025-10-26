@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import oauth2_scheme, verify_token
 from app.core.database import get_db
+from app.core.enums import UserRole
 from app.models.user import User
 from app.services.user import user_service
 
@@ -92,3 +93,30 @@ def get_current_user(
         raise credentials_exception
 
     return user
+
+
+def require_admin(
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> User:
+    """
+    Require that the current user has admin role.
+
+    This dependency should be used on admin-only routes to enforce
+    role-based access control. It fetches the full User from the database
+    to ensure role changes take effect immediately.
+
+    Args:
+        current_user: Authenticated user from JWT token
+
+    Returns:
+        User: Current authenticated admin user
+
+    Raises:
+        HTTPException: 403 if user does not have admin role
+    """
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required",
+        )
+    return current_user

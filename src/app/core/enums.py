@@ -14,6 +14,7 @@ class Condition(str, enum.Enum):
     LIKE_NEW = "like_new"
     GOOD = "good"
     FAIR = "fair"
+    POOR = "poor"
 
 
 class ListingSortOrder(str, enum.Enum):
@@ -24,10 +25,17 @@ class ListingSortOrder(str, enum.Enum):
     PRICE_DESC = "price_desc"
 
 
-class ActionType(str, enum.Enum):
+class AdminActionType(str, enum.Enum):
     """Enum for admin action types."""
 
     WARNING = "warning"
     STRIKE = "strike"
     BAN = "ban"
     LISTING_REMOVAL = "listing_removal"
+
+
+class UserRole(str, enum.Enum):
+    """Enum for user roles."""
+
+    USER = "user"
+    ADMIN = "admin"

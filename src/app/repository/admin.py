@@ -10,7 +10,7 @@ from datetime import datetime
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.enums import ActionType
+from app.core.enums import AdminActionType
 from app.models.admin import AdminAction
 from app.schemas.admin import AdminActionCreate
 
@@ -90,7 +90,7 @@ class AdminActionRepository:
         return list(db.scalars(query).all())
 
     @staticmethod
-    def get_by_action_type(db: Session, action_type: ActionType) -> list[AdminAction]:
+    def get_by_action_type(db: Session, action_type: AdminActionType) -> list[AdminAction]:
         """
         Get all admin actions of a specific type.
 
@@ -135,7 +135,7 @@ class AdminActionRepository:
         db: Session,
         target_user_id: uuid.UUID | None = None,
         admin_id: uuid.UUID | None = None,
-        action_type: ActionType | None = None,
+        action_type: AdminActionType | None = None,
         target_listing_id: uuid.UUID | None = None,
         from_date: datetime | None = None,
         to_date: datetime | None = None,
@@ -182,7 +182,7 @@ class AdminActionRepository:
         db: Session,
         target_user_id: uuid.UUID | None = None,
         admin_id: uuid.UUID | None = None,
-        action_type: ActionType | None = None,
+        action_type: AdminActionType | None = None,
         target_listing_id: uuid.UUID | None = None,
         from_date: datetime | None = None,
         to_date: datetime | None = None,
