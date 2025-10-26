@@ -90,7 +90,8 @@ async def update_listing(
     Update an existing listing's details.
 
     All fields are optional; only provided fields will be updated.
-    The is_active field can be toggled to temporarily hide the listing.
+    The is_active field can be toggled to temporarily hide/show the listing
+    (useful for sellers who want to pause visibility without deleting).
 
     Args:
         listing_id: ID of the listing to update
@@ -117,10 +118,10 @@ async def delete_listing_by_id(
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     """
-    Permanently delete a listing.
+    Permanently delete a listing from the database.
 
-    This is a hard delete that removes the listing from the database.
-    For temporary hiding, use PATCH to set is_active to false instead.
+    This is a hard delete that cannot be undone.
+    To temporarily hide a listing instead, use PATCH to set is_active=false.
 
     Args:
         listing_id: ID of the listing to delete

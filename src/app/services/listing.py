@@ -113,7 +113,7 @@ class ListingService:
 
     def delete(self, db: Session, listing_id: uuid.UUID) -> None:
         """
-        Delete a listing with validation.
+        Permanently delete a listing with validation.
 
         Args:
             db: Database session
@@ -130,29 +130,6 @@ class ListingService:
             )
 
         ListingRepository.delete(db, db_listing)
-
-    def deactivate(self, db: Session, listing_id: uuid.UUID) -> Listing:
-        """
-        Deactivate a listing (soft delete) with validation.
-
-        Args:
-            db: Database session
-            listing_id: Listing ID to deactivate
-
-        Returns:
-            Listing: Deactivated listing
-
-        Raises:
-            HTTPException: If listing not found
-        """
-        db_listing = ListingRepository.get_by_id(db, listing_id)
-        if not db_listing:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Listing with ID {listing_id} not found",
-            )
-
-        return ListingRepository.deactivate(db, db_listing)
 
 
 # Create a singleton instance

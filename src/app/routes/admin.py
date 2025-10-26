@@ -20,9 +20,9 @@ from app.schemas.admin import (
     AdminActionWarning,
     AdminListingRemoval,
     AdminListingRemovalResponse,
-    AdminListingRestoreResponse,
 )
 from app.services.admin import admin_action_service
+from app.services.listing import listing_service
 
 admin_router = APIRouter(
     prefix="/admin",
@@ -302,56 +302,11 @@ async def remove_listing(
 
     admin_action = admin_action_service.create(db, admin.id, action_data)
 
+    # Hard delete the listing from the database
+    listing_service.delete(db, listing_id)
+
     return AdminListingRemovalResponse(
         listing_id=listing_id,
         status="removed",
         admin_action=AdminActionPublic.model_validate(admin_action),
-    )
-
-
-@admin_router.post(
-    "/listings/{listing_id}/restore",
-    summary="Restore a previously removed listing",
-    status_code=status.HTTP_200_OK,
-)
-async def restore_listing(
-    listing_id: uuid.UUID,
-    db: Annotated[Session, Depends(get_db)],
-) -> AdminListingRestoreResponse:
-    """
-    Restore a listing that was previously removed by admin action.
-
-    Deletes the listing_removal admin action and restores the listing.
-
-    **Requires:** Admin privileges
-
-    Args:
-        listing_id: ID of the listing to restore
-        db: Database session
-
-    Returns:
-        AdminListingRestoreResponse: Contains listing_id and status
-
-    Raises:
-        HTTPException: 401 if not authenticated, 403 if not admin,
-                       404 if listing or removal action not found
-    """
-    # Find the listing_removal action for this listing
-    actions = admin_action_service.get_by_target_listing_id(db, listing_id)
-    removal_action = next(
-        (a for a in actions if a.action_type == AdminActionType.LISTING_REMOVAL), None
-    )
-
-    if not removal_action:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No removal action found for listing {listing_id}",
-        )
-
-    # Delete the removal action to restore the listing
-    admin_action_service.delete(db, removal_action.id)
-
-    return AdminListingRestoreResponse(
-        listing_id=listing_id,
-        status="restored",
     )

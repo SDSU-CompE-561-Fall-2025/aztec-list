@@ -179,7 +179,7 @@ class ListingRepository:
     @staticmethod
     def delete(db: Session, db_listing: Listing) -> None:
         """
-        Delete listing.
+        Permanently delete listing from database.
 
         Args:
             db: Database session
@@ -187,20 +187,3 @@ class ListingRepository:
         """
         db.delete(db_listing)
         db.commit()
-
-    @staticmethod
-    def deactivate(db: Session, db_listing: Listing) -> Listing:
-        """
-        Deactivate listing (soft delete).
-
-        Args:
-            db: Database session
-            db_listing: Listing instance to deactivate
-
-        Returns:
-            Listing: Deactivated listing
-        """
-        db_listing.is_active = False
-        db.commit()
-        db.refresh(db_listing)
-        return db_listing
