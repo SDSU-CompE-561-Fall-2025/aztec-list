@@ -9,7 +9,7 @@ from sqlalchemy import DateTime, Enum, ForeignKey, Numeric, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.core.enums import Condition
+from app.core.enums import Category, Condition
 
 if TYPE_CHECKING:
     from app.models.user import User
@@ -31,7 +31,7 @@ class Listing(Base):
     title: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(Text)
     price: Mapped[Decimal] = mapped_column(Numeric(precision=10, scale=2))
-    category: Mapped[str] = mapped_column(String, index=True)
+    category: Mapped[Category] = mapped_column(Enum(Category), index=True)
     condition: Mapped[Condition] = mapped_column(Enum(Condition))
     thumbnail_url: Mapped[str | None] = mapped_column(String)
     is_active: Mapped[bool] = mapped_column(default=True, index=True)
