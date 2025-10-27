@@ -27,14 +27,11 @@ class ImageUpdate(BaseModel):
     alt_text: str | None = None
 
 
-class Image(ImageBase):
+class ImagePublic(ImageBase):
     """Schema for image responses."""
 
     id: UUID
     listing_id: UUID
     created_at: datetime
 
-    class Config:
-        """Configure Pydantic for ORM mode."""
-
-        from_attributes = True  # allows conversion from SQLAlchemy model
+    model_config = {"from_attributes": True}
