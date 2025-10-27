@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import oauth2_scheme, verify_token
 from app.core.database import get_db
-from app.core.enums import UserRole
+from app.core.enums import AdminActionType, UserRole
 from app.models.user import User
+from app.repository.admin import AdminActionRepository
 from app.services.user import user_service
 
 
@@ -119,4 +120,37 @@ def require_admin(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin privileges required",
         )
+    return current_user
+
+
+def require_not_banned(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> User:
+    """
+    Require that the current user is not banned.
+
+    Checks for active BAN admin actions against the user. This dependency should
+    be used on mutation endpoints (POST, PUT, PATCH, DELETE) to prevent banned
+    users from creating or modifying content.
+
+    Args:
+        current_user: Authenticated user from JWT token
+        db: Database session
+
+    Returns:
+        User: Current authenticated user (not banned)
+
+    Raises:
+        HTTPException: 403 if user has an active ban
+    """
+    actions = AdminActionRepository.get_by_target_user_id(db, current_user.id)
+
+    for action in actions:
+        if action.action_type == AdminActionType.BAN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account banned. Contact support for assistance.",
+            )
+
     return current_user
