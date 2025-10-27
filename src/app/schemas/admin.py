@@ -17,12 +17,9 @@ class AdminActionBase(BaseModel):
 
     target_user_id: uuid.UUID = Field(..., description="User receiving the action")
     action_type: AdminActionType = Field(..., description="Type of moderation action")
-    reason: str | None = Field(None, max_length=255, description="Brief explanation for audit log")
+    reason: str | None = Field(None, max_length=500, description="Brief explanation for audit log")
     target_listing_id: uuid.UUID | None = Field(
         None, description="Required if action_type is listing_removal"
-    )
-    expires_at: datetime | None = Field(
-        None, description="End time for temporary ban (ISO 8601 datetime)"
     )
 
 
@@ -45,31 +42,22 @@ class AdminActionPublic(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class AdminActionWarning(BaseModel):
-    """Schema for issuing a warning (convenience wrapper)."""
-
-    reason: str | None = Field(None, max_length=255, description="Brief explanation for warning")
-
-
 class AdminActionStrike(BaseModel):
     """Schema for adding a strike (convenience wrapper)."""
 
-    reason: str | None = Field(None, max_length=255, description="Brief explanation for strike")
+    reason: str | None = Field(None, max_length=500, description="Brief explanation for strike")
 
 
 class AdminActionBan(BaseModel):
     """Schema for banning a user (convenience wrapper)."""
 
-    reason: str | None = Field(None, max_length=255, description="Brief explanation for ban")
-    expires_at: datetime | None = Field(
-        None, description="End time for temporary ban; omit for permanent ban"
-    )
+    reason: str | None = Field(None, max_length=500, description="Brief explanation for ban")
 
 
 class AdminListingRemoval(BaseModel):
     """Schema for removing a listing (convenience wrapper)."""
 
-    reason: str | None = Field(None, max_length=255, description="Brief explanation for removal")
+    reason: str | None = Field(None, max_length=500, description="Brief explanation for removal")
 
 
 class AdminListingRestore(BaseModel):

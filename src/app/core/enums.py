@@ -28,7 +28,6 @@ class ListingSortOrder(str, enum.Enum):
 class AdminActionType(str, enum.Enum):
     """Enum for admin action types."""
 
-    WARNING = "warning"
     STRIKE = "strike"
     BAN = "ban"
     LISTING_REMOVAL = "listing_removal"

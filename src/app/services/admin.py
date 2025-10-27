@@ -5,20 +5,21 @@ This module contains business logic for admin action operations.
 """
 
 import uuid
-from datetime import datetime
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.enums import AdminActionType
+from app.core.enums import AdminActionType, UserRole
+from app.core.settings import settings
 from app.models.admin import AdminAction
 from app.repository.admin import AdminActionRepository
+from app.repository.listing import ListingRepository
 from app.repository.user import UserRepository
 from app.schemas.admin import (
     AdminActionBan,
     AdminActionCreate,
+    AdminActionFilters,
     AdminActionStrike,
-    AdminActionWarning,
 )
 
 
@@ -75,55 +76,41 @@ class AdminActionService:
         """
         return AdminActionRepository.get_by_target_listing_id(db, target_listing_id)
 
-    def get_filtered(  # noqa: PLR0913
+    def get_filtered(
         self,
         db: Session,
-        target_user_id: uuid.UUID | None = None,
-        admin_id: uuid.UUID | None = None,
-        action_type: AdminActionType | None = None,
-        target_listing_id: uuid.UUID | None = None,
-        from_date: datetime | None = None,
-        to_date: datetime | None = None,
-        limit: int = 20,
-        offset: int = 0,
+        filters: AdminActionFilters,
     ) -> tuple[list[AdminAction], int]:
         """
         Get admin actions with optional filters and pagination.
 
         Args:
             db: Database session
-            target_user_id: Filter by target user ID
-            admin_id: Filter by admin user ID
-            action_type: Filter by action type
-            target_listing_id: Filter by listing ID
-            from_date: Filter actions created on or after this date
-            to_date: Filter actions created on or before this date
-            limit: Maximum number of actions to return
-            offset: Number of actions to skip
+            filters: Filter criteria and pagination parameters
 
         Returns:
             tuple[list[AdminAction], int]: Filtered admin actions and total count
         """
         actions = AdminActionRepository.get_filtered(
             db=db,
-            target_user_id=target_user_id,
-            admin_id=admin_id,
-            action_type=action_type,
-            target_listing_id=target_listing_id,
-            from_date=from_date,
-            to_date=to_date,
-            limit=limit,
-            offset=offset,
+            target_user_id=filters.target_user_id,
+            admin_id=filters.admin_id,
+            action_type=filters.action_type,
+            target_listing_id=filters.target_listing_id,
+            from_date=filters.from_date,
+            to_date=filters.to_date,
+            limit=filters.limit,
+            offset=filters.offset,
         )
 
         count = AdminActionRepository.count_filtered(
             db=db,
-            target_user_id=target_user_id,
-            admin_id=admin_id,
-            action_type=action_type,
-            target_listing_id=target_listing_id,
-            from_date=from_date,
-            to_date=to_date,
+            target_user_id=filters.target_user_id,
+            admin_id=filters.admin_id,
+            action_type=filters.action_type,
+            target_listing_id=filters.target_listing_id,
+            from_date=filters.from_date,
+            to_date=filters.to_date,
         )
 
         return actions, count
@@ -143,7 +130,6 @@ class AdminActionService:
         Raises:
             HTTPException: If target user not found or listing_removal missing target_listing_id
         """
-        # Validate target user exists
         target_user = UserRepository.get_by_id(db, action.target_user_id)
         if not target_user:
             raise HTTPException(
@@ -151,7 +137,6 @@ class AdminActionService:
                 detail=f"Target user with ID {action.target_user_id} not found",
             )
 
-        # Validate listing_removal requires target_listing_id
         if action.action_type == AdminActionType.LISTING_REMOVAL and not action.target_listing_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -160,52 +145,17 @@ class AdminActionService:
 
         return AdminActionRepository.create(db, admin_id, action)
 
-    def create_warning(
+    def create_strike(
         self,
         db: Session,
         admin_id: uuid.UUID,
         target_user_id: uuid.UUID,
-        warning: AdminActionWarning,
+        strike: AdminActionStrike,
     ) -> AdminAction:
         """
-        Create a warning action (convenience method).
+        Create a strike action with auto-escalation to ban at 3 strikes.
 
-        Args:
-            db: Database session
-            admin_id: Admin user ID performing the action
-            target_user_id: Target user ID to warn
-            warning: Warning data with reason
-
-        Returns:
-            AdminAction: Created warning action
-
-        Raises:
-            HTTPException: If target user not found
-        """
-        # Validate target user exists
-        target_user = UserRepository.get_by_id(db, target_user_id)
-        if not target_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with ID {target_user_id} not found",
-            )
-
-        # Create AdminActionCreate from warning
-        action = AdminActionCreate(
-            target_user_id=target_user_id,
-            action_type=AdminActionType.WARNING,
-            reason=warning.reason,
-            target_listing_id=None,
-            expires_at=None,
-        )
-
-        return AdminActionRepository.create(db, admin_id, action)
-
-    def create_strike(
-        self, db: Session, admin_id: uuid.UUID, target_user_id: uuid.UUID, strike: AdminActionStrike
-    ) -> AdminAction:
-        """
-        Create a strike action (convenience method).
+        Automatically issues a 30-day ban if user reaches 3 active strikes.
 
         Args:
             db: Database session
@@ -227,16 +177,47 @@ class AdminActionService:
                 detail=f"User with ID {target_user_id} not found",
             )
 
-        # Create AdminActionCreate from strike
+        # Create the strike action
         action = AdminActionCreate(
             target_user_id=target_user_id,
             action_type=AdminActionType.STRIKE,
             reason=strike.reason,
             target_listing_id=None,
-            expires_at=None,
         )
+        created_strike = AdminActionRepository.create(db, admin_id, action)
 
-        return AdminActionRepository.create(db, admin_id, action)
+        # Check for auto-escalation to permanent ban
+        strike_count = self._count_active_strikes(db, target_user_id)
+        if strike_count >= settings.moderation.strike_auto_ban_threshold:
+            ban_action = AdminActionCreate(
+                target_user_id=target_user_id,
+                action_type=AdminActionType.BAN,
+                reason=f"Automatic permanent ban: {strike_count} strikes accumulated. Latest: {strike.reason or 'Policy violation'}",
+                target_listing_id=None,
+            )
+            AdminActionRepository.create(db, admin_id, ban_action)
+
+        return created_strike
+
+    def _count_active_strikes(self, db: Session, user_id: uuid.UUID) -> int:
+        """
+        Count all strikes for a user.
+
+        Args:
+            db: Database session
+            user_id: User ID to check
+
+        Returns:
+            int: Number of strikes
+        """
+        actions = AdminActionRepository.get_by_target_user_id(db, user_id)
+        count = 0
+
+        for action in actions:
+            if action.action_type == AdminActionType.STRIKE:
+                count += 1
+
+        return count
 
     def create_ban(
         self, db: Session, admin_id: uuid.UUID, target_user_id: uuid.UUID, ban: AdminActionBan
@@ -248,7 +229,7 @@ class AdminActionService:
             db: Database session
             admin_id: Admin user ID performing the action
             target_user_id: Target user ID to ban
-            ban: Ban data with reason and optional expires_at
+            ban: Ban data with reason
 
         Returns:
             AdminAction: Created ban action
@@ -270,7 +251,6 @@ class AdminActionService:
             action_type=AdminActionType.BAN,
             reason=ban.reason,
             target_listing_id=None,
-            expires_at=ban.expires_at,
         )
 
         return AdminActionRepository.create(db, admin_id, action)
@@ -294,6 +274,69 @@ class AdminActionService:
             )
 
         AdminActionRepository.delete(db, action)
+
+    def remove_listing_with_strike(
+        self,
+        db: Session,
+        admin_id: uuid.UUID,
+        listing_id: uuid.UUID,
+        reason: str | None,
+    ) -> AdminAction:
+        """
+        Remove a listing and issue a strike to the owner.
+
+        This is the complete business logic for listing removal:
+        1. Validate listing exists and get owner
+        2. Create LISTING_REMOVAL action for audit trail
+        3. Issue STRIKE to listing owner (triggers auto-ban if threshold reached)
+        4. Hard delete the listing from database
+
+        Args:
+            db: Database session
+            admin_id: Admin user ID performing the action
+            listing_id: Listing ID being removed
+            reason: Reason for removal
+
+        Returns:
+            AdminAction: The LISTING_REMOVAL action (strike is created internally)
+
+        Raises:
+            HTTPException: If listing not found
+        """
+        # Get the listing and validate it exists
+        listing = ListingRepository.get_by_id(db, listing_id)
+        if not listing:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Listing {listing_id} not found",
+            )
+
+        seller_id = listing.seller_id
+
+        # Create the listing removal action
+        removal_action = AdminActionCreate(
+            target_user_id=seller_id,
+            target_listing_id=listing_id,
+            action_type=AdminActionType.LISTING_REMOVAL,
+            reason=reason,
+        )
+        listing_removal = AdminActionRepository.create(db, admin_id, removal_action)
+
+        # Issue a strike to the listing owner
+        self.create_strike(
+            db=db,
+            admin_id=admin_id,
+            target_user_id=seller_id,
+            strike=AdminActionStrike(reason=f"Listing removed: {reason or 'Policy violation'}"),
+        )
+
+        # Hard delete the listing from the database
+        # Import here to avoid circular dependency between services
+        from app.services.listing import listing_service  # noqa: PLC0415
+
+        listing_service.delete(db, listing_id, admin_id, UserRole.ADMIN)
+
+        return listing_removal
 
 
 # Create a singleton instance

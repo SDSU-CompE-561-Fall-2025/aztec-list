@@ -1,15 +1,13 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import require_admin
-from app.core.enums import AdminActionType
 from app.models.admin import AdminAction
 from app.models.user import User
-from app.repository.listing import ListingRepository
 from app.schemas.admin import (
     AdminActionBan,
     AdminActionCreate,
@@ -17,12 +15,10 @@ from app.schemas.admin import (
     AdminActionListResponse,
     AdminActionPublic,
     AdminActionStrike,
-    AdminActionWarning,
     AdminListingRemoval,
     AdminListingRemovalResponse,
 )
 from app.services.admin import admin_action_service
-from app.services.listing import listing_service
 
 admin_router = APIRouter(
     prefix="/admin",
@@ -84,17 +80,7 @@ async def list_admin_actions(
     Raises:
         HTTPException: 401 if not authenticated, 403 if not admin
     """
-    actions, count = admin_action_service.get_filtered(
-        db=db,
-        target_user_id=filters.target_user_id,
-        admin_id=filters.admin_id,
-        action_type=filters.action_type,
-        target_listing_id=filters.target_listing_id,
-        from_date=filters.from_date,
-        to_date=filters.to_date,
-        limit=filters.limit,
-        offset=filters.offset,
-    )
+    actions, count = admin_action_service.get_filtered(db=db, filters=filters)
 
     return AdminActionListResponse(
         items=[AdminActionPublic.model_validate(action) for action in actions],
@@ -155,38 +141,6 @@ async def delete_admin_action(
         HTTPException: 401 if not authenticated, 403 if not admin, 404 if action not found
     """
     admin_action_service.delete(db, action_id)
-
-
-@admin_router.post(
-    "/users/{user_id}/warning",
-    summary="Issue a warning to a user",
-    status_code=status.HTTP_201_CREATED,
-    response_model=AdminActionPublic,
-)
-async def warn_user(
-    user_id: uuid.UUID,
-    warning: AdminActionWarning,
-    admin: Annotated[User, Depends(require_admin)],
-    db: Annotated[Session, Depends(get_db)],
-) -> AdminAction:
-    """
-    Issue a warning to a user (convenience wrapper).
-
-    **Requires:** Admin privileges
-
-    Args:
-        user_id: ID of the user to warn
-        warning: Warning data with optional reason
-        admin: Authenticated admin user from JWT token
-        db: Database session
-
-    Returns:
-        AdminActionPublic: Created warning action
-
-    Raises:
-        HTTPException: 401 if not authenticated, 403 if not admin, 404 if user not found
-    """
-    return admin_action_service.create_warning(db, admin.id, user_id, warning)
 
 
 @admin_router.post(
@@ -267,7 +221,8 @@ async def remove_listing(
     """
     Remove a listing that violates policies (spam, inappropriate content, etc.).
 
-    Creates a listing_removal admin action and marks the listing as removed.
+    Creates a listing_removal admin action, issues a strike to the listing owner,
+    and hard deletes the listing. The strike counts toward auto-escalation to ban.
 
     **Requires:** Admin privileges
 
@@ -283,28 +238,12 @@ async def remove_listing(
     Raises:
         HTTPException: 401 if not authenticated, 403 if not admin, 404 if listing not found
     """
-    # For listing removal, we need the listing owner's user_id
-    listing = ListingRepository.get_by_id(db, listing_id)
-    if not listing:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Listing {listing_id} not found",
-        )
-
-    # Create the admin action for listing removal
-    action_data = AdminActionCreate(
-        target_user_id=listing.seller_id,  # The listing owner
-        target_listing_id=listing_id,
-        action_type=AdminActionType.LISTING_REMOVAL,
+    admin_action = admin_action_service.remove_listing_with_strike(
+        db=db,
+        admin_id=admin.id,
+        listing_id=listing_id,
         reason=removal.reason,
-        expires_at=None,
     )
-
-    admin_action = admin_action_service.create(db, admin.id, action_data)
-
-    # Hard delete the listing from the database
-    # Admin role allows deletion of any listing
-    listing_service.delete(db, listing_id, admin.id, admin.role)
 
     return AdminListingRemovalResponse(
         listing_id=listing_id,
