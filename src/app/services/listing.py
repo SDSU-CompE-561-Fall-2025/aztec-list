@@ -9,6 +9,7 @@ import uuid
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.enums import UserRole
 from app.models.listing import Listing
 from app.repository.listing import ListingRepository
 from app.schemas.listing import (
@@ -87,20 +88,31 @@ class ListingService:
         """
         return ListingRepository.create(db, seller_id, listing)
 
-    def update(self, db: Session, listing_id: uuid.UUID, listing: ListingUpdate) -> Listing:
+    def update(
+        self,
+        db: Session,
+        listing_id: uuid.UUID,
+        user_id: uuid.UUID,
+        user_role: UserRole,
+        listing: ListingUpdate,
+    ) -> Listing:
         """
-        Update listing fields with validation.
+        Update listing fields with validation and authorization check.
+
+        Admins can update any listing, users can only update their own listings.
 
         Args:
             db: Database session
             listing_id: Listing ID to update
+            user_id: User ID attempting the update
+            user_role: Role of the user (USER or ADMIN)
             listing: Listing update data (only provided fields will be updated)
 
         Returns:
             Listing: Updated listing
 
         Raises:
-            HTTPException: If listing not found
+            HTTPException: If listing not found or user is not authorized
         """
         db_listing = ListingRepository.get_by_id(db, listing_id)
         if not db_listing:
@@ -109,24 +121,44 @@ class ListingService:
                 detail=f"Listing with ID {listing_id} not found",
             )
 
+        # Check authorization: owner OR admin
+        if user_role != UserRole.ADMIN and db_listing.seller_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not the owner of this listing",
+            )
+
         return ListingRepository.update(db, db_listing, listing)
 
-    def delete(self, db: Session, listing_id: uuid.UUID) -> None:
+    def delete(
+        self, db: Session, listing_id: uuid.UUID, user_id: uuid.UUID, user_role: UserRole
+    ) -> None:
         """
-        Permanently delete a listing with validation.
+        Permanently delete a listing with validation and authorization check.
+
+        Admins can delete any listing, users can only delete their own listings.
 
         Args:
             db: Database session
             listing_id: Listing ID (UUID) to delete
+            user_id: User ID attempting the delete
+            user_role: Role of the user (USER or ADMIN)
 
         Raises:
-            HTTPException: If listing not found
+            HTTPException: If listing not found or user is not authorized
         """
         db_listing = ListingRepository.get_by_id(db, listing_id)
         if not db_listing:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Listing with ID {listing_id} not found",
+            )
+
+        # Check authorization: owner OR admin
+        if user_role != UserRole.ADMIN and db_listing.seller_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not the owner of this listing",
             )
 
         ListingRepository.delete(db, db_listing)

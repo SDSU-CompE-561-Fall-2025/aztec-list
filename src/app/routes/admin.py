@@ -303,7 +303,8 @@ async def remove_listing(
     admin_action = admin_action_service.create(db, admin.id, action_data)
 
     # Hard delete the listing from the database
-    listing_service.delete(db, listing_id)
+    # Admin role allows deletion of any listing
+    listing_service.delete(db, listing_id, admin.id, admin.role)
 
     return AdminListingRemovalResponse(
         listing_id=listing_id,
