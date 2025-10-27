@@ -26,6 +26,10 @@ class AdminActionBase(BaseModel):
 class AdminActionCreate(AdminActionBase):
     """Schema for creating a new admin action."""
 
+    expires_at: datetime | None = Field(
+        None, description="Optional expiration date (for temporary bans, not yet implemented)"
+    )
+
 
 class AdminActionPublic(BaseModel):
     """Schema for admin action response."""
