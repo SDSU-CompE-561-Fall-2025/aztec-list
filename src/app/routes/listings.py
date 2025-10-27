@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, get_current_user_id
+from app.core.dependencies import require_not_banned
 from app.models import Listing
 from app.models.user import User
 from app.schemas.listing import (
@@ -30,7 +30,7 @@ listing_router = APIRouter(
 )
 async def create_listing(
     listing: ListingCreate,
-    seller_id: Annotated[uuid.UUID, Depends(get_current_user_id)],
+    current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Listing:
     """
@@ -38,16 +38,16 @@ async def create_listing(
 
     Args:
         listing: Listing creation data (title, description, price, category, condition)
-        seller_id: Authenticated user's ID from the JWT token (automatically set as seller)
+        current_user: Authenticated user (automatically set as seller)
         db: Database session
 
     Returns:
         ListingPublic: Created listing information
 
     Raises:
-        HTTPException: 401 if not authenticated, 400 if validation fails
+        HTTPException: 401 if not authenticated, 403 if banned, 400 if validation fails
     """
-    return listing_service.create(db, seller_id, listing)
+    return listing_service.create(db, current_user.id, listing)
 
 
 @listing_router.get(
@@ -85,7 +85,7 @@ async def get_listing_by_id(
 async def update_listing(
     listing_id: uuid.UUID,
     listing: ListingUpdate,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Listing:
     """
@@ -105,7 +105,7 @@ async def update_listing(
         ListingPublic: Updated listing information
 
     Raises:
-        HTTPException: 404 if listing not found, 403 if not owner/admin, 400 if validation fails
+        HTTPException: 404 if listing not found, 403 if not owner/admin or banned, 400 if validation fails
     """
     return listing_service.update(db, listing_id, current_user.id, current_user.role, listing)
 
@@ -118,7 +118,7 @@ async def update_listing(
 )
 async def delete_listing_by_id(
     listing_id: uuid.UUID,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     """
@@ -138,7 +138,7 @@ async def delete_listing_by_id(
         None: Returns 204 No Content on success
 
     Raises:
-        HTTPException: 404 if listing not found, 403 if not owner/admin, 401 if not authenticated
+        HTTPException: 404 if listing not found, 403 if not owner/admin or banned, 401 if not authenticated
     """
     listing_service.delete(db, listing_id, current_user.id, current_user.role)
 

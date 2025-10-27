@@ -7,8 +7,10 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import create_access_token
 from app.core.database import get_db
+from app.core.enums import AdminActionType
 from app.core.settings import settings
 from app.models.user import User
+from app.repository.admin import AdminActionRepository
 from app.schemas.user import Token, UserCreate, UserPublic
 from app.services.user import user_service
 
@@ -62,7 +64,7 @@ async def login(
         Token: JWT access token and token type
 
     Raises:
-        HTTPException: 401 if credentials are invalid
+        HTTPException: 401 if credentials are invalid, 403 if account is banned
     """
     user = user_service.authenticate(db, form_data.username, form_data.password)
     if not user:
@@ -71,6 +73,14 @@ async def login(
             detail="Incorrect email/username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    actions = AdminActionRepository.get_by_target_user_id(db, user.id)
+    for action in actions:
+        if action.action_type == AdminActionType.BAN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account banned. Contact support for assistance.",
+            )
 
     access_token_expires = timedelta(minutes=settings.a2.access_token_expire_minutes)
     access_token = create_access_token(
