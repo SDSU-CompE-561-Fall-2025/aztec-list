@@ -38,6 +38,14 @@ class DatabaseSettings(BaseModel):
     )
 
 
+class ModerationSettings(BaseModel):
+    strike_auto_ban_threshold: int = Field(
+        default=3,
+        ge=1,
+        description="Number of strikes before automatic permanent ban",
+    )
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -49,6 +57,7 @@ class Settings(BaseSettings):
     app: AppMeta = Field(default_factory=AppMeta)
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
     a2: Argon2Settings
+    moderation: ModerationSettings = Field(default_factory=ModerationSettings)
 
 
 def load_settings() -> Settings:
