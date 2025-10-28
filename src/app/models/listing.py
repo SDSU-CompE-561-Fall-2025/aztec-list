@@ -47,4 +47,3 @@ class Listing(Base):
     # Relationships
     seller: Mapped[User] = relationship(back_populates="listings")
     # images: One-to-many with Image model (to be implemented)
-    # admin_actions: One-to-many with AdminAction model (to be implemented)
