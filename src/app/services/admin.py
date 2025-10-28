@@ -4,27 +4,72 @@ Admin action service.
 This module contains business logic for admin action operations.
 """
 
-import uuid
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
 
 from app.core.enums import AdminActionType, UserRole
+from app.core.security import ensure_can_moderate_user
 from app.core.settings import settings
-from app.models.admin import AdminAction
 from app.repository.admin import AdminActionRepository
 from app.repository.listing import ListingRepository
 from app.repository.user import UserRepository
-from app.schemas.admin import (
-    AdminActionBan,
-    AdminActionCreate,
-    AdminActionFilters,
-    AdminActionStrike,
-)
+from app.schemas.admin import AdminActionCreate, AdminActionStrike
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.orm import Session
+
+    from app.models.admin import AdminAction
+    from app.models.user import User
+    from app.schemas.admin import AdminActionBan, AdminActionFilters
 
 
 class AdminActionService:
     """Service for admin action business logic."""
+
+    def _validate_moderation_participants(
+        self, db: Session, admin_id: uuid.UUID, target_user_id: uuid.UUID
+    ) -> tuple[User, User]:
+        """
+        Validate and fetch both admin and target user for moderation actions.
+
+        Centralizes validation logic and security checks for admin moderation.
+
+        Args:
+            db: Database session
+            admin_id: Admin user ID performing the action
+            target_user_id: Target user ID receiving the action
+
+        Returns:
+            tuple[User, User]: (target_user, admin_user)
+
+        Raises:
+            HTTPException: If either user not found or target is an admin
+        """
+        # Validate target user exists
+        target_user = UserRepository.get_by_id(db, target_user_id)
+        if not target_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User with ID {target_user_id} not found",
+            )
+
+        # Validate admin user exists
+        admin_user = UserRepository.get_by_id(db, admin_id)
+        if not admin_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Admin with ID {admin_id} not found",
+            )
+
+        # Security check: prevent admins from moderating other admins
+        ensure_can_moderate_user(target_user, admin_user)
+
+        return target_user, admin_user
 
     def get_by_id(self, db: Session, action_id: uuid.UUID) -> AdminAction:
         """
@@ -153,9 +198,10 @@ class AdminActionService:
         strike: AdminActionStrike,
     ) -> AdminAction:
         """
-        Create a strike action with auto-escalation to ban at 3 strikes.
+        Create a strike action with auto-escalation to ban at threshold.
 
-        Automatically issues a 30-day ban if user reaches 3 active strikes.
+        Automatically issues a permanent ban if user reaches strike threshold.
+        Prevents admins from striking other admins.
 
         Args:
             db: Database session
@@ -167,15 +213,10 @@ class AdminActionService:
             AdminAction: Created strike action
 
         Raises:
-            HTTPException: If target user not found
+            HTTPException: If target user not found or is admin
         """
-        # Validate target user exists
-        target_user = UserRepository.get_by_id(db, target_user_id)
-        if not target_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with ID {target_user_id} not found",
-            )
+        # Validate both users and perform security check
+        self._validate_moderation_participants(db, admin_id, target_user_id)
 
         # Create the strike action
         action = AdminActionCreate(
@@ -183,6 +224,7 @@ class AdminActionService:
             action_type=AdminActionType.STRIKE,
             reason=strike.reason,
             target_listing_id=None,
+            expires_at=None,
         )
         created_strike = AdminActionRepository.create(db, admin_id, action)
 
@@ -194,6 +236,7 @@ class AdminActionService:
                 action_type=AdminActionType.BAN,
                 reason=f"Automatic permanent ban: {strike_count} strikes accumulated. Latest: {strike.reason or 'Policy violation'}",
                 target_listing_id=None,
+                expires_at=None,
             )
             AdminActionRepository.create(db, admin_id, ban_action)
 
@@ -223,7 +266,9 @@ class AdminActionService:
         self, db: Session, admin_id: uuid.UUID, target_user_id: uuid.UUID, ban: AdminActionBan
     ) -> AdminAction:
         """
-        Create a ban action (convenience method).
+        Create a permanent ban action.
+
+        Prevents admins from banning other admins.
 
         Args:
             db: Database session
@@ -235,15 +280,10 @@ class AdminActionService:
             AdminAction: Created ban action
 
         Raises:
-            HTTPException: If target user not found
+            HTTPException: If target user not found or is admin
         """
-        # Validate target user exists
-        target_user = UserRepository.get_by_id(db, target_user_id)
-        if not target_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with ID {target_user_id} not found",
-            )
+        # Validate both users and perform security check
+        self._validate_moderation_participants(db, admin_id, target_user_id)
 
         # Create AdminActionCreate from ban
         action = AdminActionCreate(
@@ -251,6 +291,7 @@ class AdminActionService:
             action_type=AdminActionType.BAN,
             reason=ban.reason,
             target_listing_id=None,
+            expires_at=None,
         )
 
         return AdminActionRepository.create(db, admin_id, action)
@@ -319,6 +360,7 @@ class AdminActionService:
             target_listing_id=listing_id,
             action_type=AdminActionType.LISTING_REMOVAL,
             reason=reason,
+            expires_at=None,
         )
         listing_removal = AdminActionRepository.create(db, admin_id, removal_action)
 

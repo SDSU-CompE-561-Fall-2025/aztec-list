@@ -4,21 +4,28 @@ Listing service.
 This module contains business logic for listing operations.
 """
 
-import uuid
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
 
-from app.core.enums import UserRole
 from app.core.security import ensure_listing_owner_or_admin
-from app.models.listing import Listing
 from app.repository.listing import ListingRepository
-from app.schemas.listing import (
-    ListingCreate,
-    ListingSearchParams,
-    ListingUpdate,
-    UserListingsParams,
-)
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.orm import Session
+
+    from app.core.enums import UserRole
+    from app.models.listing import Listing
+    from app.schemas.listing import (
+        ListingCreate,
+        ListingSearchParams,
+        ListingUpdate,
+        UserListingsParams,
+    )
 
 
 class ListingService:

@@ -122,3 +122,25 @@ def ensure_verified(user: User) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Email verification required for this action",
         )
+
+
+def ensure_can_moderate_user(target_user: User, moderator_user: User) -> None:
+    """
+    Ensure moderator can take action against target user.
+
+    Prevents admins from banning/moderating other admins. Only regular users can be moderated.
+
+    Args:
+        target_user: User being moderated (banned, warned, etc.)
+        moderator_user: Admin user performing the moderation action
+
+    Raises:
+        HTTPException: 403 if target is an admin or moderator lacks privileges
+    """
+    ensure_admin(moderator_user)
+
+    if target_user.role == UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot moderate admin accounts. Contact system administrator.",
+        )
