@@ -67,6 +67,25 @@ class AdminActionService:
         ensure_can_moderate_user(target_user, admin_user)
         return target_user, admin_user
 
+    def _check_user_not_banned(self, db: Session, user_id: uuid.UUID) -> None:
+        """
+        Check if user is already banned.
+
+        Args:
+            db: Database session
+            user_id: User ID to check
+
+        Raises:
+            HTTPException: If user is already banned
+        """
+        existing_actions = AdminActionRepository.get_by_target_user_id(db, user_id)
+        for action in existing_actions:
+            if action.action_type == AdminActionType.BAN:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="User is already banned. Revoke existing ban first if needed.",
+                )
+
     def get_by_id(self, db: Session, action_id: uuid.UUID) -> AdminAction:
         """
         Get admin action by ID.
@@ -197,15 +216,7 @@ class AdminActionService:
             HTTPException: If target user not found, is admin, or already banned
         """
         self._validate_moderation_participants(db, admin_id, target_user_id)
-
-        # Check if user is already banned
-        existing_actions = AdminActionRepository.get_by_target_user_id(db, target_user_id)
-        for action in existing_actions:
-            if action.action_type == AdminActionType.BAN:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Cannot strike a banned user. Revoke ban first if needed.",
-                )
+        self._check_user_not_banned(db, target_user_id)
 
         action = AdminActionCreate(
             target_user_id=target_user_id,
@@ -271,15 +282,7 @@ class AdminActionService:
             HTTPException: If target user not found, is admin, or already banned
         """
         self._validate_moderation_participants(db, admin_id, target_user_id)
-
-        # Check if user is already banned
-        existing_actions = AdminActionRepository.get_by_target_user_id(db, target_user_id)
-        for action in existing_actions:
-            if action.action_type == AdminActionType.BAN:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="User is already banned. Revoke existing ban first if you need to update the reason.",
-                )
+        self._check_user_not_banned(db, target_user_id)
 
         action = AdminActionCreate(
             target_user_id=target_user_id,
