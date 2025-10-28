@@ -10,6 +10,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.enums import UserRole
+from app.core.security import ensure_listing_owner_or_admin
 from app.models.listing import Listing
 from app.repository.listing import ListingRepository
 from app.schemas.listing import (
@@ -120,14 +121,7 @@ class ListingService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Listing with ID {listing_id} not found",
             )
-
-        # Check authorization: owner OR admin
-        if user_role != UserRole.ADMIN and db_listing.seller_id != user_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You are not the owner of this listing",
-            )
-
+        ensure_listing_owner_or_admin(db_listing, user_id, user_role)
         return ListingRepository.update(db, db_listing, listing)
 
     def delete(
@@ -153,14 +147,7 @@ class ListingService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Listing with ID {listing_id} not found",
             )
-
-        # Check authorization: owner OR admin
-        if user_role != UserRole.ADMIN and db_listing.seller_id != user_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You are not the owner of this listing",
-            )
-
+        ensure_listing_owner_or_admin(db_listing, user_id, user_role)
         ListingRepository.delete(db, db_listing)
 
 

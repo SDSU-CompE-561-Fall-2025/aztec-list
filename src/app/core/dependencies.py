@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import oauth2_scheme, verify_token
 from app.core.database import get_db
-from app.core.enums import AdminActionType, UserRole
+from app.core.security import ensure_admin, ensure_not_banned
 from app.models.user import User
 from app.repository.admin import AdminActionRepository
 from app.services.user import user_service
@@ -65,8 +65,7 @@ def require_admin(
     Require that the current user has admin role.
 
     This dependency should be used on admin-only routes to enforce
-    role-based access control. It fetches the full User from the database
-    to ensure role changes take effect immediately.
+    role-based access control.
 
     Args:
         current_user: Authenticated user from JWT token
@@ -77,11 +76,7 @@ def require_admin(
     Raises:
         HTTPException: 403 if user does not have admin role
     """
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin privileges required",
-        )
+    ensure_admin(current_user)
     return current_user
 
 
@@ -107,12 +102,5 @@ def require_not_banned(
         HTTPException: 403 if user has an active ban
     """
     actions = AdminActionRepository.get_by_target_user_id(db, current_user.id)
-
-    for action in actions:
-        if action.action_type == AdminActionType.BAN:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Account banned. Contact support for assistance.",
-            )
-
+    ensure_not_banned(actions)
     return current_user

@@ -1,16 +1,13 @@
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.core.auth import create_access_token
 from app.core.database import get_db
-from app.core.enums import AdminActionType
-from app.core.settings import settings
-from app.models.user import User
-from app.repository.admin import AdminActionRepository
+from app.core.settings import Settings, get_settings
 from app.schemas.user import Token, UserCreate, UserPublic
 from app.services.user import user_service
 
@@ -24,12 +21,11 @@ auth_router = APIRouter(
     "/signup",
     summary="Register a new user",
     status_code=status.HTTP_201_CREATED,
-    response_model=UserPublic,
 )
 async def signup(
     user: UserCreate,
     db: Annotated[Session, Depends(get_db)],
-) -> User:
+) -> UserPublic:
     """
     Register a new user account.
 
@@ -43,13 +39,15 @@ async def signup(
     Raises:
         HTTPException: 400 if email already exists, 500 on database error
     """
-    return user_service.create(db, user)
+    created_user = user_service.create(db, user)
+    return UserPublic.model_validate(created_user)
 
 
 @auth_router.post("/login", summary="Authenticate and obtain a JWT access token")
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[Session, Depends(get_db)],
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> Token:
     """
     Authenticate user and return access token.
@@ -59,6 +57,7 @@ async def login(
     Args:
         form_data: OAuth2 form with username (email or username) and password
         db: Database session
+        settings: Application settings
 
     Returns:
         Token: JWT access token and token type
@@ -66,21 +65,8 @@ async def login(
     Raises:
         HTTPException: 401 if credentials are invalid, 403 if account is banned
     """
+    # Service handles authentication, credential validation, and ban check
     user = user_service.authenticate(db, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email/username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    actions = AdminActionRepository.get_by_target_user_id(db, user.id)
-    for action in actions:
-        if action.action_type == AdminActionType.BAN:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Account banned. Contact support for assistance.",
-            )
 
     access_token_expires = timedelta(minutes=settings.a2.access_token_expire_minutes)
     access_token = create_access_token(

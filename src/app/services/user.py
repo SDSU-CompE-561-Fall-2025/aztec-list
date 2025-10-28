@@ -10,7 +10,9 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.auth import get_password_hash, verify_password
+from app.core.security import ensure_not_banned
 from app.models.user import User
+from app.repository.admin import AdminActionRepository
 from app.repository.user import UserRepository
 from app.schemas.user import UserCreate
 
@@ -133,7 +135,7 @@ class UserService:
             )
         UserRepository.delete(db, user)
 
-    def authenticate(self, db: Session, username: str, password: str) -> User | None:
+    def authenticate(self, db: Session, username: str, password: str) -> User:
         """
         Authenticate user with username or email and password.
 
@@ -143,15 +145,23 @@ class UserService:
             password: Plain text password
 
         Returns:
-            User | None: Authenticated user if credentials are valid, None otherwise
+            User: Authenticated user if credentials are valid
+
+        Raises:
+            HTTPException: 401 if credentials are invalid, 403 if user is banned
         """
         user = UserRepository.get_by_email_or_username(db, username)
 
-        # If user not found or password incorrect, return None
-        if not user:
-            return None
-        if not verify_password(password, str(user.hashed_password)):
-            return None
+        # Validate credentials
+        if not user or not verify_password(password, str(user.hashed_password)):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email/username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        actions = AdminActionRepository.get_by_target_user_id(db, user.id)
+        ensure_not_banned(actions)
+
         return user
 
 
