@@ -53,7 +53,7 @@ async def list_admin_actions(
 
     return AdminActionListResponse(
         items=[AdminActionPublic.model_validate(action) for action in actions],
-        next_cursor=None,  # Cursor pagination can be implemented later
+        next_cursor=None,  # TODO: Implement cursor pagination in the future
         count=count,
     )
 

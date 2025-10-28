@@ -73,7 +73,7 @@ class ListingRepository:
             query = query.order_by(Listing.created_at.desc())
 
         # Apply offset-based pagination
-        # Implement cursor-based pagination in the future for better performance at scale
+        # TODO: Implement cursor-based pagination in the future for better performance at scale
         query = query.offset(params.offset).limit(params.limit)
         return list(db.scalars(query).all())
 
@@ -128,7 +128,7 @@ class ListingRepository:
             query = query.order_by(Listing.created_at.desc())
 
         # Apply offset-based pagination
-        # Implement cursor-based pagination in the future for better performance at scale
+        # TODO: Implement cursor-based pagination in the future for better performance at scale
         query = query.offset(params.offset).limit(params.limit)
 
         return list(db.scalars(query).all())
