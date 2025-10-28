@@ -4,13 +4,20 @@ User repository.
 This module provides data access layer for user operations.
 """
 
-import uuid
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
 
 from app.models.user import User
-from app.schemas.user import UserCreate
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.orm import Session
+
+    from app.schemas.user import UserCreate
 
 
 class UserRepository:

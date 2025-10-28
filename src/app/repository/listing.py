@@ -4,19 +4,26 @@ Listing repository.
 This module provides data access layer for listing operations.
 """
 
-import uuid
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
 
 from app.core.enums import ListingSortOrder
 from app.models.listing import Listing
-from app.schemas.listing import (
-    ListingCreate,
-    ListingSearchParams,
-    ListingUpdate,
-    UserListingsParams,
-)
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.orm import Session
+
+    from app.schemas.listing import (
+        ListingCreate,
+        ListingSearchParams,
+        ListingUpdate,
+        UserListingsParams,
+    )
 
 
 class ListingRepository:
