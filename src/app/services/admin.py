@@ -156,9 +156,14 @@ class AdminActionService:
 
         return actions, count
 
-    def create(self, db: Session, admin_id: uuid.UUID, action: AdminActionCreate) -> AdminAction:
+    def _create_internal(
+        self, db: Session, admin_id: uuid.UUID, action: AdminActionCreate
+    ) -> AdminAction:
         """
-        Create a new admin action with validation.
+        Create admin action without business logic checks (internal use only).
+
+        Used by specialized methods (create_strike, create_ban) that handle
+        their own validation. Should not be called directly from routes.
 
         Args:
             db: Database session
@@ -197,7 +202,7 @@ class AdminActionService:
         Create a strike action with auto-escalation to ban at threshold.
 
         Automatically issues a permanent ban if user reaches strike threshold.
-        Prevents admins from striking other admins.
+        Prevents admins from striking other admins and already banned users.
 
         Args:
             db: Database session
@@ -209,9 +214,18 @@ class AdminActionService:
             AdminAction: Created strike action
 
         Raises:
-            HTTPException: If target user not found or is admin
+            HTTPException: If target user not found, is admin, or already banned
         """
         self._validate_moderation_participants(db, admin_id, target_user_id)
+
+        # Check if user is already banned
+        existing_actions = AdminActionRepository.get_by_target_user_id(db, target_user_id)
+        for action in existing_actions:
+            if action.action_type == AdminActionType.BAN:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Cannot strike a banned user. Revoke ban first if needed.",
+                )
 
         action = AdminActionCreate(
             target_user_id=target_user_id,
@@ -262,7 +276,7 @@ class AdminActionService:
         """
         Create a permanent ban action.
 
-        Prevents admins from banning other admins.
+        Prevents admins from banning other admins and duplicate bans.
 
         Args:
             db: Database session
@@ -274,9 +288,18 @@ class AdminActionService:
             AdminAction: Created ban action
 
         Raises:
-            HTTPException: If target user not found or is admin
+            HTTPException: If target user not found, is admin, or already banned
         """
         self._validate_moderation_participants(db, admin_id, target_user_id)
+
+        # Check if user is already banned
+        existing_actions = AdminActionRepository.get_by_target_user_id(db, target_user_id)
+        for action in existing_actions:
+            if action.action_type == AdminActionType.BAN:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="User is already banned. Revoke existing ban first if you need to update the reason.",
+                )
 
         action = AdminActionCreate(
             target_user_id=target_user_id,

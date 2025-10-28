@@ -10,7 +10,6 @@ from app.models.admin import AdminAction
 from app.models.user import User
 from app.schemas.admin import (
     AdminActionBan,
-    AdminActionCreate,
     AdminActionFilters,
     AdminActionListResponse,
     AdminActionPublic,
@@ -25,36 +24,6 @@ admin_router = APIRouter(
     tags=["Admin"],
     dependencies=[Depends(require_admin), Depends(require_not_banned)],
 )
-
-
-@admin_router.post(
-    "/actions",
-    summary="Create a moderation action",
-    status_code=status.HTTP_201_CREATED,
-    response_model=AdminActionPublic,
-)
-async def create_admin_action(
-    action: AdminActionCreate,
-    admin: Annotated[User, Depends(require_admin)],
-    db: Annotated[Session, Depends(get_db)],
-) -> AdminAction:
-    """
-    Create a moderation action (warning, strike, ban, or listing_removal).
-
-    **Requires:** Admin privileges
-
-    Args:
-        action: Admin action creation data (target_user_id, action_type, reason, etc.)
-        admin: Authenticated admin user from JWT token
-        db: Database session
-
-    Returns:
-        AdminActionPublic: Created admin action information
-
-    Raises:
-        HTTPException: 401 if not authenticated, 403 if not admin, 404 if target user not found
-    """
-    return admin_action_service.create(db, admin.id, action)
 
 
 @admin_router.get(
