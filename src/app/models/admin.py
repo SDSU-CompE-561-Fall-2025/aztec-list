@@ -33,7 +33,7 @@ class AdminAction(Base):
     target_listing_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("listings.id", ondelete="CASCADE"), index=True
     )
-    action_type: Mapped[str] = mapped_column(Enum(AdminActionType), index=True)
+    action_type: Mapped[AdminActionType] = mapped_column(Enum(AdminActionType), index=True)
     reason: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
