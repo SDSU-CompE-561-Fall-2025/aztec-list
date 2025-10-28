@@ -50,7 +50,6 @@ class AdminActionService:
         Raises:
             HTTPException: If either user not found or target is an admin
         """
-        # Validate target user exists
         target_user = UserRepository.get_by_id(db, target_user_id)
         if not target_user:
             raise HTTPException(
@@ -58,7 +57,6 @@ class AdminActionService:
                 detail=f"User with ID {target_user_id} not found",
             )
 
-        # Validate admin user exists
         admin_user = UserRepository.get_by_id(db, admin_id)
         if not admin_user:
             raise HTTPException(
@@ -66,9 +64,7 @@ class AdminActionService:
                 detail=f"Admin with ID {admin_id} not found",
             )
 
-        # Security check: prevent admins from moderating other admins
         ensure_can_moderate_user(target_user, admin_user)
-
         return target_user, admin_user
 
     def get_by_id(self, db: Session, action_id: uuid.UUID) -> AdminAction:
@@ -215,10 +211,8 @@ class AdminActionService:
         Raises:
             HTTPException: If target user not found or is admin
         """
-        # Validate both users and perform security check
         self._validate_moderation_participants(db, admin_id, target_user_id)
 
-        # Create the strike action
         action = AdminActionCreate(
             target_user_id=target_user_id,
             action_type=AdminActionType.STRIKE,
@@ -282,10 +276,8 @@ class AdminActionService:
         Raises:
             HTTPException: If target user not found or is admin
         """
-        # Validate both users and perform security check
         self._validate_moderation_participants(db, admin_id, target_user_id)
 
-        # Create AdminActionCreate from ban
         action = AdminActionCreate(
             target_user_id=target_user_id,
             action_type=AdminActionType.BAN,
@@ -296,22 +288,31 @@ class AdminActionService:
 
         return AdminActionRepository.create(db, admin_id, action)
 
-    def delete(self, db: Session, action_id: uuid.UUID) -> None:
+    def delete(self, db: Session, action_id: uuid.UUID, admin_id: uuid.UUID) -> None:
         """
         Delete (revoke) an admin action by ID.
+
+        Prevents self-unbanning and maintains audit integrity.
 
         Args:
             db: Database session
             action_id: Admin action ID (UUID) to delete
+            admin_id: Admin user ID performing the revocation
 
         Raises:
-            HTTPException: If admin action not found
+            HTTPException: If admin action not found or attempting to revoke own action
         """
         action = AdminActionRepository.get_by_id(db, action_id)
         if not action:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Admin action with ID {action_id} not found",
+            )
+
+        if action.target_user_id == admin_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Cannot revoke actions targeting yourself. Contact another admin.",
             )
 
         AdminActionRepository.delete(db, action)
@@ -344,7 +345,6 @@ class AdminActionService:
         Raises:
             HTTPException: If listing not found
         """
-        # Get the listing and validate it exists
         listing = ListingRepository.get_by_id(db, listing_id)
         if not listing:
             raise HTTPException(
@@ -354,7 +354,6 @@ class AdminActionService:
 
         seller_id = listing.seller_id
 
-        # Create the listing removal action
         removal_action = AdminActionCreate(
             target_user_id=seller_id,
             target_listing_id=listing_id,
@@ -364,7 +363,6 @@ class AdminActionService:
         )
         listing_removal = AdminActionRepository.create(db, admin_id, removal_action)
 
-        # Issue a strike to the listing owner
         self.create_strike(
             db=db,
             admin_id=admin_id,
@@ -372,12 +370,10 @@ class AdminActionService:
             strike=AdminActionStrike(reason=f"Listing removed: {reason or 'Policy violation'}"),
         )
 
-        # Hard delete the listing from the database
         # Import here to avoid circular dependency between services
         from app.services.listing import listing_service  # noqa: PLC0415
 
         listing_service.delete(db, listing_id, admin_id, UserRole.ADMIN)
-
         return listing_removal
 
 

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import require_admin
+from app.core.dependencies import require_admin, require_not_banned
 from app.models.admin import AdminAction
 from app.models.user import User
 from app.schemas.admin import (
@@ -23,7 +23,7 @@ from app.services.admin import admin_action_service
 admin_router = APIRouter(
     prefix="/admin",
     tags=["Admin"],
-    dependencies=[Depends(require_admin)],
+    dependencies=[Depends(require_admin), Depends(require_not_banned)],
 )
 
 
@@ -123,6 +123,7 @@ async def get_admin_action(
 )
 async def delete_admin_action(
     action_id: uuid.UUID,
+    admin: Annotated[User, Depends(require_admin)],
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     """
@@ -130,17 +131,20 @@ async def delete_admin_action(
 
     **Requires:** Admin privileges
 
+    **Security:** Admins cannot revoke actions targeting themselves.
+
     Args:
         action_id: ID of the action to revoke
+        admin: Authenticated admin user from JWT token
         db: Database session
 
     Returns:
         None: 204 No Content on success
 
     Raises:
-        HTTPException: 401 if not authenticated, 403 if not admin, 404 if action not found
+        HTTPException: 401 if not authenticated, 403 if not admin or attempting self-revocation, 404 if action not found
     """
-    admin_action_service.delete(db, action_id)
+    admin_action_service.delete(db, action_id, admin.id)
 
 
 @admin_router.post(
