@@ -14,7 +14,8 @@ class AppMeta(BaseModel):
 
 class Argon2Settings(BaseModel):
     secret_key: str = Field(
-        default="CHANGE_ME_generate_a_secure_random_key_here",  # come up with warning later for not changing key
+        # TODO: come up with warning later for not changing key
+        default="CHANGE_ME_generate_a_secure_random_key_here",
         min_length=32,
         description="The secret key for JWT (configure via environment variable)",
     )
