@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import require_not_banned
-from app.models import Listing
+from app.models.listing import Listing
 from app.models.user import User
 from app.schemas.listing import (
     ListingCreate,
