@@ -14,12 +14,11 @@ from app.models.admin import AdminAction
 
 if TYPE_CHECKING:
     import uuid
-    from datetime import datetime
 
     from sqlalchemy.orm import Session
 
     from app.core.enums import AdminActionType
-    from app.schemas.admin import AdminActionCreate
+    from app.schemas.admin import AdminActionCreate, AdminActionFilters
 
 
 class AdminActionRepository:
@@ -138,91 +137,67 @@ class AdminActionRepository:
         return list(db.scalars(query).all())
 
     @staticmethod
-    def get_filtered(  # noqa: PLR0913
-        db: Session,
-        target_user_id: uuid.UUID | None = None,
-        admin_id: uuid.UUID | None = None,
-        action_type: AdminActionType | None = None,
-        target_listing_id: uuid.UUID | None = None,
-        from_date: datetime | None = None,
-        to_date: datetime | None = None,
-        limit: int = 20,
-        offset: int = 0,
-    ) -> list[AdminAction]:
+    def get_filtered(db: Session, filters: AdminActionFilters) -> list[AdminAction]:
         """
         Get admin actions with optional filters and pagination.
 
         Args:
             db: Database session
-            target_user_id: Filter by target user ID
-            admin_id: Filter by admin user ID
-            action_type: Filter by action type
-            target_listing_id: Filter by listing ID
-            from_date: Filter actions created on or after this date
-            to_date: Filter actions created on or before this date
-            limit: Maximum number of actions to return
-            offset: Number of actions to skip
+            filters: Filter parameters including target_user_id, admin_id, action_type,
+                    target_listing_id, date ranges, and pagination
 
         Returns:
             list[AdminAction]: List of filtered admin actions
         """
         query = select(AdminAction)
 
-        if target_user_id:
-            query = query.where(AdminAction.target_user_id == target_user_id)
-        if admin_id:
-            query = query.where(AdminAction.admin_id == admin_id)
-        if action_type:
-            query = query.where(AdminAction.action_type == action_type.value)
-        if target_listing_id:
-            query = query.where(AdminAction.target_listing_id == target_listing_id)
-        if from_date:
-            query = query.where(AdminAction.created_at >= from_date)
-        if to_date:
-            query = query.where(AdminAction.created_at <= to_date)
+        if filters.target_user_id:
+            query = query.where(AdminAction.target_user_id == filters.target_user_id)
+        if filters.admin_id:
+            query = query.where(AdminAction.admin_id == filters.admin_id)
+        if filters.action_type:
+            query = query.where(AdminAction.action_type == filters.action_type.value)
+        if filters.target_listing_id:
+            query = query.where(AdminAction.target_listing_id == filters.target_listing_id)
+        if filters.from_date:
+            query = query.where(AdminAction.created_at >= filters.from_date)
+        if filters.to_date:
+            query = query.where(AdminAction.created_at <= filters.to_date)
 
-        query = query.order_by(AdminAction.created_at.desc()).limit(limit).offset(offset)
+        query = (
+            query.order_by(AdminAction.created_at.desc())
+            .limit(filters.limit)
+            .offset(filters.offset)
+        )
         return list(db.scalars(query).all())
 
     @staticmethod
-    def count_filtered(  # noqa: PLR0913
-        db: Session,
-        target_user_id: uuid.UUID | None = None,
-        admin_id: uuid.UUID | None = None,
-        action_type: AdminActionType | None = None,
-        target_listing_id: uuid.UUID | None = None,
-        from_date: datetime | None = None,
-        to_date: datetime | None = None,
-    ) -> int:
+    def count_filtered(db: Session, filters: AdminActionFilters) -> int:
         """
         Count admin actions with optional filters.
 
         Args:
             db: Database session
-            target_user_id: Filter by target user ID
-            admin_id: Filter by admin user ID
-            action_type: Filter by action type
-            target_listing_id: Filter by listing ID
-            from_date: Filter actions created on or after this date
-            to_date: Filter actions created on or before this date
+            filters: Filter parameters including target_user_id, admin_id, action_type,
+                    target_listing_id, and date ranges
 
         Returns:
             int: Count of matching admin actions
         """
         query = select(AdminAction)
 
-        if target_user_id:
-            query = query.where(AdminAction.target_user_id == target_user_id)
-        if admin_id:
-            query = query.where(AdminAction.admin_id == admin_id)
-        if action_type:
-            query = query.where(AdminAction.action_type == action_type.value)
-        if target_listing_id:
-            query = query.where(AdminAction.target_listing_id == target_listing_id)
-        if from_date:
-            query = query.where(AdminAction.created_at >= from_date)
-        if to_date:
-            query = query.where(AdminAction.created_at <= to_date)
+        if filters.target_user_id:
+            query = query.where(AdminAction.target_user_id == filters.target_user_id)
+        if filters.admin_id:
+            query = query.where(AdminAction.admin_id == filters.admin_id)
+        if filters.action_type:
+            query = query.where(AdminAction.action_type == filters.action_type.value)
+        if filters.target_listing_id:
+            query = query.where(AdminAction.target_listing_id == filters.target_listing_id)
+        if filters.from_date:
+            query = query.where(AdminAction.created_at >= filters.from_date)
+        if filters.to_date:
+            query = query.where(AdminAction.created_at <= filters.to_date)
 
         return db.scalar(select(func.count()).select_from(query.subquery())) or 0
 

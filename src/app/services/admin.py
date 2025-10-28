@@ -132,28 +132,8 @@ class AdminActionService:
         Returns:
             tuple[list[AdminAction], int]: Filtered admin actions and total count
         """
-        actions = AdminActionRepository.get_filtered(
-            db=db,
-            target_user_id=filters.target_user_id,
-            admin_id=filters.admin_id,
-            action_type=filters.action_type,
-            target_listing_id=filters.target_listing_id,
-            from_date=filters.from_date,
-            to_date=filters.to_date,
-            limit=filters.limit,
-            offset=filters.offset,
-        )
-
-        count = AdminActionRepository.count_filtered(
-            db=db,
-            target_user_id=filters.target_user_id,
-            admin_id=filters.admin_id,
-            action_type=filters.action_type,
-            target_listing_id=filters.target_listing_id,
-            from_date=filters.from_date,
-            to_date=filters.to_date,
-        )
-
+        actions = AdminActionRepository.get_filtered(db=db, filters=filters)
+        count = AdminActionRepository.count_filtered(db=db, filters=filters)
         return actions, count
 
     def _create_internal(
