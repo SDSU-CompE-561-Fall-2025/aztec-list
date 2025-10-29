@@ -12,6 +12,8 @@ from app.schemas.listing import (
     ListingCreate,
     ListingPublic,
     ListingSearchParams,
+    ListingSearchResponse,
+    ListingSummary,
     ListingUpdate,
 )
 from app.services.listing import listing_service
@@ -150,13 +152,12 @@ async def delete_listing_by_id(
 @listing_router.get(
     "/",
     summary="Search and filter listings",
-    response_model=list[ListingPublic],
     status_code=status.HTTP_200_OK,
 )
 async def get_listings(
     params: Annotated[ListingSearchParams, Depends()],
     db: Annotated[Session, Depends(get_db)],
-) -> list[Listing]:
+) -> ListingSearchResponse:
     """
     Retrieve a paginated list of active listings with optional filters.
 
@@ -173,4 +174,10 @@ async def get_listings(
     Raises:
         HTTPException: 400 if invalid parameters
     """
-    return listing_service.search(db, params)
+    listings, count = listing_service.get_filtered(db, params)
+
+    return ListingSearchResponse(
+        items=[ListingSummary.model_validate(listing) for listing in listings],
+        next_cursor=None,
+        count=count,
+    )

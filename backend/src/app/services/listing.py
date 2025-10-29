@@ -53,7 +53,7 @@ class ListingService:
 
     def get_by_seller(
         self, db: Session, seller_id: uuid.UUID, params: UserListingsParams
-    ) -> list[Listing]:
+    ) -> tuple[list[Listing], int]:
         """
         Get all listings by seller ID with pagination and sorting.
 
@@ -63,13 +63,15 @@ class ListingService:
             params: Pagination and filtering parameters
 
         Returns:
-            list[Listing]: List of listings (empty if none found)
+            tuple[list[Listing], int]: Filtered listings and total count
         """
-        return ListingRepository.get_by_seller(db, seller_id, params)
+        listings = ListingRepository.get_by_seller(db, seller_id, params)
+        count = ListingRepository.count_by_seller(db, seller_id, params)
+        return listings, count
 
-    def search(self, db: Session, params: ListingSearchParams) -> list[Listing]:
+    def get_filtered(self, db: Session, params: ListingSearchParams) -> tuple[list[Listing], int]:
         """
-        Search listings with filters, pagination, and sorting.
+        Get listings with filters, pagination, and sorting.
 
         Args:
             db: Database session
@@ -78,7 +80,9 @@ class ListingService:
         Returns:
             list[Listing]: List of matching listings (empty if none found)
         """
-        return ListingRepository.search(db, params)
+        listings = ListingRepository.get_filtered(db, params)
+        count = ListingRepository.count_filtered(db, params)
+        return listings, count
 
     def create(self, db: Session, seller_id: uuid.UUID, listing: ListingCreate) -> Listing:
         """
