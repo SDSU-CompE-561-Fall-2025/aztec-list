@@ -12,6 +12,7 @@ from app.core.database import Base
 from app.core.enums import Category, Condition
 
 if TYPE_CHECKING:
+    from app.models.listing_image import Image
     from app.models.user import User
 
 
@@ -48,4 +49,6 @@ class Listing(Base):
 
     # Relationships
     seller: Mapped[User] = relationship(back_populates="listings")
-    # images: One-to-many with Image model (to be implemented)
+    images: Mapped[list[Image]] = relationship(
+        back_populates="listing", cascade="all, delete-orphan"
+    )
