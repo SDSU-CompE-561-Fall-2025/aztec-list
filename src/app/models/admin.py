@@ -35,10 +35,10 @@ class AdminAction(Base):
         ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
     target_user_id: Mapped[uuid.UUID | None] = mapped_column(
-        Uuid, ForeignKey("users.id", ondelete="SET NULL"), index=True
+        ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
     target_listing_id: Mapped[uuid.UUID | None] = mapped_column(
-        Uuid, ForeignKey("listings.id", ondelete="SET NULL"), index=True
+        ForeignKey("listings.id", ondelete="SET NULL"), index=True
     )
     action_type: Mapped[AdminActionType] = mapped_column(Enum(AdminActionType), index=True)
     reason: Mapped[str | None] = mapped_column(String(255))

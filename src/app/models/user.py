@@ -52,7 +52,6 @@ class User(Base):
         "AdminAction",
         foreign_keys="AdminAction.admin_id",
         back_populates="admin",
-        cascade="all, delete-orphan",
     )
 
     # one-to-many -> Admin actions received by this user (when being moderated)
@@ -60,5 +59,4 @@ class User(Base):
         "AdminAction",
         foreign_keys="AdminAction.target_user_id",
         back_populates="target_user",
-        cascade="all, delete-orphan",
     )
