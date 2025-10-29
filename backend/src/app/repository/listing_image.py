@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, func, select, update
 
 from app.models.listing import Listing
 from app.models.listing_image import Image
@@ -176,8 +176,8 @@ class ListingImageRepository:
         Returns:
             int: Number of images
         """
-        query = select(Image).where(Image.listing_id == listing_id)
-        return len(list(db.scalars(query).all()))
+        query = select(func.count()).select_from(Image).where(Image.listing_id == listing_id)
+        return db.scalar(query) or 0
 
     @staticmethod
     def delete_all_for_listing(db: Session, listing_id: uuid.UUID) -> None:
@@ -193,6 +193,25 @@ class ListingImageRepository:
         db.commit()
 
     @staticmethod
+    def set_as_thumbnail_only(db: Session, db_image: Image) -> Image:
+        """
+        Set an image as thumbnail without clearing other thumbnails.
+
+        Used when you know no other thumbnails exist (e.g., after deletion).
+
+        Args:
+            db: Database session
+            db_image: Image to set as thumbnail
+
+        Returns:
+            Image: Updated image
+        """
+        db_image.is_thumbnail = True
+        db.commit()
+        db.refresh(db_image)
+        return db_image
+
+    @staticmethod
     def update_listing_thumbnail_url(
         db: Session, listing_id: uuid.UUID, thumbnail_url: str | None
     ) -> None:
@@ -203,8 +222,16 @@ class ListingImageRepository:
             db: Database session
             listing_id: Listing ID (UUID)
             thumbnail_url: New thumbnail URL (or None to clear)
+
+        Raises:
+            ValueError: If listing with given ID does not exist
         """
         listing = db.get(Listing, listing_id)
-        if listing:
-            listing.thumbnail_url = thumbnail_url
-            db.commit()
+        if not listing:
+            msg = (
+                f"Cannot update thumbnail_url: Listing with ID {listing_id} not found. "
+                "This may indicate a data integrity issue."
+            )
+            raise ValueError(msg)
+        listing.thumbnail_url = thumbnail_url
+        db.commit()

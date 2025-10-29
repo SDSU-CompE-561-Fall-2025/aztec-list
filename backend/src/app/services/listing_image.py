@@ -12,6 +12,7 @@ from fastapi import HTTPException, status
 
 from app.repository.listing import ListingRepository
 from app.repository.listing_image import ListingImageRepository
+from app.schemas.listing_image import ImageCreate, ImageUpdate
 
 if TYPE_CHECKING:
     import uuid
@@ -20,7 +21,6 @@ if TYPE_CHECKING:
 
     from app.models.listing_image import Image
     from app.models.user import User
-    from app.schemas.listing_image import ImageCreate, ImageUpdate
 
 
 class ListingImageService:
@@ -127,13 +127,24 @@ class ListingImageService:
                 detail=f"Maximum {ListingImageService.MAX_IMAGES_PER_LISTING} images per listing",
             )
 
-        # Create the image
-        db_image = ListingImageRepository.create(db, image)
+        # Determine if this should be the thumbnail
+        should_be_thumbnail = current_count == 0 or image.is_thumbnail
 
-        # If this is the first image or is_thumbnail is True, set as thumbnail
-        if current_count == 0 or image.is_thumbnail:
-            ListingImageRepository.set_thumbnail(db, db_image)
-            # Update listing thumbnail_url
+        # If setting as thumbnail and other images exist, clear existing thumbnails first
+        if should_be_thumbnail and current_count > 0:
+            ListingImageRepository.clear_thumbnail_for_listing(db, image.listing_id)
+
+        # Create the image with correct thumbnail flag
+        image_data = ImageCreate(
+            listing_id=image.listing_id,
+            url=image.url,
+            is_thumbnail=should_be_thumbnail,
+            alt_text=image.alt_text,
+        )
+        db_image = ListingImageRepository.create(db, image_data)
+
+        # Update listing thumbnail_url if this is the thumbnail
+        if should_be_thumbnail:
             ListingImageRepository.update_listing_thumbnail_url(
                 db, image.listing_id, str(db_image.url)
             )
@@ -162,13 +173,26 @@ class ListingImageService:
         """
         db_image = ListingImageService.get_by_id(db, image_id, current_user)
 
+        # Check if this image is currently the thumbnail
+        was_thumbnail = db_image.is_thumbnail
+
+        # If setting as thumbnail, clear other thumbnails first
+        if image_update.is_thumbnail is True:
+            ListingImageRepository.clear_thumbnail_for_listing(db, db_image.listing_id)
+
+        # If explicitly setting to False and this was the thumbnail, clear listing thumbnail
+        if image_update.is_thumbnail is False and was_thumbnail:
+            ListingImageRepository.update_listing_thumbnail_url(db, db_image.listing_id, None)
+
         # Update the image
         updated_image = ListingImageRepository.update(db, db_image, image_update)
 
-        # If is_thumbnail changed to True, update thumbnail
-        if image_update.is_thumbnail is True:
-            ListingImageRepository.set_thumbnail(db, updated_image)
-            # Update listing thumbnail_url
+        # Update listing thumbnail_url if this image is now/still the thumbnail
+        # and either: became thumbnail OR URL changed
+        is_now_thumbnail = updated_image.is_thumbnail
+        url_changed = image_update.url is not None
+
+        if is_now_thumbnail and (image_update.is_thumbnail is True or (was_thumbnail and url_changed)):
             ListingImageRepository.update_listing_thumbnail_url(
                 db, updated_image.listing_id, str(updated_image.url)
             )
@@ -205,8 +229,9 @@ class ListingImageService:
 
             if remaining_images:
                 # Set the first remaining image as thumbnail
+                # No need to clear other thumbnails - we just deleted the only thumbnail
                 new_thumbnail = remaining_images[0]
-                ListingImageRepository.set_thumbnail(db, new_thumbnail)
+                ListingImageRepository.set_as_thumbnail_only(db, new_thumbnail)
                 ListingImageRepository.update_listing_thumbnail_url(
                     db, listing_id, str(new_thumbnail.url)
                 )
