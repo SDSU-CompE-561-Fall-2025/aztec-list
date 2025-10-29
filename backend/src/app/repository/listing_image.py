@@ -69,19 +69,20 @@ class ListingImageRepository:
         return db.scalars(query).first()
 
     @staticmethod
-    def create(db: Session, image: ImageCreate) -> Image:
+    def create(db: Session, listing_id: uuid.UUID, image: ImageCreate) -> Image:
         """
         Create a new image.
 
         Args:
             db: Database session
-            image: Image creation data
+            listing_id: Listing ID from the URL path
+            image: Image creation data (url, is_thumbnail, alt_text)
 
         Returns:
             Image: Created image
         """
         db_image = Image(
-            listing_id=image.listing_id,
+            listing_id=listing_id,
             url=image.url,
             is_thumbnail=image.is_thumbnail,
             alt_text=image.alt_text,
@@ -133,12 +134,12 @@ class ListingImageRepository:
             db: Database session
             listing_id: Listing ID (UUID)
         """
-        stmt = (
+        query = (
             update(Image)
-            .where(Image.listing_id == listing_id, Image.is_thumbnail == True)  # noqa: E712
+            .where(Image.listing_id == listing_id, Image.is_thumbnail)
             .values(is_thumbnail=False)
         )
-        db.execute(stmt)
+        db.execute(query)
         db.commit()
 
     @staticmethod
@@ -188,8 +189,8 @@ class ListingImageRepository:
             db: Database session
             listing_id: Listing ID (UUID)
         """
-        stmt = delete(Image).where(Image.listing_id == listing_id)
-        db.execute(stmt)
+        query = delete(Image).where(Image.listing_id == listing_id)
+        db.execute(query)
         db.commit()
 
     @staticmethod

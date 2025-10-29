@@ -60,45 +60,14 @@ class ListingImageService:
         return image
 
     @staticmethod
-    def get_by_listing(
-        db: Session, listing_id: uuid.UUID, current_user: User | None = None
-    ) -> list[Image]:
-        """
-        Get all images for a listing.
-
-        Args:
-            db: Database session
-            listing_id: Listing ID (UUID)
-            current_user: Optional current authenticated user (for ownership check)
-
-        Returns:
-            list[Image]: List of images
-
-        Raises:
-            HTTPException: 404 if listing not found
-            HTTPException: 403 if user is not authorized (for non-public listings)
-        """
-        listing = ListingRepository.get_by_id(db, listing_id)
-        if not listing:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Listing not found")
-
-        # Optional: Check if listing is active or user is seller
-        if not listing.is_active and (not current_user or listing.seller_id != current_user.id):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authorized to view this listing's images",
-            )
-
-        return ListingImageRepository.get_by_listing(db, listing_id)
-
-    @staticmethod
-    def create(db: Session, image: ImageCreate, current_user: User) -> Image:
+    def create(db: Session, listing_id: uuid.UUID, image: ImageCreate, current_user: User) -> Image:
         """
         Create a new image for a listing.
 
         Args:
             db: Database session
-            image: Image creation data
+            listing_id: Listing ID from the URL path
+            image: Image creation data (url, is_thumbnail, alt_text)
             current_user: Current authenticated user
 
         Returns:
@@ -110,7 +79,7 @@ class ListingImageService:
             HTTPException: 400 if max images exceeded
         """
         # Verify listing exists and user is the seller
-        listing = ListingRepository.get_by_id(db, image.listing_id)
+        listing = ListingRepository.get_by_id(db, listing_id)
         if not listing:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Listing not found")
         if listing.seller_id != current_user.id:
@@ -120,7 +89,7 @@ class ListingImageService:
             )
 
         # Check image count limit
-        current_count = ListingImageRepository.count_by_listing(db, image.listing_id)
+        current_count = ListingImageRepository.count_by_listing(db, listing_id)
         if current_count >= ListingImageService.MAX_IMAGES_PER_LISTING:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -132,22 +101,19 @@ class ListingImageService:
 
         # If setting as thumbnail and other images exist, clear existing thumbnails first
         if should_be_thumbnail and current_count > 0:
-            ListingImageRepository.clear_thumbnail_for_listing(db, image.listing_id)
+            ListingImageRepository.clear_thumbnail_for_listing(db, listing_id)
 
-        # Create the image with correct thumbnail flag
+        # Create the image with correct thumbnail flag (use listing_id from path)
         image_data = ImageCreate(
-            listing_id=image.listing_id,
             url=image.url,
             is_thumbnail=should_be_thumbnail,
             alt_text=image.alt_text,
         )
-        db_image = ListingImageRepository.create(db, image_data)
+        db_image = ListingImageRepository.create(db, listing_id, image_data)
 
         # Update listing thumbnail_url if this is the thumbnail
         if should_be_thumbnail:
-            ListingImageRepository.update_listing_thumbnail_url(
-                db, image.listing_id, str(db_image.url)
-            )
+            ListingImageRepository.update_listing_thumbnail_url(db, listing_id, str(db_image.url))
 
         return db_image
 
@@ -192,7 +158,9 @@ class ListingImageService:
         is_now_thumbnail = updated_image.is_thumbnail
         url_changed = image_update.url is not None
 
-        if is_now_thumbnail and (image_update.is_thumbnail is True or (was_thumbnail and url_changed)):
+        if is_now_thumbnail and (
+            image_update.is_thumbnail is True or (was_thumbnail and url_changed)
+        ):
             ListingImageRepository.update_listing_thumbnail_url(
                 db, updated_image.listing_id, str(updated_image.url)
             )

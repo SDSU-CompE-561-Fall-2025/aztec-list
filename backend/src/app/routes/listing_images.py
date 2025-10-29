@@ -4,58 +4,22 @@ Listing image routes.
 This module defines API endpoints for listing image operations.
 """
 
-from __future__ import annotations
-
 import uuid
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user, get_db
+from app.models.listing_image import Image
+from app.models.user import User
 from app.schemas.listing_image import ImageCreate, ImagePublic, ImageUpdate, SetThumbnailRequest
 from app.services.listing_image import ListingImageService
 
-if TYPE_CHECKING:
-    from sqlalchemy.orm import Session
-
-    from app.models.user import User
-
-listing_images_router = APIRouter(prefix="/listings", tags=["listing-images"])
-
-
-@listing_images_router.get(
-    "/{listing_id}/images",
-    response_model=list[ImagePublic],
-    summary="Get all images for a listing",
+listing_images_router = APIRouter(
+    prefix="/listings",
+    tags=["Listing Images"],
 )
-def get_listing_images(
-    listing_id: str,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User | None, Depends(get_current_user)] = None,
-) -> list[ImagePublic]:
-    """
-    Get all images for a listing.
-
-    Args:
-        listing_id: ID of the listing
-        db: Database session
-        current_user: Optional current user
-
-    Returns:
-        list[ImagePublic]: List of images for the listing
-
-    Raises:
-        HTTPException: 404 if listing not found
-    """
-    try:
-        listing_uuid = uuid.UUID(listing_id)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid listing ID format"
-        ) from exc
-
-    images = ListingImageService.get_by_listing(db, listing_uuid, current_user)
-    return [ImagePublic.model_validate(img) for img in images]
 
 
 @listing_images_router.get(
@@ -63,11 +27,11 @@ def get_listing_images(
     response_model=ImagePublic,
     summary="Get a specific image",
 )
-def get_image(
-    image_id: str,
+async def get_image(
+    image_id: uuid.UUID,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-) -> ImagePublic:
+) -> Image:
     """
     Get a specific image by ID.
 
@@ -83,15 +47,7 @@ def get_image(
         HTTPException: 404 if image not found
         HTTPException: 403 if user is not authorized
     """
-    try:
-        image_uuid = uuid.UUID(image_id)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image ID format"
-        ) from exc
-
-    image = ListingImageService.get_by_id(db, image_uuid, current_user)
-    return ImagePublic.model_validate(image)
+    return ListingImageService.get_by_id(db, image_id, current_user)
 
 
 @listing_images_router.post(
@@ -100,12 +56,12 @@ def get_image(
     status_code=status.HTTP_201_CREATED,
     summary="Add a new image to a listing",
 )
-def create_image(
-    listing_id: str,
+async def create_image(
+    listing_id: uuid.UUID,
     image: ImageCreate,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-) -> ImagePublic:
+) -> Image:
     """
     Add a new image to a listing.
 
@@ -124,24 +80,9 @@ def create_image(
     Raises:
         HTTPException: 404 if listing not found
         HTTPException: 403 if user is not the seller
-        HTTPException: 400 if max images exceeded or listing_id mismatch
+        HTTPException: 400 if max images exceeded
     """
-    try:
-        listing_uuid = uuid.UUID(listing_id)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid listing ID format"
-        ) from exc
-
-    # Verify listing_id in path matches listing_id in body
-    if image.listing_id != listing_uuid:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Listing ID in URL does not match listing ID in request body",
-        )
-
-    created_image = ListingImageService.create(db, image, current_user)
-    return ImagePublic.model_validate(created_image)
+    return ListingImageService.create(db, listing_id, image, current_user)
 
 
 @listing_images_router.patch(
@@ -149,12 +90,12 @@ def create_image(
     response_model=ImagePublic,
     summary="Update an image",
 )
-def update_image(
-    image_id: str,
+async def update_image(
+    image_id: uuid.UUID,
     image_update: ImageUpdate,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-) -> ImagePublic:
+) -> Image:
     """
     Update an existing image.
 
@@ -175,15 +116,7 @@ def update_image(
         HTTPException: 404 if image not found
         HTTPException: 403 if user is not the seller
     """
-    try:
-        image_uuid = uuid.UUID(image_id)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image ID format"
-        ) from exc
-
-    updated_image = ListingImageService.update(db, image_uuid, image_update, current_user)
-    return ImagePublic.model_validate(updated_image)
+    return ListingImageService.update(db, image_id, image_update, current_user)
 
 
 @listing_images_router.delete(
@@ -191,8 +124,8 @@ def update_image(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete an image",
 )
-def delete_image(
-    image_id: str,
+async def delete_image(
+    image_id: uuid.UUID,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> None:
@@ -212,14 +145,7 @@ def delete_image(
         HTTPException: 404 if image not found
         HTTPException: 403 if user is not the seller
     """
-    try:
-        image_uuid = uuid.UUID(image_id)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image ID format"
-        ) from exc
-
-    ListingImageService.delete(db, image_uuid, current_user)
+    ListingImageService.delete(db, image_id, current_user)
 
 
 @listing_images_router.patch(
@@ -227,12 +153,12 @@ def delete_image(
     response_model=ImagePublic,
     summary="Set listing thumbnail",
 )
-def set_thumbnail(
-    listing_id: str,
+async def set_thumbnail(
+    listing_id: uuid.UUID,
     request: SetThumbnailRequest,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-) -> ImagePublic:
+) -> Image:
     """
     Set an image as the thumbnail for a listing.
 
@@ -253,14 +179,4 @@ def set_thumbnail(
         HTTPException: 403 if user is not the seller
         HTTPException: 400 if image doesn't belong to the listing
     """
-    try:
-        listing_uuid = uuid.UUID(listing_id)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid listing ID format"
-        ) from exc
-
-    updated_image = ListingImageService.set_thumbnail(
-        db, listing_uuid, request.image_id, current_user
-    )
-    return ImagePublic.model_validate(updated_image)
+    return ListingImageService.set_thumbnail(db, listing_id, request.image_id, current_user)

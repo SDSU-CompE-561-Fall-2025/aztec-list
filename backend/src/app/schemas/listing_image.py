@@ -4,15 +4,10 @@ Listing image schemas.
 This module defines Pydantic schemas for listing image operations.
 """
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+import uuid
+from datetime import datetime
 
 from pydantic import BaseModel, Field, HttpUrl
-
-if TYPE_CHECKING:
-    import uuid
-    from datetime import datetime
 
 
 class ImageBase(BaseModel):
@@ -25,8 +20,6 @@ class ImageBase(BaseModel):
 
 class ImageCreate(ImageBase):
     """Schema for creating a new image."""
-
-    listing_id: uuid.UUID = Field(..., description="ID of the listing this image belongs to")
 
 
 class ImageUpdate(BaseModel):
