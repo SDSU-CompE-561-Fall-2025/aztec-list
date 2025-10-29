@@ -3,21 +3,30 @@
 ## Overview
 Aztec List is an OfferUp-style marketplace for college students. Students can post items with photos and descriptions, browse/search listings, and (in later iterations) coordinate sales via messaging. Prices are typically lower than MSRP.
 
-## Requirements
+## Project Structure
+
+This is a monorepo containing both backend and frontend:
+
+- **`backend/`** - FastAPI REST API (Python)
+  - Has its own `.venv/` for Python dependencies
+  - All backend commands run from `backend/` directory
+- **`frontend/`** - Web frontend (coming soon)
+  - Frontend commands will run from `frontend/` directory
+- **`docs/`** - API documentation and design specs
+
+## Backend Setup
+
+### Requirements
 - [uv](https://docs.astral.sh/uv/) installed
 - Python **3.13** (recommended). `uv python install` will fetch it for you.
 
-## Quickstart
+### Quickstart
 ```bash
 # 1) Clone
 git clone https://github.com/SDSU-CompE-561-Fall-2025/aztec-list.git
 cd aztec-list
 
-# 2) Install Python + sync deps from pyproject/uv.lock
-uv python install
-uv sync
-
-# 3) Configure environment variables
+# 2) Configure environment variables (do this once at project root)
 cp .env.example .env
 
 # Generate a secure secret key and copy the output
@@ -25,15 +34,30 @@ uv run python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 # Edit .env and replace A2__SECRET_KEY with the generated key
 
-# 4) (optional) Install Git hooks (ruff, EOF/line-endings, etc.)
+# 3) Navigate to backend
+cd backend
+
+# 4) Install Python + sync deps from pyproject/uv.lock
+uv python install
+uv sync
+
+# 5) (optional) Install Git hooks (ruff, EOF/line-endings, etc.)
 uv run pre-commit install
 
-# 5) Run the API (dev)
+# 6) Run the API (dev)
 uv run fastapi dev src/app/main.py
 ```
-**Notes**:
+
+**Important Notes**:
 - Open http://127.0.0.1:8000/docs for Swagger UI
 - Run `uv run uvicorn --app-dir src app.main:app --reload` to start the app without FastAPI dev wrapper
+- The `.env` file lives at the **project root** (shared between backend/frontend)
+- The `.venv/` directory lives in **`backend/`** (Python dependencies)
+- **Always run backend commands from the `backend/` directory**
+
+## Frontend Setup
+
+The frontend will be developed in the `frontend/` directory. Instructions will be added once development begins.
 
 ## Environment Configuration
 
@@ -82,6 +106,12 @@ DB__ECHO=false  # Set to true for SQL query logging
 APP__TITLE="Aztec List"
 APP__DESCRIPTION="API for an OfferUp-style marketplace for college students"
 APP__VERSION="0.1.0"
+```
+
+#### Moderation Settings
+```bash
+# Number of strikes before automatic permanent ban
+MODERATION__STRIKE_AUTO_BAN_THRESHOLD=3
 ```
 
 ### Important Notes:
