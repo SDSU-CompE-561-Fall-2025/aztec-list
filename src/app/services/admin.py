@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
 
-from app.core.enums import AdminActionType, UserRole
+from app.core.enums import AdminActionType
 from app.core.security import ensure_can_moderate_user
 from app.core.settings import settings
 from app.repository.admin import AdminActionRepository
@@ -376,10 +376,11 @@ class AdminActionService:
             strike=AdminActionStrike(reason=f"Listing removed: {reason or 'Policy violation'}"),
         )
 
-        # Import here to avoid circular dependency between services
-        from app.services.listing import listing_service  # noqa: PLC0415
+        # Admin removal bypasses owner check - use repository directly
+        db_listing = ListingRepository.get_by_id(db, listing_id)
+        if db_listing:
+            ListingRepository.delete(db, db_listing)
 
-        listing_service.delete(db, listing_id, admin_id, UserRole.ADMIN)
         return listing_removal
 
 

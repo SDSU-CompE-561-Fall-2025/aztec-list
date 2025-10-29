@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
 
-from app.core.security import ensure_listing_owner_or_admin
 from app.repository.listing import ListingRepository
 
 if TYPE_CHECKING:
@@ -18,7 +17,6 @@ if TYPE_CHECKING:
 
     from sqlalchemy.orm import Session
 
-    from app.core.enums import UserRole
     from app.models.listing import Listing
     from app.schemas.listing import (
         ListingCreate,
@@ -101,26 +99,25 @@ class ListingService:
         db: Session,
         listing_id: uuid.UUID,
         user_id: uuid.UUID,
-        user_role: UserRole,
         listing: ListingUpdate,
     ) -> Listing:
         """
-        Update listing fields with validation and authorization check.
+        Update listing fields with validation and authorization check (owner only).
 
-        Admins can update any listing, users can only update their own listings.
+        Only the listing owner can update their own listing.
+        Admins should use admin endpoints for moderation actions.
 
         Args:
             db: Database session
             listing_id: Listing ID to update
-            user_id: User ID attempting the update
-            user_role: Role of the user (USER or ADMIN)
+            user_id: User ID attempting the update (must be owner)
             listing: Listing update data (only provided fields will be updated)
 
         Returns:
             Listing: Updated listing
 
         Raises:
-            HTTPException: If listing not found or user is not authorized
+            HTTPException: If listing not found or user is not the owner
         """
         db_listing = ListingRepository.get_by_id(db, listing_id)
         if not db_listing:
@@ -128,25 +125,30 @@ class ListingService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Listing with ID {listing_id} not found",
             )
-        ensure_listing_owner_or_admin(db_listing, user_id, user_role)
+
+        # Check authorization: owner only (admins must use admin endpoints)
+        if db_listing.seller_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only the owner can update their listing",
+            )
+
         return ListingRepository.update(db, db_listing, listing)
 
-    def delete(
-        self, db: Session, listing_id: uuid.UUID, user_id: uuid.UUID, user_role: UserRole
-    ) -> None:
+    def delete(self, db: Session, listing_id: uuid.UUID, user_id: uuid.UUID) -> None:
         """
-        Permanently delete a listing with validation and authorization check.
+        Permanently delete a listing (owner only).
 
-        Admins can delete any listing, users can only delete their own listings.
+        Only the listing owner can delete their own listing.
+        Admins must use the admin endpoints to remove listings.
 
         Args:
             db: Database session
             listing_id: Listing ID (UUID) to delete
-            user_id: User ID attempting the delete
-            user_role: Role of the user (USER or ADMIN)
+            user_id: User ID attempting the delete (must be owner)
 
         Raises:
-            HTTPException: If listing not found or user is not authorized
+            HTTPException: If listing not found or user is not the owner
         """
         db_listing = ListingRepository.get_by_id(db, listing_id)
         if not db_listing:
@@ -154,7 +156,14 @@ class ListingService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Listing with ID {listing_id} not found",
             )
-        ensure_listing_owner_or_admin(db_listing, user_id, user_role)
+
+        # Check authorization: owner only (admins must use admin endpoints)
+        if db_listing.seller_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only the owner can delete their listing",
+            )
+
         ListingRepository.delete(db, db_listing)
 
 

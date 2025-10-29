@@ -16,10 +16,8 @@ from app.core.enums import AdminActionType, UserRole
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from uuid import UUID
 
     from app.models.admin import AdminAction
-    from app.models.listing import Listing
     from app.models.user import User
 
 
@@ -61,47 +59,6 @@ def ensure_admin(user: User) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin privileges required",
         )
-
-
-def ensure_owner_or_admin(
-    resource_owner_id: UUID, requesting_user_id: UUID, user_role: UserRole
-) -> None:
-    """
-    Ensure user is the resource owner or an admin.
-
-    Pure authorization policy for resource ownership checks. Used for
-    operations like updating/deleting listings, profiles, etc.
-
-    Args:
-        resource_owner_id: ID of the user who owns the resource
-        requesting_user_id: ID of the user making the request
-        user_role: Role of the requesting user
-
-    Raises:
-        HTTPException: 403 if user is neither owner nor admin
-    """
-    if user_role != UserRole.ADMIN and resource_owner_id != requesting_user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not the owner of this resource",
-        )
-
-
-def ensure_listing_owner_or_admin(listing: Listing, user_id: UUID, user_role: UserRole) -> None:
-    """
-    Ensure user is the listing owner or an admin.
-
-    Convenience wrapper around ensure_owner_or_admin specifically for listings.
-
-    Args:
-        listing: Listing object to check ownership of
-        user_id: ID of the user making the request
-        user_role: Role of the requesting user
-
-    Raises:
-        HTTPException: 403 if user is neither owner nor admin
-    """
-    ensure_owner_or_admin(listing.seller_id, user_id, user_role)
 
 
 def ensure_verified(user: User) -> None:
