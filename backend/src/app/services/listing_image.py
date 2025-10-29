@@ -83,7 +83,7 @@ class ListingImageService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Listing not found")
 
         # Optional: Check if listing is active or user is seller
-        if current_user and not listing.is_active and listing.seller_id != current_user.id:
+        if not listing.is_active and (not current_user or listing.seller_id != current_user.id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Not authorized to view this listing's images",
