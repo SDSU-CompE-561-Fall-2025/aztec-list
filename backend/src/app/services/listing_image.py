@@ -47,9 +47,7 @@ class ListingImageService:
         """
         image = ListingImageRepository.get_by_id(db, image_id)
         if not image:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Image not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
 
         # Verify the user is the seller of the listing
         listing = ListingRepository.get_by_id(db, image.listing_id)
@@ -82,9 +80,7 @@ class ListingImageService:
         """
         listing = ListingRepository.get_by_id(db, listing_id)
         if not listing:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Listing not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Listing not found")
 
         # Optional: Check if listing is active or user is seller
         if current_user and not listing.is_active and listing.seller_id != current_user.id:
@@ -116,9 +112,7 @@ class ListingImageService:
         # Verify listing exists and user is the seller
         listing = ListingRepository.get_by_id(db, image.listing_id)
         if not listing:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Listing not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Listing not found")
         if listing.seller_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -244,9 +238,7 @@ class ListingImageService:
         # Verify listing exists and user is the seller
         listing = ListingRepository.get_by_id(db, listing_id)
         if not listing:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Listing not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Listing not found")
         if listing.seller_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -256,9 +248,7 @@ class ListingImageService:
         # Get the image
         image = ListingImageRepository.get_by_id(db, image_id)
         if not image:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Image not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
 
         # Verify image belongs to the listing
         if image.listing_id != listing_id:
@@ -271,8 +261,6 @@ class ListingImageService:
         updated_image = ListingImageRepository.set_thumbnail(db, image)
 
         # Update listing thumbnail_url
-        ListingImageRepository.update_listing_thumbnail_url(
-            db, listing_id, str(updated_image.url)
-        )
+        ListingImageRepository.update_listing_thumbnail_url(db, listing_id, str(updated_image.url))
 
         return updated_image

@@ -50,11 +50,7 @@ class ListingImageRepository:
         Returns:
             list[Image]: List of images (empty if none found)
         """
-        query = (
-            select(Image)
-            .where(Image.listing_id == listing_id)
-            .order_by(Image.created_at.asc())
-        )
+        query = select(Image).where(Image.listing_id == listing_id).order_by(Image.created_at.asc())
         return list(db.scalars(query).all())
 
     @staticmethod
@@ -69,9 +65,7 @@ class ListingImageRepository:
         Returns:
             Image | None: Thumbnail image if found, None otherwise
         """
-        query = select(Image).where(
-            Image.listing_id == listing_id, Image.is_thumbnail
-        )
+        query = select(Image).where(Image.listing_id == listing_id, Image.is_thumbnail)
         return db.scalars(query).first()
 
     @staticmethod
