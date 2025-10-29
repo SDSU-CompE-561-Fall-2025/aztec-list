@@ -10,7 +10,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Uuid
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -28,12 +28,13 @@ class Image(Base):
     """
 
     __tablename__ = "images"
+    __table_args__ = (UniqueConstraint("listing_id", "url", name="uq_images_listing_url"),)
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4, index=True)
     listing_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("listings.id", ondelete="CASCADE"), index=True
     )
-    url: Mapped[str] = mapped_column(String, unique=True)
+    url: Mapped[str] = mapped_column(String)
     is_thumbnail: Mapped[bool] = mapped_column(Boolean, default=False)
     alt_text: Mapped[str | None] = mapped_column(String)
     created_at: Mapped[datetime] = mapped_column(
