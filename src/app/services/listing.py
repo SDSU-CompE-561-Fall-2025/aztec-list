@@ -4,19 +4,26 @@ Listing service.
 This module contains business logic for listing operations.
 """
 
-import uuid
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
 
-from app.models.listing import Listing
 from app.repository.listing import ListingRepository
-from app.schemas.listing import (
-    ListingCreate,
-    ListingSearchParams,
-    ListingUpdate,
-    UserListingsParams,
-)
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.orm import Session
+
+    from app.models.listing import Listing
+    from app.schemas.listing import (
+        ListingCreate,
+        ListingSearchParams,
+        ListingUpdate,
+        UserListingsParams,
+    )
 
 
 class ListingService:
@@ -87,72 +94,77 @@ class ListingService:
         """
         return ListingRepository.create(db, seller_id, listing)
 
-    def update(self, db: Session, listing_id: uuid.UUID, listing: ListingUpdate) -> Listing:
+    def update(
+        self,
+        db: Session,
+        listing_id: uuid.UUID,
+        user_id: uuid.UUID,
+        listing: ListingUpdate,
+    ) -> Listing:
         """
-        Update listing fields with validation.
+        Update listing fields with validation and authorization check (owner only).
+
+        Only the listing owner can update their own listing.
+        Admins should use admin endpoints for moderation actions.
 
         Args:
             db: Database session
             listing_id: Listing ID to update
+            user_id: User ID attempting the update (must be owner)
             listing: Listing update data (only provided fields will be updated)
 
         Returns:
             Listing: Updated listing
 
         Raises:
-            HTTPException: If listing not found
+            HTTPException: If listing not found or user is not the owner
         """
         db_listing = ListingRepository.get_by_id(db, listing_id)
         if not db_listing:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Listing with ID {listing_id} not found",
+            )
+
+        # Check authorization: owner only (admins must use admin endpoints)
+        if db_listing.seller_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only the owner can update their listing",
             )
 
         return ListingRepository.update(db, db_listing, listing)
 
-    def delete(self, db: Session, listing_id: uuid.UUID) -> None:
+    def delete(self, db: Session, listing_id: uuid.UUID, user_id: uuid.UUID) -> None:
         """
-        Delete a listing with validation.
+        Permanently delete a listing (owner only).
+
+        Only the listing owner can delete their own listing.
+        Admins must use the admin endpoints to remove listings.
 
         Args:
             db: Database session
             listing_id: Listing ID (UUID) to delete
+            user_id: User ID attempting the delete (must be owner)
 
         Raises:
-            HTTPException: If listing not found
+            HTTPException: If listing not found or user is not the owner
         """
         db_listing = ListingRepository.get_by_id(db, listing_id)
         if not db_listing:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Listing with ID {listing_id} not found",
+            )
+
+        # Check authorization: owner only (admins must use admin endpoints)
+        if db_listing.seller_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only the owner can delete their listing",
             )
 
         ListingRepository.delete(db, db_listing)
-
-    def deactivate(self, db: Session, listing_id: uuid.UUID) -> Listing:
-        """
-        Deactivate a listing (soft delete) with validation.
-
-        Args:
-            db: Database session
-            listing_id: Listing ID to deactivate
-
-        Returns:
-            Listing: Deactivated listing
-
-        Raises:
-            HTTPException: If listing not found
-        """
-        db_listing = ListingRepository.get_by_id(db, listing_id)
-        if not db_listing:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Listing with ID {listing_id} not found",
-            )
-
-        return ListingRepository.deactivate(db, db_listing)
 
 
 # Create a singleton instance

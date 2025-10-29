@@ -29,6 +29,8 @@ ignore = [
     "D212",   # keep summary on first line
     "D413",   # blank line after last docs section
     "D1",     # ignore all "missing docstring" rules
+    "TD",     # ignore all TODO rules
+    "FIX002", # line contains TODO
 ]
 
 [tool.ruff.format]

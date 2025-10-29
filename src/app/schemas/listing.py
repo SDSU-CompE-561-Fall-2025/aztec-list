@@ -10,7 +10,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, HttpUrl
 
-from app.core.enums import Condition, ListingSortOrder
+from app.core.enums import Category, Condition, ListingSortOrder
 
 
 class ListingBase(BaseModel):
@@ -19,7 +19,7 @@ class ListingBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=200, description="Short name of the item")
     description: str = Field(..., min_length=1, description="Detailed description of the item")
     price: Decimal = Field(..., ge=0, decimal_places=2, description="Price in USD, must be >= 0")
-    category: str = Field(..., min_length=1, description="Category (e.g., electronics, books)")
+    category: Category = Field(..., description="Category of the item")
     condition: Condition = Field(..., description="Item condition")
 
 
@@ -33,7 +33,7 @@ class ListingUpdate(BaseModel):
     title: str | None = Field(None, min_length=1, max_length=200)
     description: str | None = Field(None, min_length=1)
     price: Decimal | None = Field(None, ge=0, decimal_places=2)
-    category: str | None = Field(None, min_length=1)
+    category: Category | None = None
     condition: Condition | None = None
     is_active: bool | None = None
 
@@ -42,7 +42,7 @@ class ListingSearchParams(BaseModel):
     """Schema for listing search/filter parameters."""
 
     search_text: str | None = Field(None, description="Full-text search over title/description")
-    category: str | None = Field(None, description="Filter by category")
+    category: Category | None = Field(None, description="Filter by category")
     min_price: Decimal | None = Field(None, ge=0, description="Minimum price filter")
     max_price: Decimal | None = Field(None, ge=0, description="Maximum price filter")
     condition: Condition | None = Field(None, description="Filter by condition")

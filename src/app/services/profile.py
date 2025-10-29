@@ -4,14 +4,21 @@ Profile service.
 This module contains business logic for profile operations.
 """
 
-import uuid
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
 
-from app.models.profile import Profile
 from app.repository.profile import ProfileRepository
-from app.schemas.profile import ProfileCreate, ProfilePictureUpdate, ProfileUpdate
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.orm import Session
+
+    from app.models.profile import Profile
+    from app.schemas.profile import ProfileCreate, ProfilePictureUpdate, ProfileUpdate
 
 
 class ProfileService:

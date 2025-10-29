@@ -4,13 +4,20 @@ Profile repository.
 This module provides data access layer for profile operations.
 """
 
-import uuid
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 from app.models.profile import Profile
-from app.schemas.profile import ProfileCreate, ProfileUpdate
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.orm import Session
+
+    from app.schemas.profile import ProfileCreate, ProfileUpdate
 
 
 class ProfileRepository:

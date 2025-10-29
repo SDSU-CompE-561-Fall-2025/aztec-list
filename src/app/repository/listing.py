@@ -4,19 +4,26 @@ Listing repository.
 This module provides data access layer for listing operations.
 """
 
-import uuid
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
 
 from app.core.enums import ListingSortOrder
 from app.models.listing import Listing
-from app.schemas.listing import (
-    ListingCreate,
-    ListingSearchParams,
-    ListingUpdate,
-    UserListingsParams,
-)
+
+if TYPE_CHECKING:
+    import uuid
+
+    from sqlalchemy.orm import Session
+
+    from app.schemas.listing import (
+        ListingCreate,
+        ListingSearchParams,
+        ListingUpdate,
+        UserListingsParams,
+    )
 
 
 class ListingRepository:
@@ -66,7 +73,7 @@ class ListingRepository:
             query = query.order_by(Listing.created_at.desc())
 
         # Apply offset-based pagination
-        # Implement cursor-based pagination in the future for better performance at scale
+        # TODO: Implement cursor-based pagination in the future for better performance at scale
         query = query.offset(params.offset).limit(params.limit)
         return list(db.scalars(query).all())
 
@@ -121,7 +128,7 @@ class ListingRepository:
             query = query.order_by(Listing.created_at.desc())
 
         # Apply offset-based pagination
-        # Implement cursor-based pagination in the future for better performance at scale
+        # TODO: Implement cursor-based pagination in the future for better performance at scale
         query = query.offset(params.offset).limit(params.limit)
 
         return list(db.scalars(query).all())
@@ -179,7 +186,7 @@ class ListingRepository:
     @staticmethod
     def delete(db: Session, db_listing: Listing) -> None:
         """
-        Delete listing.
+        Permanently delete listing from database.
 
         Args:
             db: Database session
@@ -187,20 +194,3 @@ class ListingRepository:
         """
         db.delete(db_listing)
         db.commit()
-
-    @staticmethod
-    def deactivate(db: Session, db_listing: Listing) -> Listing:
-        """
-        Deactivate listing (soft delete).
-
-        Args:
-            db: Database session
-            db_listing: Listing instance to deactivate
-
-        Returns:
-            Listing: Deactivated listing
-        """
-        db_listing.is_active = False
-        db.commit()
-        db.refresh(db_listing)
-        return db_listing

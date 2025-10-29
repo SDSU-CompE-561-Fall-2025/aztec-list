@@ -9,7 +9,7 @@ from sqlalchemy import DateTime, Enum, ForeignKey, Numeric, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.core.enums import Condition
+from app.core.enums import Category, Condition
 
 if TYPE_CHECKING:
     from app.models.user import User
@@ -27,11 +27,13 @@ class Listing(Base):
     __tablename__ = "listings"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4, index=True)
-    seller_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    seller_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     title: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(Text)
     price: Mapped[Decimal] = mapped_column(Numeric(precision=10, scale=2))
-    category: Mapped[str] = mapped_column(String, index=True)
+    category: Mapped[Category] = mapped_column(Enum(Category), index=True)
     condition: Mapped[Condition] = mapped_column(Enum(Condition))
     thumbnail_url: Mapped[str | None] = mapped_column(String)
     is_active: Mapped[bool] = mapped_column(default=True, index=True)
@@ -47,4 +49,3 @@ class Listing(Base):
     # Relationships
     seller: Mapped[User] = relationship(back_populates="listings")
     # images: One-to-many with Image model (to be implemented)
-    # admin_actions: One-to-many with AdminAction model (to be implemented)

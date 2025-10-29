@@ -5,8 +5,9 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user_id
-from app.models import Listing
+from app.core.dependencies import require_not_banned
+from app.models.listing import Listing
+from app.models.user import User
 from app.schemas.listing import (
     ListingCreate,
     ListingPublic,
@@ -29,7 +30,7 @@ listing_router = APIRouter(
 )
 async def create_listing(
     listing: ListingCreate,
-    seller_id: Annotated[uuid.UUID, Depends(get_current_user_id)],
+    current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Listing:
     """
@@ -37,16 +38,16 @@ async def create_listing(
 
     Args:
         listing: Listing creation data (title, description, price, category, condition)
-        seller_id: Authenticated user's ID from the JWT token (automatically set as seller)
+        current_user: Authenticated user (automatically set as seller)
         db: Database session
 
     Returns:
         ListingPublic: Created listing information
 
     Raises:
-        HTTPException: 401 if not authenticated, 400 if validation fails
+        HTTPException: 401 if not authenticated, 403 if banned, 400 if validation fails
     """
-    return listing_service.create(db, seller_id, listing)
+    return listing_service.create(db, current_user.id, listing)
 
 
 @listing_router.get(
@@ -84,55 +85,66 @@ async def get_listing_by_id(
 async def update_listing(
     listing_id: uuid.UUID,
     listing: ListingUpdate,
+    current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Listing:
     """
-    Update an existing listing's details.
+    Update an existing listing's details (owner only).
 
     All fields are optional; only provided fields will be updated.
-    The is_active field can be toggled to temporarily hide the listing.
+    The is_active field can be toggled to temporarily hide/show the listing
+    (useful for sellers who want to pause visibility without deleting).
+
+    Only the listing owner can update their listing.
+    Admins must use admin endpoints for any listing modifications.
 
     Args:
         listing_id: ID of the listing to update
         listing: Listing update data (any combination of title, description, price, etc.)
+        current_user: Authenticated user from JWT token
         db: Database session
 
     Returns:
         ListingPublic: Updated listing information
 
     Raises:
-        HTTPException: 404 if listing not found, 400 if validation fails
+        HTTPException: 404 if listing not found, 403 if not owner or banned, 400 if validation fails
     """
-    return listing_service.update(db, listing_id, listing)
+    return listing_service.update(db, listing_id, current_user.id, listing)
 
 
 @listing_router.delete(
     "/{listing_id}",
-    summary="Delete a listing (owner or admin)",
+    summary="Delete a listing (owner only)",
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
 )
 async def delete_listing_by_id(
     listing_id: uuid.UUID,
+    current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     """
-    Permanently delete a listing.
+    Permanently delete a listing from the database (owner only).
 
-    This is a hard delete that removes the listing from the database.
-    For temporary hiding, use PATCH to set is_active to false instead.
+    This is a hard delete that cannot be undone.
+    To temporarily hide a listing instead, use PATCH to set is_active=false.
+
+    Only the listing owner can delete their own listing.
+    Admins must use the admin endpoints (POST /admin/actions/remove-listing) to remove listings.
 
     Args:
         listing_id: ID of the listing to delete
+        current_user: Authenticated user from JWT token
         db: Database session
 
     Returns:
         None: Returns 204 No Content on success
 
     Raises:
-        HTTPException: 404 if listing not found, 401 if not authenticated
+        HTTPException: 404 if listing not found, 403 if not owner or banned, 401 if not authenticated
     """
-    listing_service.delete(db, listing_id)
+    listing_service.delete(db, listing_id, current_user.id)
 
 
 @listing_router.get(
