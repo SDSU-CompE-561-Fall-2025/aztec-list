@@ -129,3 +129,26 @@ async def update_profile_picture(
         HTTPException: 401 if not authenticated, 403 if banned, 404 if profile not found, 422 if invalid URL format
     """
     return profile_service.update_profile_picture(db, current_user.id, data)
+
+
+@profile_router.delete(
+    "/", summary="Delete a user profile", response_model=None
+)
+async def delete_profile(
+    current_user: Annotated[User, Depends(require_not_banned)],
+    db: Annotated[Session, Depends(get_db)],
+) -> None:
+    """
+    Delete the authenticated user's profile.
+
+    Args:
+        current_user: Authenticated user from the JWT token (must not be banned)
+        db: Database session
+
+    Returns:
+        None
+
+    Raises:
+        HTTPException: 401 if not authenticated, 403 if banned, 404 if profile not found, 500 on database error
+    """
+    return profile_service.delete(db, current_user.id)
