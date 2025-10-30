@@ -18,8 +18,6 @@ if TYPE_CHECKING:
 
     from sqlalchemy.orm import Session
 
-    from app.schemas.listing_image import ImageCreate, ImageUpdate
-
 
 class ListingImageRepository:
     """Repository for listing image data access."""
@@ -69,23 +67,31 @@ class ListingImageRepository:
         return db.scalars(query).first()
 
     @staticmethod
-    def create(db: Session, listing_id: uuid.UUID, image: ImageCreate) -> Image:
+    def create(
+        db: Session,
+        listing_id: uuid.UUID,
+        url: str,
+        is_thumbnail: bool,  # noqa: FBT001
+        alt_text: str | None,
+    ) -> Image:
         """
         Create a new image.
 
         Args:
             db: Database session
             listing_id: Listing ID from the URL path
-            image: Image creation data (url, is_thumbnail, alt_text)
+            url: New URL
+            is_thumbnail: New thumbnail status
+            alt_text: New alt text (optional)
 
         Returns:
             Image: Created image
         """
         db_image = Image(
             listing_id=listing_id,
-            url=image.url,
-            is_thumbnail=image.is_thumbnail,
-            alt_text=image.alt_text,
+            url=url,
+            is_thumbnail=is_thumbnail,
+            alt_text=alt_text,
         )
         db.add(db_image)
         db.commit()
@@ -93,21 +99,34 @@ class ListingImageRepository:
         return db_image
 
     @staticmethod
-    def update(db: Session, db_image: Image, image_update: ImageUpdate) -> Image:
+    def update(
+        db: Session,
+        db_image: Image,
+        url: str | None,
+        is_thumbnail: bool | None,  # noqa: FBT001
+        alt_text: str | None,
+    ) -> Image:
         """
         Update an existing image.
 
         Args:
             db: Database session
             db_image: Existing image object
-            image_update: Fields to update
+            url: New URL (optional)
+            is_thumbnail: New thumbnail status (optional)
+            alt_text: New alt text (optional)
 
         Returns:
             Image: Updated image
         """
-        update_data = image_update.model_dump(exclude_unset=True)
-        for field, value in update_data.items():
-            setattr(db_image, field, value)
+        if url is not None:
+            db_image.url = url
+
+        if is_thumbnail is not None:
+            db_image.is_thumbnail = is_thumbnail
+
+        if alt_text is not None:
+            db_image.alt_text = alt_text
 
         db.commit()
         db.refresh(db_image)

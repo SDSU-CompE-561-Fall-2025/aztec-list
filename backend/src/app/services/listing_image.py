@@ -12,7 +12,6 @@ from fastapi import HTTPException, status
 
 from app.repository.listing import ListingRepository
 from app.repository.listing_image import ListingImageRepository
-from app.schemas.listing_image import ImageCreate, ImageUpdate
 
 if TYPE_CHECKING:
     import uuid
@@ -21,6 +20,7 @@ if TYPE_CHECKING:
 
     from app.models.listing_image import Image
     from app.models.user import User
+    from app.schemas.listing_image import ImageCreate, ImageUpdate
 
 
 class ListingImageService:
@@ -104,12 +104,9 @@ class ListingImageService:
             ListingImageRepository.clear_thumbnail_for_listing(db, listing_id)
 
         # Create the image with correct thumbnail flag (use listing_id from path)
-        image_data = ImageCreate(
-            url=image.url,
-            is_thumbnail=should_be_thumbnail,
-            alt_text=image.alt_text,
+        db_image = ListingImageRepository.create(
+            db, listing_id, str(image.url), should_be_thumbnail, image.alt_text
         )
-        db_image = ListingImageRepository.create(db, listing_id, image_data)
 
         # Update listing thumbnail_url if this is the thumbnail
         if should_be_thumbnail:
@@ -151,7 +148,9 @@ class ListingImageService:
             ListingImageRepository.update_listing_thumbnail_url(db, db_image.listing_id, None)
 
         # Update the image
-        updated_image = ListingImageRepository.update(db, db_image, image_update)
+        updated_image = ListingImageRepository.update(
+            db, db_image, str(image_update.url), image_update.is_thumbnail, image_update.alt_text
+        )
 
         # Update listing thumbnail_url if this image is now/still the thumbnail
         # and either: became thumbnail OR URL changed
