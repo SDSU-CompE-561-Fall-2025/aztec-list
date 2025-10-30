@@ -38,9 +38,3 @@ class ImagePublic(ImageBase):
     created_at: datetime = Field(..., description="Timestamp when the image was created")
 
     model_config = {"from_attributes": True}
-
-
-class SetThumbnailRequest(BaseModel):
-    """Schema for setting a listing thumbnail."""
-
-    image_id: uuid.UUID = Field(..., description="ID of the image to set as thumbnail")

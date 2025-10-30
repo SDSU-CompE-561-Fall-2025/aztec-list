@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_user, get_db
 from app.models.listing_image import Image
 from app.models.user import User
-from app.schemas.listing_image import ImageCreate, ImagePublic, ImageUpdate, SetThumbnailRequest
+from app.schemas.listing_image import ImageCreate, ImagePublic, ImageUpdate
 from app.services.listing_image import ListingImageService
 
 listing_images_router = APIRouter(
@@ -155,7 +155,7 @@ async def delete_image(
 )
 async def set_thumbnail(
     listing_id: uuid.UUID,
-    request: SetThumbnailRequest,
+    image_id: uuid.UUID,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> Image:
@@ -167,7 +167,7 @@ async def set_thumbnail(
 
     Args:
         listing_id: ID of the listing
-        request: Request containing image_id to set as thumbnail
+        image_id: ID of the image
         db: Database session
         current_user: Current authenticated user
 
@@ -179,4 +179,4 @@ async def set_thumbnail(
         HTTPException: 403 if user is not the seller
         HTTPException: 400 if image doesn't belong to the listing
     """
-    return ListingImageService.set_thumbnail(db, listing_id, request.image_id, current_user)
+    return ListingImageService.set_thumbnail(db, listing_id, image_id, current_user)
