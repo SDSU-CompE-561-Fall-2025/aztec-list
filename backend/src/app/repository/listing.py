@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
+from sqlalchemy.orm import selectinload
 
 from app.core.enums import ListingSortOrder
 from app.models.listing import Listing
@@ -16,6 +17,7 @@ from app.models.listing import Listing
 if TYPE_CHECKING:
     import uuid
 
+    from sqlalchemy import Select
     from sqlalchemy.orm import Session
 
     from app.schemas.listing import (
@@ -30,34 +32,9 @@ class ListingRepository:
     """Repository for listing data access."""
 
     @staticmethod
-    def get_by_id(db: Session, listing_id: uuid.UUID) -> Listing | None:
-        """
-        Get listing by ID.
-
-        Args:
-            db: Database session
-            listing_id: Listing ID (UUID)
-
-        Returns:
-            Listing | None: Listing if found, None otherwise
-        """
-        return db.get(Listing, listing_id)
-
-    @staticmethod
-    def get_by_seller(
-        db: Session, seller_id: uuid.UUID, params: UserListingsParams
-    ) -> list[Listing]:
-        """
-        Get all listings by seller ID with pagination and sorting.
-
-        Args:
-            db: Database session
-            seller_id: User ID of the seller
-            params: Pagination and filtering parameters
-
-        Returns:
-            list[Listing]: List of listings (empty if none found)
-        """
+    def _apply_seller_filters(
+        seller_id: uuid.UUID, params: UserListingsParams
+    ) -> Select[tuple[Listing]]:
         query = select(Listing).where(Listing.seller_id == seller_id)
 
         # Filter by active status unless include_inactive is True
@@ -72,23 +49,10 @@ class ListingRepository:
         else:  # default to RECENT
             query = query.order_by(Listing.created_at.desc())
 
-        # Apply offset-based pagination
-        # TODO: Implement cursor-based pagination in the future for better performance at scale
-        query = query.offset(params.offset).limit(params.limit)
-        return list(db.scalars(query).all())
+        return query
 
     @staticmethod
-    def search(db: Session, params: ListingSearchParams) -> list[Listing]:
-        """
-        Search listings with filters, pagination, and sorting.
-
-        Args:
-            db: Database session
-            params: Search parameters including filters, pagination, and sort options
-
-        Returns:
-            list[Listing]: List of matching listings (empty if none found)
-        """
+    def _apply_search_filters(params: ListingSearchParams) -> Select[tuple[Listing]]:
         query = select(Listing).where(Listing.is_active)
 
         # Apply filters
@@ -127,11 +91,98 @@ class ListingRepository:
         else:  # default to RECENT
             query = query.order_by(Listing.created_at.desc())
 
+        return query
+
+    @staticmethod
+    def get_by_id(db: Session, listing_id: uuid.UUID) -> Listing | None:
+        """
+        Get listing by ID with images eagerly loaded.
+
+        Args:
+            db: Database session
+            listing_id: Listing ID (UUID)
+
+        Returns:
+            Listing | None: Listing if found, None otherwise
+        """
+        return db.scalar(
+            select(Listing).where(Listing.id == listing_id).options(selectinload(Listing.images))
+        )
+
+    @staticmethod
+    def get_by_seller(
+        db: Session, seller_id: uuid.UUID, params: UserListingsParams
+    ) -> list[Listing]:
+        """
+        Get all listings by seller ID with pagination and sorting.
+
+        Args:
+            db: Database session
+            seller_id: User ID of the seller
+            params: Pagination and filtering parameters
+
+        Returns:
+            list[Listing]: List of listings (empty if none found)
+        """
+        query = ListingRepository._apply_seller_filters(seller_id, params)
+
+        # Apply offset-based pagination
+        # TODO: Implement cursor-based pagination in the future for better performance at scale
+        query = query.offset(params.offset).limit(params.limit)
+        return list(db.scalars(query).all())
+
+    @staticmethod
+    def count_by_seller(db: Session, seller_id: uuid.UUID, params: UserListingsParams) -> int:
+        """
+        Get all listings by seller ID with pagination and sorting.
+
+        Args:
+            db: Database session
+            seller_id: User ID of the seller
+            params: Pagination and filtering parameters
+
+        Returns:
+            list[Listing]: List of listings (empty if none found)
+        """
+        query = ListingRepository._apply_seller_filters(seller_id, params)
+
+        # Count the listings
+        return db.scalar(select(func.count()).select_from(query.subquery())) or 0
+
+    @staticmethod
+    def get_filtered(db: Session, params: ListingSearchParams) -> list[Listing]:
+        """
+        Get listings with filters, pagination, and sorting.
+
+        Args:
+            db: Database session
+            params: Search parameters including filters, pagination, and sort options
+
+        Returns:
+            list[Listing]: List of matching listings (empty if none found)
+        """
+        query = ListingRepository._apply_search_filters(params)
+
         # Apply offset-based pagination
         # TODO: Implement cursor-based pagination in the future for better performance at scale
         query = query.offset(params.offset).limit(params.limit)
 
         return list(db.scalars(query).all())
+
+    @staticmethod
+    def count_filtered(db: Session, params: ListingSearchParams) -> int:
+        """
+        Get listings with filters, pagination, and sorting.
+
+        Args:
+            db: Database session
+            params: Search parameters including filters, pagination, and sort options
+
+        Returns:
+            list[Listing]: List of matching listings (empty if none found)
+        """
+        query = ListingRepository._apply_search_filters(params)
+        return db.scalar(select(func.count()).select_from(query.subquery())) or 0
 
     @staticmethod
     def create(db: Session, seller_id: uuid.UUID, listing: ListingCreate) -> Listing:
