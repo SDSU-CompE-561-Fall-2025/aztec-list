@@ -132,7 +132,10 @@ async def update_profile_picture(
 
 
 @profile_router.delete(
-    "/", summary="Delete a user profile", response_model=None
+    "/",
+    summary="Delete a user profile",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
 )
 async def delete_profile(
     current_user: Annotated[User, Depends(require_not_banned)],

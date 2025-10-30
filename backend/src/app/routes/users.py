@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -65,12 +65,16 @@ async def get_user_listings(
     return listing_service.get_by_seller(db, user_id, params)
 
 
+
 @user_router.delete(
-    "/{user_id}", summary="Delete a user", response_model=None
+    "/{user_id}",
+    summary="Delete a user",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
 )
 async def delete_user(
+    current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_not_banned)]
 ) -> None:
     """
     Delete the current user's account.
