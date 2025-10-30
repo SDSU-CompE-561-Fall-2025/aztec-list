@@ -49,6 +49,44 @@ class ModerationSettings(BaseModel):
     )
 
 
+class CORSSettings(BaseModel):
+    """
+    Cross-Origin Resource Sharing (CORS) configuration.
+
+    Configure allowed origins, methods, and headers for cross-origin requests.
+    """
+
+    allowed_origins: list[str] = Field(
+        default=["http://localhost:3000", "http://localhost:5173"],
+        description="List of allowed origins for CORS (frontend URLs)",
+    )
+    allow_credentials: bool = Field(
+        default=True,
+        description="Allow cookies and authentication headers in CORS requests",
+    )
+    allowed_methods: list[str] = Field(
+        default=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        description="HTTP methods allowed for CORS requests",
+    )
+    allowed_headers: list[str] = Field(
+        default=["*"],
+        description="HTTP headers allowed in CORS requests (* allows all)",
+    )
+
+
+class LoggingSettings(BaseModel):
+    """Application logging configuration."""
+
+    level: str = Field(
+        default="INFO",
+        description="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+    )
+    format: str = Field(
+        default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        description="Log message format string",
+    )
+
+
 class Settings(BaseSettings):
     """
     Application settings loaded from environment variables.
@@ -70,6 +108,8 @@ class Settings(BaseSettings):
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
     a2: Argon2Settings = Field(default_factory=Argon2Settings)
     moderation: ModerationSettings = Field(default_factory=ModerationSettings)
+    cors: CORSSettings = Field(default_factory=CORSSettings)
+    logging: LoggingSettings = Field(default_factory=LoggingSettings)
 
 
 @lru_cache
