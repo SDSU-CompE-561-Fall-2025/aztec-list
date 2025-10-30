@@ -48,6 +48,20 @@ async def get_user_listings(
     user_id: uuid.UUID,
     params: Annotated[UserListingsParams, Depends()],
 ) -> list[Listing]:
+    """
+    Get all listings posted by a specific user.
+
+    Args:
+        db: Database session
+        user_id: The user's unique identifier (UUID)
+        params: Query parameters for filtering and pagination
+
+    Returns:
+        list[ListingPublic]: List of listings created by the user
+
+    Raises:
+        HTTPException: 404 if user not found, 500 on database error
+    """
     return listing_service.get_by_seller(db, user_id, params)
 
 
@@ -58,4 +72,17 @@ async def delete_user(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(require_not_banned)]
 ) -> None:
+    """
+    Delete the current user's account.
+
+    Args:
+        db: Database session
+        current_user: The authenticated user (must not be banned)
+
+    Returns:
+        None
+
+    Raises:
+        HTTPException: 401 if not authenticated, 403 if banned, 500 on database error
+    """
     return user_service.delete(db, current_user.id)
