@@ -3,14 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.routes import api_router
 from app.core.database import Base, engine
-from app.core.middleware import RequestLoggingMiddleware, configure_logging
+from app.core.logging import configure_logging
+from app.core.middleware import RequestLoggingMiddleware
 from app.core.settings import settings
 
-# Configure logging
-configure_logging(
-    log_level=settings.logging.level,
-    use_json=False  # Set to False for local development if you prefer readable logs
-)
+# Configure logging from settings
+configure_logging(settings.logging)
 
 # Create database tables
 # If the tables do not exist, create them
@@ -24,7 +22,13 @@ app = FastAPI(
     redoc_url=settings.app.redoc_url,
 )
 
-# Add CORS middleware (must be added before other middleware)
+# Middleware order matters! Added in reverse order of execution.
+# Execution flow: RequestLogging → CORS → Routes
+
+# Add request logging middleware first (outermost - logs all requests)
+app.add_middleware(RequestLoggingMiddleware)
+
+# Add CORS middleware second (validates origins after logging)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors.allowed_origins,
@@ -32,8 +36,5 @@ app.add_middleware(
     allow_methods=settings.cors.allowed_methods,
     allow_headers=settings.cors.allowed_headers,
 )
-
-# Add request logging middleware
-app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(api_router)

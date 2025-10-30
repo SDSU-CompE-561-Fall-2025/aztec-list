@@ -85,6 +85,22 @@ class LoggingSettings(BaseModel):
         default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         description="Log message format string",
     )
+    use_json: bool = Field(
+        default=False,
+        description="Use JSON formatting for logs (recommended for production)",
+    )
+    uvicorn_access_level: str = Field(
+        default="WARNING",
+        description="Logging level for Uvicorn access logs",
+    )
+    uvicorn_error_level: str = Field(
+        default="INFO",
+        description="Logging level for Uvicorn error logs",
+    )
+    excluded_paths: list[str] = Field(
+        default=["/health", "/docs", "/redoc", "/openapi.json"],
+        description="Paths to exclude from detailed request logging",
+    )
 
 
 class Settings(BaseSettings):

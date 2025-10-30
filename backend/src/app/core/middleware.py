@@ -1,61 +1,28 @@
 """
-Middleware components for request processing.
+HTTP middleware for request logging and tracking.
 
-This module provides middleware for:
-- Request/response logging with performance metrics
-- Error tracking and correlation IDs
-- Request context enrichment
+This module provides:
+- Request/response logging with correlation IDs
+- Performance timing
+- Configurable path exclusions
 """
 
-import json
 import logging
 import time
 import uuid
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import ClassVar
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
+
+from app.core.settings import settings
 
 logger = logging.getLogger(__name__)
 
 # HTTP status code threshold for error logging
 HTTP_ERROR_THRESHOLD = 400
-
-
-class JsonFormatter(logging.Formatter):
-    """
-    Formatter that outputs logs as JSON for structured logging.
-
-    Compatible with log aggregation tools like ELK, Datadog, CloudWatch, etc.
-    """
-
-    def format(self, record: logging.LogRecord) -> str:
-        """Format log record as JSON string."""
-        log_data = {
-            "timestamp": self.formatTime(record, self.datefmt),
-            "level": record.levelname,
-            "logger": record.name,
-            "message": record.getMessage(),
-        }
-
-        # Add extra fields from the log record
-        for key, value in record.__dict__.items():
-            if key not in [
-                'name', 'msg', 'args', 'created', 'filename', 'funcName',
-                'levelname', 'levelno', 'lineno', 'module', 'msecs',
-                'message', 'pathname', 'process', 'processName',
-                'relativeCreated', 'thread', 'threadName', 'exc_info',
-                'exc_text', 'stack_info', 'taskName'
-            ]:
-                log_data[key] = value
-
-        # Add exception info if present
-        if record.exc_info:
-            log_data['exception'] = self.formatException(record.exc_info)
-
-        return json.dumps(log_data)
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -68,10 +35,20 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     - Correlation ID for request tracking
     - Error details for failed requests
 
-    Excludes health check and docs endpoints from detailed logging.
+    Reads configuration from app settings.
     """
 
-    EXCLUDED_PATHS: ClassVar[set[str]] = {"/health", "/docs", "/redoc", "/openapi.json"}
+    def __init__(self, app: ASGIApp) -> None:
+        """
+        Initialize middleware.
+
+        Excluded paths are read from settings during middleware initialization.
+
+        Args:
+            app: ASGI application
+        """
+        super().__init__(app)
+        self.excluded_paths = set(settings.logging.excluded_paths)
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """
@@ -89,7 +66,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         request.state.correlation_id = correlation_id
 
         # Skip detailed logging for excluded paths
-        if request.url.path in self.EXCLUDED_PATHS:
+        if request.url.path in self.excluded_paths:
             response = await call_next(request)
             response.headers["X-Correlation-ID"] = correlation_id
             return response
@@ -102,7 +79,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             process_time = time.perf_counter() - start_time
 
-            # Determine log level and message based on status code
+            # Determine log level based on status code
             log_level = (
                 logging.WARNING if response.status_code >= HTTP_ERROR_THRESHOLD else logging.INFO
             )
@@ -110,14 +87,17 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             # Get status text from HTTPStatus enum
             try:
                 status_text = HTTPStatus(response.status_code).phrase
-                message = f"{request.method} {request.url.path} {response.status_code} {status_text}"
             except ValueError:
                 # Handle non-standard status codes
-                message = f"{request.method} {request.url.path} {response.status_code}"
+                status_text = "Unknown"
 
             logger.log(
                 log_level,
-                message,
+                "%s %s %d %s",
+                request.method,
+                request.url.path,
+                response.status_code,
+                status_text,
                 extra={
                     "correlation_id": correlation_id,
                     "method": request.method,
@@ -133,12 +113,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             response.headers["X-Correlation-ID"] = correlation_id
             response.headers["X-Process-Time"] = f"{process_time:.3f}"
 
-            return response
-
         except Exception as e:
             process_time = time.perf_counter() - start_time
             logger.exception(
-                f"{request.method} {request.url.path} failed",
+                "%s %s failed",
+                request.method,
+                request.url.path,
                 extra={
                     "correlation_id": correlation_id,
                     "method": request.method,
@@ -150,39 +130,5 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 },
             )
             raise
-
-
-def configure_logging(log_level: str = "INFO", use_json: bool = True) -> None:
-    """
-    Configure application-wide logging.
-
-    Sets up structured logging with consistent formatting across the application.
-
-    Args:
-        log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        use_json: Whether to use JSON formatting (recommended for production)
-    """
-    # Create handler with appropriate formatter
-    handler = logging.StreamHandler()
-
-    if use_json:
-        handler.setFormatter(JsonFormatter(datefmt="%Y-%m-%dT%H:%M:%S"))
-    else:
-        # Human-readable format for local development
-        handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                datefmt="%Y-%m-%d %H:%M:%S",
-            )
-        )
-
-    # Configure root logger
-    logging.basicConfig(
-        level=getattr(logging, log_level.upper()),
-        handlers=[handler],
-        force=True,  # Override any existing configuration
-    )
-
-    # Reduce noise from uvicorn
-    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
-    logging.getLogger("uvicorn.error").setLevel(logging.INFO)
+        else:
+            return response
