@@ -100,12 +100,20 @@ async def update_image(
     Update an existing image.
 
     Only the seller of the listing can update images.
-    If is_thumbnail is set to True, this image will become the thumbnail
-    and all other images will have is_thumbnail set to False.
+
+    Use cases:
+    - Update image URL
+    - Update alt text
+    - Set/unset as thumbnail (is_thumbnail: true/false)
+
+    When is_thumbnail is set to true:
+    - This image becomes the listing's thumbnail
+    - All other images automatically have is_thumbnail set to false
+    - The listing's thumbnail_url is updated
 
     Args:
         image_id: ID of the image to update
-        image_update: Fields to update
+        image_update: Fields to update (url, is_thumbnail, alt_text - all optional)
         db: Database session
         current_user: Current authenticated user
 
@@ -146,37 +154,3 @@ async def delete_image(
         HTTPException: 403 if user is not the seller
     """
     ListingImageService.delete(db, image_id, current_user)
-
-
-@listing_images_router.patch(
-    "/{listing_id}/images/thumbnail",
-    response_model=ImagePublic,
-    summary="Set listing thumbnail",
-)
-async def set_thumbnail(
-    listing_id: uuid.UUID,
-    image_id: uuid.UUID,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
-) -> Image:
-    """
-    Set an image as the thumbnail for a listing.
-
-    Only the seller of the listing can set the thumbnail.
-    All other images will have is_thumbnail set to False.
-
-    Args:
-        listing_id: ID of the listing
-        image_id: ID of the image
-        db: Database session
-        current_user: Current authenticated user
-
-    Returns:
-        ImagePublic: The updated thumbnail image
-
-    Raises:
-        HTTPException: 404 if listing or image not found
-        HTTPException: 403 if user is not the seller
-        HTTPException: 400 if image doesn't belong to the listing
-    """
-    return ListingImageService.set_thumbnail(db, listing_id, image_id, current_user)

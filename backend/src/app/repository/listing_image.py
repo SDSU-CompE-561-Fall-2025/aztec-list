@@ -162,29 +162,6 @@ class ListingImageRepository:
         db.commit()
 
     @staticmethod
-    def set_thumbnail(db: Session, db_image: Image) -> Image:
-        """
-        Set an image as the thumbnail for its listing.
-
-        Clears thumbnail flag from other images in the same listing.
-
-        Args:
-            db: Database session
-            db_image: Image to set as thumbnail
-
-        Returns:
-            Image: Updated image
-        """
-        # Clear existing thumbnail
-        ListingImageRepository.clear_thumbnail_for_listing(db, db_image.listing_id)
-
-        # Set new thumbnail
-        db_image.is_thumbnail = True
-        db.commit()
-        db.refresh(db_image)
-        return db_image
-
-    @staticmethod
     def count_by_listing(db: Session, listing_id: uuid.UUID) -> int:
         """
         Count images for a listing.
