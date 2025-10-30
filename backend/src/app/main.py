@@ -7,7 +7,10 @@ from app.core.middleware import RequestLoggingMiddleware, configure_logging
 from app.core.settings import settings
 
 # Configure logging
-configure_logging(log_level=settings.logging.level)
+configure_logging(
+    log_level=settings.logging.level,
+    use_json=False  # Set to False for local development if you prefer readable logs
+)
 
 # Create database tables
 # If the tables do not exist, create them
