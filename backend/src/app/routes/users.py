@@ -9,7 +9,7 @@ from app.core.dependencies import require_not_banned
 from app.models.listing import Listing
 from app.models.user import User
 from app.schemas.listing import ListingPublic, UserListingsParams
-from app.schemas.user import UserPublic
+from app.schemas.user import UserPublic, UserUpdate
 from app.services.listing import listing_service
 from app.services.user import user_service
 
@@ -64,6 +64,34 @@ async def get_user_listings(
     """
     return listing_service.get_by_seller(db, user_id, params)
 
+
+
+@user_router.patch(
+    "/me",
+    summary="Update current user",
+    response_model=UserPublic,
+)
+async def update_current_user(
+    update_data: UserUpdate,
+    current_user: Annotated[User, Depends(require_not_banned)],
+    db: Annotated[Session, Depends(get_db)],
+) -> User:
+    """
+    Update the current user's profile.
+
+    Args:
+        update_data: Fields to update
+        current_user: The authenticated user
+        db: Database session
+
+    Returns:
+        UserPublic: Updated user information
+
+    Raises:
+        HTTPException: 401 if not authenticated, 403 if banned
+        HTTPException: 400 if username/email already taken
+    """
+    return user_service.update(db, current_user.id, update_data)
 
 
 @user_router.delete(
