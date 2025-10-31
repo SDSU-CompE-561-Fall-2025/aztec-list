@@ -178,15 +178,15 @@ def configure_logging(logging_settings: LoggingSettings) -> None:
 
     # Configure root logger
     logging.basicConfig(
-        level=getattr(logging, logging_settings.level.upper()),
+        level=getattr(logging, logging_settings.level.value),
         handlers=[handler],
         force=True,  # Override any existing configuration
     )
 
     # Configure uvicorn loggers
     logging.getLogger("uvicorn.access").setLevel(
-        getattr(logging, logging_settings.uvicorn_access_level.upper())
+        getattr(logging, logging_settings.uvicorn_access_level.value)
     )
     logging.getLogger("uvicorn.error").setLevel(
-        getattr(logging, logging_settings.uvicorn_error_level.upper())
+        getattr(logging, logging_settings.uvicorn_error_level.value)
     )
