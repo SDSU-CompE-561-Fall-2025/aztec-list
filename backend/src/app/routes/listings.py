@@ -169,7 +169,7 @@ async def get_listings(
         db: Database session
 
     Returns:
-        list[ListingPublic]: List of matching listings (empty list if none found)
+        ListingSearchResponse: Paginated response containing items (list of ListingSummary), next_cursor, and count
 
     Raises:
         HTTPException: 400 if invalid parameters

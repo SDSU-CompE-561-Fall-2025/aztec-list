@@ -63,3 +63,13 @@ class UserRole(str, enum.Enum):
 
     USER = "user"
     ADMIN = "admin"
+
+
+class LogLevel(str, enum.Enum):
+    """Enum for logging levels matching Python's logging module."""
+
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
