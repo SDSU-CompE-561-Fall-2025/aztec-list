@@ -23,6 +23,7 @@ app = FastAPI(
 )
 
 # Middleware is added in REVERSE order of execution
+# Execution flow: Request → RequestLoggingMiddleware → CORSMiddleware → Routes → Response
 # Add CORS middleware first (executes last, closest to routes)
 app.add_middleware(
     CORSMiddleware,
