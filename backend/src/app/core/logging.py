@@ -96,9 +96,7 @@ class JsonFormatter(logging.Formatter):
 
         # Add extra fields from the log record using dictionary comprehension
         extra_fields = {
-            key: value
-            for key, value in record.__dict__.items()
-            if key not in STANDARD_LOG_ATTRS
+            key: value for key, value in record.__dict__.items() if key not in STANDARD_LOG_ATTRS
         }
         log_data.update(extra_fields)
 

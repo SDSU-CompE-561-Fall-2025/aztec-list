@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from sqlalchemy.orm import Session
 
     from app.models.user import User
-    from app.schemas.user import UserCreate
+    from app.schemas.user import UserCreate, UserUpdate
 
 
 class UserService:
@@ -169,6 +169,47 @@ class UserService:
         ensure_not_banned(actions)
 
         return user
+
+    def update(self, db: Session, user_id: uuid.UUID, update_data: UserUpdate) -> User:
+        """
+        Update user information.
+
+        Args:
+            db: Database session
+            user_id: ID of user to update
+            update_data: New user data
+
+        Returns:
+            User: Updated user
+
+        Raises:
+            HTTPException: 404 if user not found, 400 if username/email taken
+        """
+        user = self.get_by_id(db, user_id)
+
+        # Only validate if actually changing
+        if update_data.username and update_data.username != user.username:
+            if UserRepository.get_by_username(db, update_data.username):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Username already taken",
+                )
+            user.username = update_data.username
+
+        if update_data.email and update_data.email != user.email:
+            if UserRepository.get_by_email(db, str(update_data.email)):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email already registered",
+                )
+            user.email = update_data.email
+            # Reset verification when email changes
+            user.is_verified = False
+
+        if update_data.is_verified is not None:
+            user.is_verified = update_data.is_verified
+
+        return UserRepository.update(db, user)
 
 
 # Create a singleton instance
