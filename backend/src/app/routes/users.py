@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import require_not_banned
+from app.core.dependencies import get_current_user, require_not_banned
 from app.models.listing import Listing
 from app.models.user import User
 from app.schemas.listing import ListingPublic, UserListingsParams
@@ -19,7 +19,38 @@ user_router = APIRouter(
 )
 
 
-@user_router.get("/{user_id}", summary="Get a user's public profile", response_model=UserPublic)
+@user_router.get(
+    "/me",
+    summary="Get current user",
+    status_code=status.HTTP_200_OK,
+    response_model=UserPublic,
+)
+async def get_current_user_info(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> User:
+    """
+    Get the authenticated user's information.
+
+    Args:
+        current_user: The authenticated user from the JWT token
+        db: Database session
+
+    Returns:
+        UserPublic: Current user's information
+
+    Raises:
+        HTTPException: 401 if not authenticated
+    """
+    return user_service.get_by_id(db, current_user.id)
+
+
+@user_router.get(
+    "/{user_id}",
+    summary="Get a user's public profile",
+    status_code=status.HTTP_200_OK,
+    response_model=UserPublic,
+)
 async def get_user(
     user_id: uuid.UUID,
     db: Annotated[Session, Depends(get_db)],
@@ -41,20 +72,23 @@ async def get_user(
 
 
 @user_router.get(
-    "/{user_id}/listings", summary="Get user's listings", response_model=list[ListingPublic]
+    "/{user_id}/listings",
+    summary="Get user's listings",
+    status_code=status.HTTP_200_OK,
+    response_model=list[ListingPublic],
 )
 async def get_user_listings(
-    db: Annotated[Session, Depends(get_db)],
     user_id: uuid.UUID,
     params: Annotated[UserListingsParams, Depends()],
+    db: Annotated[Session, Depends(get_db)],
 ) -> list[Listing]:
     """
     Get all listings posted by a specific user.
 
     Args:
-        db: Database session
         user_id: The user's unique identifier (UUID)
         params: Query parameters for filtering and pagination
+        db: Database session
 
     Returns:
         list[ListingPublic]: List of listings created by the user
@@ -69,6 +103,7 @@ async def get_user_listings(
 @user_router.patch(
     "/me",
     summary="Update current user",
+    status_code=status.HTTP_200_OK,
     response_model=UserPublic,
 )
 async def update_current_user(
@@ -95,8 +130,8 @@ async def update_current_user(
 
 
 @user_router.delete(
-    "/{user_id}",
-    summary="Delete a user",
+    "/me",
+    summary="Delete current user",
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
 )
