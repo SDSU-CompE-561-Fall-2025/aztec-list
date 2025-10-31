@@ -27,7 +27,6 @@ repos:
       - id: mixed-line-ending
         args:
           - --fix=auto
-      - id: name-tests-test
       - id: trailing-whitespace
       - id: pretty-format-json
         args:

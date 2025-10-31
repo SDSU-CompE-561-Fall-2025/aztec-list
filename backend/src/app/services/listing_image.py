@@ -149,7 +149,11 @@ class ListingImageService:
 
         # Update the image
         updated_image = ListingImageRepository.update(
-            db, db_image, str(image_update.url), image_update.is_thumbnail, image_update.alt_text
+            db,
+            db_image,
+            str(image_update.url) if image_update.url is not None else None,
+            image_update.is_thumbnail,
+            image_update.alt_text
         )
 
         # Update listing thumbnail_url if this image is now/still the thumbnail

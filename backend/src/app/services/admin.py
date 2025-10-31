@@ -331,12 +331,14 @@ class AdminActionService:
         reason: str | None,
     ) -> AdminAction:
         """
-        Remove a listing and issue a strike to the owner.
+        Remove a listing and conditionally issue a strike to the owner.
 
         This is the complete business logic for listing removal:
         1. Validate listing exists and get owner
         2. Create LISTING_REMOVAL action for audit trail
-        3. Issue STRIKE to listing owner (triggers auto-ban if threshold reached)
+        3. Issue STRIKE to listing owner ONLY if not already banned
+           - If already banned, skip strike (cleanup without additional penalty)
+           - If not banned, strike may trigger auto-ban if threshold reached
         4. Hard delete the listing from database
 
         Args:
@@ -346,7 +348,7 @@ class AdminActionService:
             reason: Reason for removal
 
         Returns:
-            AdminAction: The LISTING_REMOVAL action (strike is created internally)
+            AdminAction: The LISTING_REMOVAL action (strike is created internally if user not banned)
 
         Raises:
             HTTPException: If listing not found
@@ -369,12 +371,21 @@ class AdminActionService:
         )
         listing_removal = AdminActionRepository.create(db, admin_id, removal_action)
 
-        self.create_strike(
-            db=db,
-            admin_id=admin_id,
-            target_user_id=seller_id,
-            strike=AdminActionStrike(reason=f"Listing removed: {reason or 'Policy violation'}"),
-        )
+        # Only issue strike if user is not already banned (cleanup without additional penalty)
+        try:
+            self._check_user_not_banned(db, seller_id)
+            # User is not banned, issue strike which may trigger auto-ban
+            self.create_strike(
+                db=db,
+                admin_id=admin_id,
+                target_user_id=seller_id,
+                strike=AdminActionStrike(reason=reason),
+            )
+        except HTTPException as e:
+            # Only skip strike if user is already banned (400 BAD_REQUEST)
+            # Re-raise any other exceptions (e.g., user not found)
+            if e.status_code != status.HTTP_400_BAD_REQUEST:
+                raise
 
         # Admin removal bypasses owner check - use repository directly
         db_listing = ListingRepository.get_by_id(db, listing_id)
