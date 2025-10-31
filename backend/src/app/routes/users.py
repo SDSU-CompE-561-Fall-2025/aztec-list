@@ -6,9 +6,12 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_not_banned
-from app.models.listing import Listing
 from app.models.user import User
-from app.schemas.listing import ListingSearchResponse, ListingSummary, ListingPublic, UserListingsParams
+from app.schemas.listing import (
+    ListingSearchResponse,
+    ListingSummary,
+    UserListingsParams,
+)
 from app.schemas.user import UserPublic, UserUpdate
 from app.services.listing import listing_service
 from app.services.user import user_service
@@ -72,10 +75,7 @@ async def get_user(
 
 
 @user_router.get(
-    "/{user_id}/listings",
-    summary="Get user's listings",
-    status_code=status.HTTP_200_OK,
-    response_model=list[ListingPublic],
+    "/{user_id}/listings", summary="Get user's listings", status_code=status.HTTP_200_OK
 )
 async def get_user_listings(
     user_id: uuid.UUID,
@@ -97,8 +97,13 @@ async def get_user_listings(
     Raises:
         HTTPException: 404 if user not found, 500 on database error
     """
-    return listing_service.get_by_seller(db, user_id, params)
+    listings, count = listing_service.get_by_seller(db, user_id, params)
 
+    return ListingSearchResponse(
+        items=[ListingSummary.model_validate(listing) for listing in listings],
+        next_cursor=None,
+        count=count,
+    )
 
 
 @user_router.patch(
