@@ -125,6 +125,8 @@ DB__ECHO=false  # Set to true for SQL query logging
 APP__TITLE="Aztec List"
 APP__DESCRIPTION="API for an OfferUp-style marketplace for college students"
 APP__VERSION="0.1.0"
+APP__DOCS_URL="/docs"      # Swagger UI path (set to null to disable)
+APP__REDOC_URL="/redoc"    # ReDoc UI path (set to null to disable)
 ```
 
 #### CORS Settings
@@ -154,6 +156,12 @@ LOGGING__EXCLUDED_PATHS='["/health", "/docs", "/redoc", "/openapi.json"]'
 ```bash
 # Number of strikes before automatic permanent ban
 MODERATION__STRIKE_AUTO_BAN_THRESHOLD=3
+```
+
+#### Listing Settings
+```bash
+# Maximum number of images allowed per listing
+LISTING__MAX_IMAGES_PER_LISTING=10
 ```
 
 ### Important Notes:
