@@ -56,6 +56,57 @@ backend/
 
 ## Development
 
+### Testing
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run with coverage
+uv run pytest --cov=src/app --cov-report=term-missing
+
+# Generate HTML coverage report
+uv run pytest --cov=src/app --cov-report=html
+
+# Run only unit tests
+uv run pytest tests/unit/
+
+# Run only integration tests
+uv run pytest tests/ --ignore=tests/unit/
+
+# Run specific test file
+uv run pytest tests/test_users.py -v
+```
+
+**Test Coverage:**
+- **365 tests total** with **97% code coverage**
+- 186 unit tests (88% coverage - business logic)
+- 179 integration tests (covering routes, auth, middleware)
+
+See [Testing Guide](tests/README.md) for detailed testing documentation.
+
+### Manual API Testing
+
+Interactive API documentation with built-in testing:
+
+```bash
+# Start the development server
+uv run fastapi dev src/app/main.py
+
+# Open Swagger UI in your browser
+# http://127.0.0.1:8000/docs
+```
+
+**Using Swagger UI for Manual Testing:**
+1. Navigate to http://127.0.0.1:8000/docs
+2. Click "Authorize" button to authenticate (if needed)
+3. Expand any endpoint and click "Try it out"
+4. Fill in parameters and request body
+5. Click "Execute" to send the request
+6. Review the response, status code, and headers
+
+All 27 API endpoints have been manually tested using Swagger UI.
+
 ### Code Quality
 
 ```bash

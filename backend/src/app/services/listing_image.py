@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
 
+from app.core.settings import settings
 from app.repository.listing import ListingRepository
 from app.repository.listing_image import ListingImageRepository
 
@@ -25,8 +26,6 @@ if TYPE_CHECKING:
 
 class ListingImageService:
     """Service for listing image business logic."""
-
-    MAX_IMAGES_PER_LISTING = 10
 
     @staticmethod
     def get_by_id(db: Session, image_id: uuid.UUID, current_user: User) -> Image:
@@ -90,10 +89,10 @@ class ListingImageService:
 
         # Check image count limit
         current_count = ListingImageRepository.count_by_listing(db, listing_id)
-        if current_count >= ListingImageService.MAX_IMAGES_PER_LISTING:
+        if current_count >= settings.listing.max_images_per_listing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Maximum {ListingImageService.MAX_IMAGES_PER_LISTING} images per listing",
+                detail=f"Maximum {settings.listing.max_images_per_listing} images per listing",
             )
 
         # Determine if this should be the thumbnail
@@ -153,7 +152,7 @@ class ListingImageService:
             db_image,
             str(image_update.url) if image_update.url is not None else None,
             image_update.is_thumbnail,
-            image_update.alt_text
+            image_update.alt_text,
         )
 
         # Update listing thumbnail_url if this image is now/still the thumbnail

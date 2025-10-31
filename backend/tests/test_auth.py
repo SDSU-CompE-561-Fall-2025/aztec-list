@@ -53,13 +53,13 @@ class TestRegister:
 
         response = client.post("/api/v1/auth/signup", json=valid_user_data)
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     def test_register_missing_fields(self, client: TestClient):
         """Test registration with missing required fields fails."""
         response = client.post("/api/v1/auth/signup", json={"username": "test"})
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
 class TestLogin:
@@ -113,7 +113,7 @@ class TestLogin:
         """Test login with missing credentials fails."""
         response = client.post("/api/v1/auth/login", data={"username": "test"})
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
 class TestTokenAuthentication:
@@ -135,9 +135,7 @@ class TestTokenAuthentication:
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_access_protected_endpoint_with_invalid_token(
-        self, client: TestClient, test_listing
-    ):
+    def test_access_protected_endpoint_with_invalid_token(self, client: TestClient, test_listing):
         """Test accessing protected endpoint with invalid token fails."""
         client.headers["Authorization"] = "Bearer invalid-token"
         response = client.delete(f"/api/v1/listings/{test_listing.id}")

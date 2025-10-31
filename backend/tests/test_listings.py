@@ -44,7 +44,7 @@ class TestCreateListing:
         valid_listing_data["condition"] = "invalid_condition"
         response = authenticated_client.post("/api/v1/listings", json=valid_listing_data)
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     def test_create_listing_negative_price(
         self, authenticated_client: TestClient, valid_listing_data: dict
@@ -53,13 +53,13 @@ class TestCreateListing:
         valid_listing_data["price"] = -10.00
         response = authenticated_client.post("/api/v1/listings", json=valid_listing_data)
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     def test_create_listing_missing_required_fields(self, authenticated_client: TestClient):
         """Test creating listing with missing fields fails."""
         response = authenticated_client.post("/api/v1/listings", json={"title": "Test"})
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
 class TestGetListings:
@@ -135,9 +135,7 @@ class TestGetListing:
         assert "images" in data
         assert isinstance(data["images"], list)
 
-    def test_get_listing_with_images(
-        self, client: TestClient, test_listing: Listing, test_images
-    ):
+    def test_get_listing_with_images(self, client: TestClient, test_listing: Listing, test_images):
         """Test getting a listing includes all its images."""
         response = client.get(f"/api/v1/listings/{test_listing.id}")
 
@@ -163,15 +161,13 @@ class TestGetListing:
         """Test getting listing with invalid UUID format."""
         response = client.get("/api/v1/listings/not-a-uuid")
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
 class TestUpdateListing:
     """Test PATCH /listings/{listing_id} endpoint."""
 
-    def test_update_listing_success(
-        self, authenticated_client: TestClient, test_listing: Listing
-    ):
+    def test_update_listing_success(self, authenticated_client: TestClient, test_listing: Listing):
         """Test updating own listing."""
         update_data = {"title": "Updated Title", "price": 600.00}
         response = authenticated_client.patch(
@@ -235,9 +231,7 @@ class TestUpdateListing:
 class TestDeleteListing:
     """Test DELETE /listings/{listing_id} endpoint."""
 
-    def test_delete_listing_success(
-        self, authenticated_client: TestClient, test_listing: Listing
-    ):
+    def test_delete_listing_success(self, authenticated_client: TestClient, test_listing: Listing):
         """Test deleting own listing."""
         response = authenticated_client.delete(f"/api/v1/listings/{test_listing.id}")
 
