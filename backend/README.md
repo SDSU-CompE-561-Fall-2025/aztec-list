@@ -4,7 +4,7 @@ FastAPI REST API for the Aztec List marketplace.
 
 ## Quick Start
 
-**⚠️ Always run commands from the `backend/` directory!**
+**Always run commands from the `backend/` directory!**
 
 From the backend directory:
 
