@@ -7,9 +7,9 @@ from pwdlib import PasswordHash
 
 from app.core.settings import settings
 
-SECRET_KEY = settings.a2.secret_key
-ALGORITHM = settings.a2.algorithm
-ACCESS_TOKEN_EXPIRE_MINUTES = settings.a2.access_token_expire_minutes
+SECRET_KEY = settings.jwt.secret_key
+ALGORITHM = settings.jwt.algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.jwt.access_token_expire_minutes
 
 password_hash = PasswordHash.recommended()
 
