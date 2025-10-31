@@ -68,7 +68,7 @@ async def login(
     # Service handles authentication, credential validation, and ban check
     user = user_service.authenticate(db, form_data.username, form_data.password)
 
-    access_token_expires = timedelta(minutes=settings.a2.access_token_expire_minutes)
+    access_token_expires = timedelta(minutes=settings.jwt.access_token_expire_minutes)
     access_token = create_access_token(
         data={"sub": str(user.id)},
         expires_delta=access_token_expires,

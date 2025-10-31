@@ -22,13 +22,8 @@ app = FastAPI(
     redoc_url=settings.app.redoc_url,
 )
 
-# Middleware order matters! Added in reverse order of execution.
-# Execution flow: RequestLogging → CORS → Routes
-
-# Add request logging middleware first (outermost - logs all requests)
-app.add_middleware(RequestLoggingMiddleware)
-
-# Add CORS middleware second (validates origins after logging)
+# Middleware is added in REVERSE order of execution
+# Add CORS middleware first (executes last, closest to routes)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors.allowed_origins,
@@ -36,5 +31,8 @@ app.add_middleware(
     allow_methods=settings.cors.allowed_methods,
     allow_headers=settings.cors.allowed_headers,
 )
+
+# Add request logging middleware second (executes first, outermost layer)
+app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(api_router)

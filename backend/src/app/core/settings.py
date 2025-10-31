@@ -14,9 +14,8 @@ class AppMeta(BaseModel):
     redoc_url: str | None = "/redoc"
 
 
-class Argon2Settings(BaseModel):
+class JWTSettings(BaseModel):
     secret_key: str = Field(
-        # TODO: Come up with warning later for not changing key
         default="CHANGE_ME_generate_a_secure_random_key_here",
         min_length=32,
         description="The secret key for JWT (configure via environment variable)",
@@ -152,7 +151,7 @@ class Settings(BaseSettings):
 
     app: AppMeta = Field(default_factory=AppMeta)
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
-    a2: Argon2Settings = Field(default_factory=Argon2Settings)
+    jwt: JWTSettings = Field(default_factory=JWTSettings)
     moderation: ModerationSettings = Field(default_factory=ModerationSettings)
     cors: CORSSettings = Field(default_factory=CORSSettings)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
