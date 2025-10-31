@@ -233,10 +233,9 @@ def test_profile(db_session: Session, test_user: User) -> Profile:
     """
     profile = Profile(
         user_id=test_user.id,
-        full_name="Test User",
-        bio="This is a test bio",
-        phone_number="+1234567890",
-        location="Test City, TC",
+        name="Test User",
+        campus="Test University",
+        contact_info={"email": "test@example.com", "phone": "+1234567890"},
     )
     db_session.add(profile)
     db_session.commit()
@@ -435,10 +434,12 @@ def valid_listing_data() -> dict:
 def valid_profile_data() -> dict:
     """Valid profile creation data."""
     return {
-        "full_name": "John Doe",
-        "bio": "A test user bio",
-        "phone_number": "+1234567890",
-        "location": "San Diego, CA",
+        "name": "John Doe",
+        "campus": "UC San Diego",
+        "contact_info": {
+            "email": "john.doe@example.com",
+            "phone": "+1234567890",
+        },
     }
 
 
