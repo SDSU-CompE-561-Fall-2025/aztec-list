@@ -184,9 +184,7 @@ class TestDeleteAdminAction:
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_revoke_ban_lifts_restriction(
-        self, admin_client: TestClient, test_ban: AdminAction
-    ):
+    def test_revoke_ban_lifts_restriction(self, admin_client: TestClient, test_ban: AdminAction):
         """Test that revoking a ban allows user to perform actions again."""
         # Revoke ban
         response = admin_client.delete(f"/api/v1/admin/actions/{test_ban.id}")
@@ -201,14 +199,10 @@ class TestDeleteAdminAction:
 class TestStrikeUser:
     """Test POST /admin/users/{user_id}/strike endpoint."""
 
-    def test_strike_user_success(
-        self, admin_client: TestClient, test_user: User, test_admin: User
-    ):
+    def test_strike_user_success(self, admin_client: TestClient, test_user: User, test_admin: User):
         """Test adding a strike to a user."""
         strike_data = {"reason": "Posted inappropriate content"}
-        response = admin_client.post(
-            f"/api/v1/admin/users/{test_user.id}/strike", json=strike_data
-        )
+        response = admin_client.post(f"/api/v1/admin/users/{test_user.id}/strike", json=strike_data)
 
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
@@ -247,14 +241,10 @@ class TestStrikeUser:
     def test_strike_accumulation(self, admin_client: TestClient, test_user: User):
         """Test that multiple strikes accumulate."""
         # Add first strike
-        admin_client.post(
-            f"/api/v1/admin/users/{test_user.id}/strike", json={"reason": "Strike 1"}
-        )
+        admin_client.post(f"/api/v1/admin/users/{test_user.id}/strike", json={"reason": "Strike 1"})
 
         # Add second strike
-        admin_client.post(
-            f"/api/v1/admin/users/{test_user.id}/strike", json={"reason": "Strike 2"}
-        )
+        admin_client.post(f"/api/v1/admin/users/{test_user.id}/strike", json={"reason": "Strike 2"})
 
         # Verify both strikes exist
         response = admin_client.get(
@@ -312,9 +302,7 @@ class TestBanUser:
     ):
         """Test that banned users cannot perform protected actions."""
         # Ban the user
-        admin_client.post(
-            f"/api/v1/admin/users/{test_user.id}/ban", json={"reason": "Test ban"}
-        )
+        admin_client.post(f"/api/v1/admin/users/{test_user.id}/ban", json={"reason": "Test ban"})
 
         # Try to perform action as banned user
         client.headers["Authorization"] = f"Bearer {test_user_token}"
@@ -399,9 +387,7 @@ class TestRemoveListing:
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_remove_listing_without_reason(
-        self, admin_client: TestClient, test_listing: Listing
-    ):
+    def test_remove_listing_without_reason(self, admin_client: TestClient, test_listing: Listing):
         """Test removing listing without reason succeeds (reason is optional)."""
         response = admin_client.post(f"/api/v1/admin/listings/{test_listing.id}/remove", json={})
 
@@ -463,9 +449,7 @@ class TestAdminIntegration:
         assert remove_response.status_code == status.HTTP_200_OK
 
         # Step 4: Review all actions for this user
-        actions_response = admin_client.get(
-            f"/api/v1/admin/actions?target_user_id={test_user.id}"
-        )
+        actions_response = admin_client.get(f"/api/v1/admin/actions?target_user_id={test_user.id}")
         actions = actions_response.json()
         assert actions["count"] >= 3  # 2 strikes + 1 from listing removal
 

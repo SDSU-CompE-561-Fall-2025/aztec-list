@@ -50,6 +50,14 @@ class ModerationSettings(BaseModel):
     )
 
 
+class ListingSettings(BaseModel):
+    max_images_per_listing: int = Field(
+        default=10,
+        ge=1,
+        description="Maximum number of images allowed per listing",
+    )
+
+
 class CORSSettings(BaseModel):
     """
     Cross-Origin Resource Sharing (CORS) configuration.
@@ -153,6 +161,7 @@ class Settings(BaseSettings):
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
     jwt: JWTSettings = Field(default_factory=JWTSettings)
     moderation: ModerationSettings = Field(default_factory=ModerationSettings)
+    listing: ListingSettings = Field(default_factory=ListingSettings)
     cors: CORSSettings = Field(default_factory=CORSSettings)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
 

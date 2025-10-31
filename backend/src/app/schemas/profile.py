@@ -28,6 +28,8 @@ class ProfileBase(BaseModel):
 class ProfileCreate(ProfileBase):
     """Schema for creating a new profile."""
 
+    profile_picture_url: HttpUrl | None = Field(None, description="Optional profile picture URL")
+
 
 class ProfileUpdate(BaseModel):
     """Schema for updating profile fields."""
@@ -35,6 +37,7 @@ class ProfileUpdate(BaseModel):
     name: str | None = Field(None, min_length=1, description="Full name of the user")
     campus: str | None = Field(None, description="University or campus name")
     contact_info: ContactInfo | None = Field(None, description="Contact information (email, phone)")
+    profile_picture_url: HttpUrl | None = Field(None, description="Profile picture URL")
 
 
 class ProfilePictureUpdate(BaseModel):

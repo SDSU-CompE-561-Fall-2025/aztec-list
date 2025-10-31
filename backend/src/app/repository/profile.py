@@ -17,8 +17,6 @@ if TYPE_CHECKING:
 
     from sqlalchemy.orm import Session
 
-    from app.schemas.profile import ProfileCreate, ProfileUpdate
-
 
 class ProfileRepository:
     """Repository for profile data access."""
@@ -53,28 +51,22 @@ class ProfileRepository:
         return db.get(Profile, profile_id)
 
     @staticmethod
-    def create(db: Session, user_id: uuid.UUID, profile: ProfileCreate) -> Profile:
+    def create(db: Session, user_id: uuid.UUID, profile_data: dict) -> Profile:
         """
         Create a new profile for a user.
 
         Args:
             db: Database session
             user_id: User ID to associate with profile
-            profile: Profile creation data
+            profile_data: Dictionary with profile data (contact_info already converted,
+                         profile_picture_url as str if provided)
 
         Returns:
             Profile: Created profile
         """
-        # Convert contact_info to dict if provided
-        contact_info_dict = None
-        if profile.contact_info:
-            contact_info_dict = profile.contact_info.model_dump(exclude_none=True)
-
         db_profile = Profile(
             user_id=user_id,
-            name=profile.name,
-            campus=profile.campus,
-            contact_info=contact_info_dict,
+            **profile_data,
         )
         db.add(db_profile)
         db.commit()
@@ -82,21 +74,18 @@ class ProfileRepository:
         return db_profile
 
     @staticmethod
-    def update(db: Session, db_profile: Profile, profile: ProfileUpdate) -> Profile:
+    def update(db: Session, db_profile: Profile, update_data: dict) -> Profile:
         """
         Update profile fields.
 
         Args:
             db: Database session
             db_profile: Profile instance to update
-            profile: Profile update data (only provided fields will be updated)
+            update_data: Dictionary of fields to update (already converted from schema)
 
         Returns:
             Profile: Updated profile
         """
-        # Convert ProfileUpdate model fields into dictionary
-        update_data = profile.model_dump(exclude_unset=True)
-
         # Update only the fields present in the request
         for field, value in update_data.items():
             setattr(db_profile, field, value)

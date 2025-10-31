@@ -70,7 +70,7 @@ class TestCreateListingImage:
             f"/api/v1/listings/{test_listing.id}/images", json=invalid_data
         )
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     def test_create_image_max_limit(
         self, authenticated_client: TestClient, test_listing: Listing, db_session
@@ -113,9 +113,7 @@ class TestGetSingleImage:
         assert data["id"] == str(test_image.id)
         assert data["url"] == test_image.url
 
-    def test_get_image_not_found(
-        self, authenticated_client: TestClient, test_listing: Listing
-    ):
+    def test_get_image_not_found(self, authenticated_client: TestClient, test_listing: Listing):
         """Test getting non-existent image returns 404."""
         fake_id = uuid.uuid4()
         response = authenticated_client.get(f"/api/v1/listings/{test_listing.id}/images/{fake_id}")
@@ -186,7 +184,9 @@ class TestUpdateImage:
         # Verify the update persisted via the listing
         listing_response = authenticated_client.get(f"/api/v1/listings/{test_listing.id}")
         listing_data = listing_response.json()
-        updated_image = next(img for img in listing_data["images"] if img["id"] == str(test_image.id))
+        updated_image = next(
+            img for img in listing_data["images"] if img["id"] == str(test_image.id)
+        )
         assert updated_image["alt_text"] == update_data["alt_text"]
 
     def test_update_image_set_thumbnail(
@@ -208,7 +208,9 @@ class TestUpdateImage:
         listing_response = authenticated_client.get(f"/api/v1/listings/{test_listing.id}")
         listing_data = listing_response.json()
         # Verify this image is now the thumbnail
-        updated_image = next(img for img in listing_data["images"] if img["id"] == str(non_thumbnail_image.id))
+        updated_image = next(
+            img for img in listing_data["images"] if img["id"] == str(non_thumbnail_image.id)
+        )
         assert updated_image["is_thumbnail"] is True
         # Verify listing's thumbnail_url points to this image
         assert listing_data["thumbnail_url"] == str(non_thumbnail_image.url)
