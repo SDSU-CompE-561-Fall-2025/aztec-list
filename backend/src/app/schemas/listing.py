@@ -11,6 +11,7 @@ from decimal import Decimal
 from pydantic import BaseModel, Field, HttpUrl
 
 from app.core.enums import Category, Condition, ListingSortOrder
+from app.schemas.listing_image import ImagePublic
 
 
 class ListingBase(BaseModel):
@@ -55,7 +56,7 @@ class ListingSearchParams(BaseModel):
 class ListingSearchResponse(BaseModel):
     """Response schema for paginated listing search."""
 
-    items: list["ListingPublic"] = Field(..., description="List of listings")
+    items: list["ListingSummary"] = Field(..., description="List of listings")
     next_cursor: str | None = Field(
         None, description="Cursor for next page (null for offset pagination)"
     )
@@ -75,6 +76,20 @@ class UserListingsParams(BaseModel):
 
 class ListingPublic(ListingBase):
     """Schema for listing response."""
+
+    id: uuid.UUID
+    seller_id: uuid.UUID
+    thumbnail_url: HttpUrl | None = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    images: list[ImagePublic] = Field(default_factory=list, description="Images for this listing")
+
+    model_config = {"from_attributes": True}
+
+
+class ListingSummary(ListingBase):
+    """Compact listing schema for collection responses (no images array)."""
 
     id: uuid.UUID
     seller_id: uuid.UUID

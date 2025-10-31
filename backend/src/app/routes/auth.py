@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.auth import create_access_token
 from app.core.database import get_db
 from app.core.settings import Settings, get_settings
+from app.models.user import User
 from app.schemas.user import Token, UserCreate, UserPublic
 from app.services.user import user_service
 
@@ -21,11 +22,12 @@ auth_router = APIRouter(
     "/signup",
     summary="Register a new user",
     status_code=status.HTTP_201_CREATED,
+    response_model=UserPublic,
 )
 async def signup(
     user: UserCreate,
     db: Annotated[Session, Depends(get_db)],
-) -> UserPublic:
+) -> User:
     """
     Register a new user account.
 
@@ -39,8 +41,7 @@ async def signup(
     Raises:
         HTTPException: 400 if email already exists, 500 on database error
     """
-    created_user = user_service.create(db, user)
-    return UserPublic.model_validate(created_user)
+    return user_service.create(db, user)
 
 
 @auth_router.post("/login", summary="Authenticate and obtain a JWT access token")
@@ -68,7 +69,7 @@ async def login(
     # Service handles authentication, credential validation, and ban check
     user = user_service.authenticate(db, form_data.username, form_data.password)
 
-    access_token_expires = timedelta(minutes=settings.a2.access_token_expire_minutes)
+    access_token_expires = timedelta(minutes=settings.jwt.access_token_expire_minutes)
     access_token = create_access_token(
         data={"sub": str(user.id)},
         expires_delta=access_token_expires,

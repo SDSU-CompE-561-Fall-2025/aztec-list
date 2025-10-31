@@ -32,7 +32,7 @@ cp .env.example .env
 # Generate a secure secret key and copy the output
 uv run python -c "import secrets; print(secrets.token_urlsafe(32))"
 
-# Edit .env and replace A2__SECRET_KEY with the generated key
+# Edit .env and replace JWT__SECRET_KEY with the generated key
 
 # 3) Navigate to backend
 cd backend
@@ -76,8 +76,8 @@ The application uses environment variables for configuration. These are loaded f
    ```
 
 3. **Edit `.env` and update the values:**
-   - **Required:** `A2__SECRET_KEY` - Use the key generated above
-   - **Optional:** Modify database URL, token expiration, etc.
+   - **Required:** `JWT__SECRET_KEY` - Use the key generated above
+   - **Optional:** Modify database URL, token expiration, CORS origins, logging settings, etc.
 
 ### Configuration Options:
 
@@ -85,9 +85,9 @@ The application uses environment variables for configuration. These are loaded f
 ```bash
 # IMPORTANT: Generate a secure key with:
 # uv run python -c "import secrets; print(secrets.token_urlsafe(32))"
-A2__SECRET_KEY="your-generated-secret-key-here"
-A2__ALGORITHM="HS256"
-A2__ACCESS_TOKEN_EXPIRE_MINUTES=30
+JWT__SECRET_KEY="your-generated-secret-key-here"
+JWT__ALGORITHM="HS256"
+JWT__ACCESS_TOKEN_EXPIRE_MINUTES=30
 ```
 
 #### Database Settings
@@ -108,6 +108,29 @@ APP__DESCRIPTION="API for an OfferUp-style marketplace for college students"
 APP__VERSION="0.1.0"
 ```
 
+#### CORS Settings
+```bash
+# WARNING: The default localhost origins are for DEVELOPMENT ONLY!
+# In production, override with your actual frontend domain(s).
+CORS__ALLOWED_ORIGINS='["http://localhost:3000"]'
+CORS__ALLOW_CREDENTIALS=true
+CORS__ALLOWED_METHODS='["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]'
+CORS__ALLOWED_HEADERS='["*"]'
+
+# NEVER use "*" (wildcard) with CORS__ALLOW_CREDENTIALS=true - this is a security risk!
+```
+
+#### Logging Settings
+```bash
+# Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+LOGGING__LEVEL="INFO"
+LOGGING__USE_JSON=false  # Use JSON format in production
+LOGGING__FORMAT="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+LOGGING__UVICORN_ACCESS_LEVEL="WARNING"
+LOGGING__UVICORN_ERROR_LEVEL="INFO"
+LOGGING__EXCLUDED_PATHS='["/health", "/docs", "/redoc", "/openapi.json"]'
+```
+
 #### Moderation Settings
 ```bash
 # Number of strikes before automatic permanent ban
@@ -119,4 +142,6 @@ MODERATION__STRIKE_AUTO_BAN_THRESHOLD=3
 - **Never commit your `.env` file** - It contains sensitive information
 - The `.env.example` file is safe to commit and serves as a template
 - Settings use nested delimiter `__` (e.g., `DB__DATABASE_URL` maps to `settings.db.database_url`)
-- The application will fail to start if `A2__SECRET_KEY` is not set
+- The application will fail to start if `JWT__SECRET_KEY` is not set
+- CORS wildcard (`"*"`) is blocked when `CORS__ALLOW_CREDENTIALS=true` for security
+- Logging settings support both human-readable and JSON formats

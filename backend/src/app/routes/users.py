@@ -8,7 +8,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_not_banned
 from app.models.listing import Listing
 from app.models.user import User
-from app.schemas.listing import ListingPublic, UserListingsParams
+from app.schemas.listing import ListingSearchResponse, ListingSummary, ListingPublic, UserListingsParams
 from app.schemas.user import UserPublic, UserUpdate
 from app.services.listing import listing_service
 from app.services.user import user_service
@@ -81,17 +81,18 @@ async def get_user_listings(
     user_id: uuid.UUID,
     params: Annotated[UserListingsParams, Depends()],
     db: Annotated[Session, Depends(get_db)],
-) -> list[Listing]:
+) -> ListingSearchResponse:
     """
-    Get all listings posted by a specific user.
+    Get paginated listings for a specific user.
 
     Args:
         user_id: The user's unique identifier (UUID)
-        params: Query parameters for filtering and pagination
+        params: Query parameters including pagination (limit, offset),
+                sorting (sort), and filters (include_inactive)
         db: Database session
 
     Returns:
-        list[ListingPublic]: List of listings created by the user
+        ListingSearchResponse: Paginated list of user's listings with total count
 
     Raises:
         HTTPException: 404 if user not found, 500 on database error
