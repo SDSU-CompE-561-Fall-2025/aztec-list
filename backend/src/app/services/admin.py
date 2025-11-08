@@ -258,7 +258,6 @@ class AdminActionService:
                 detail=f"Admin action with ID {action_id} not found",
             )
 
-        # Prevent self-unbanning (if action has a target user)
         if action.target_user_id == admin_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -315,10 +314,8 @@ class AdminActionService:
         )
         listing_removal = AdminActionRepository.create(db, admin_id, removal_action)
 
-        # Only issue strike if user is not already banned (cleanup without additional penalty)
         try:
             self._check_user_not_banned(db, seller_id)
-            # User is not banned, issue strike which may trigger auto-ban
             self.create_strike(
                 db=db,
                 admin_id=admin_id,
@@ -326,18 +323,12 @@ class AdminActionService:
                 strike=AdminActionStrike(reason=reason),
             )
         except HTTPException as e:
-            # Only skip strike if user is already banned (400 BAD_REQUEST)
-            # Re-raise any other exceptions (e.g., user not found)
             if e.status_code != status.HTTP_400_BAD_REQUEST:
                 raise
 
-        # Admin removal bypasses owner check - use repository directly
-        db_listing = ListingRepository.get_by_id(db, listing_id)
-        if db_listing:
-            ListingRepository.delete(db, db_listing)
+        ListingRepository.delete(db, listing)
 
         return listing_removal
-
 
 # Create a singleton instance
 admin_action_service = AdminActionService()
