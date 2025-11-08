@@ -55,28 +55,15 @@ uv run fastapi dev src/app/main.py
 - The `.venv/` directory lives in **`backend/`** (Python dependencies)
 - **Always run backend commands from the `backend/` directory**
 
-### Running Tests
-
-From the `backend/` directory:
-
-```bash
-# Run all tests
-uv run pytest
-
-# Run with coverage
-uv run pytest --cov=src/app --cov-report=term-missing
-
-# Generate HTML coverage report
-uv run pytest --cov=src/app --cov-report=html
-```
-
-**Current Test Coverage:** 365 tests with 97% code coverage
-
-See [backend/tests/README.md](backend/tests/README.md) for detailed testing documentation.
-
 ## Frontend Setup
 
 The frontend will be developed in the `frontend/` directory. Instructions will be added once development begins.
+
+## Testing
+
+For detailed testing documentation, see:
+- Backend: [backend/tests/README.md](backend/tests/README.md)
+- Frontend: Coming soon
 
 ## Environment Configuration
 

@@ -319,3 +319,16 @@ class TestListingImageRepositoryDelete:
 
         images = ListingImageRepository.get_by_listing(db_session, test_listing.id)
         assert len(images) == 0
+
+
+class TestListingImageRepositoryUpdateThumbnail:
+    """Test ListingImageRepository update_listing_thumbnail_url method."""
+
+    def test_update_listing_thumbnail_url_listing_not_found(self, db_session: Session):
+        """Test update_listing_thumbnail_url raises ValueError when listing not found."""
+        nonexistent_listing_id = uuid.uuid4()
+        
+        with pytest.raises(ValueError, match="Cannot update thumbnail_url"):
+            ListingImageRepository.update_listing_thumbnail_url(
+                db_session, nonexistent_listing_id, "https://example.com/thumb.jpg"
+            )

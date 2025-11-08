@@ -219,12 +219,11 @@ class TestUserServiceAuthenticate:
         with (
             patch("app.services.user.UserRepository.get_by_email_or_username") as mock_get,
             patch("app.services.user.verify_password") as mock_verify,
-            patch("app.services.user.AdminActionRepository.get_by_target_user_id") as mock_actions,
-            patch("app.services.user.ensure_not_banned") as mock_ensure,
+            patch("app.services.user.AdminActionRepository.has_active_ban") as mock_ban_check,
         ):
             mock_get.return_value = mock_user
             mock_verify.return_value = True
-            mock_actions.return_value = []
+            mock_ban_check.return_value = None  # No active ban
             db = MagicMock(spec=Session)
 
             result = user_service.authenticate(db, "testuser", "password123")
@@ -232,6 +231,7 @@ class TestUserServiceAuthenticate:
             assert result == mock_user
             mock_get.assert_called_once_with(db, "testuser")
             mock_verify.assert_called_once_with("password123", mock_user.hashed_password)
+            mock_ban_check.assert_called_once_with(db, mock_user.id)
 
     def test_authenticate_invalid_username_raises_401(self, user_service: UserService):
         """Test authentication with invalid username raises 401."""
@@ -276,21 +276,19 @@ class TestUserServiceAuthenticate:
         with (
             patch("app.services.user.UserRepository.get_by_email_or_username") as mock_get,
             patch("app.services.user.verify_password") as mock_verify,
-            patch("app.services.user.AdminActionRepository.get_by_target_user_id") as mock_actions,
-            patch("app.services.user.ensure_not_banned") as mock_ensure,
+            patch("app.services.user.AdminActionRepository.has_active_ban") as mock_ban_check,
         ):
             mock_get.return_value = mock_user
             mock_verify.return_value = True
-            mock_actions.return_value = [ban_action]
-            mock_ensure.side_effect = HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="User is banned"
-            )
+            mock_ban_check.return_value = ban_action  # Return active ban
             db = MagicMock(spec=Session)
 
             with pytest.raises(HTTPException) as exc_info:
                 user_service.authenticate(db, "testuser", "password123")
 
             assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
+            assert "banned" in exc_info.value.detail.lower()
+            mock_ban_check.assert_called_once_with(db, mock_user.id)
 
 
 class TestUserServiceUpdate:
@@ -352,6 +350,48 @@ class TestUserServiceUpdate:
             user_service.update(db, mock_user.id, update_data)
 
             # Verify is_verified was set to False on the user object
+            assert mock_user.is_verified is False
+            mock_update.assert_called_once()
+
+    def test_update_user_set_is_verified_true(
+        self, user_service: UserService, mock_user: User
+    ):
+        """Test explicitly setting is_verified to True (admin operation)."""
+        update_data = UserUpdate(is_verified=True)
+        mock_user.is_verified = False
+
+        with (
+            patch("app.services.user.UserRepository.get_by_id") as mock_get,
+            patch("app.services.user.UserRepository.update") as mock_update,
+        ):
+            mock_get.return_value = mock_user
+            mock_update.return_value = mock_user
+            db = MagicMock(spec=Session)
+
+            user_service.update(db, mock_user.id, update_data)
+
+            # Verify is_verified was set to True
+            assert mock_user.is_verified is True
+            mock_update.assert_called_once()
+
+    def test_update_user_set_is_verified_false(
+        self, user_service: UserService, mock_user: User
+    ):
+        """Test explicitly setting is_verified to False."""
+        update_data = UserUpdate(is_verified=False)
+        mock_user.is_verified = True
+
+        with (
+            patch("app.services.user.UserRepository.get_by_id") as mock_get,
+            patch("app.services.user.UserRepository.update") as mock_update,
+        ):
+            mock_get.return_value = mock_user
+            mock_update.return_value = mock_user
+            db = MagicMock(spec=Session)
+
+            user_service.update(db, mock_user.id, update_data)
+
+            # Verify is_verified was set to False
             assert mock_user.is_verified is False
             mock_update.assert_called_once()
 

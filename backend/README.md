@@ -59,6 +59,9 @@ backend/
 ### Testing
 
 ```bash
+# First time: Install test dependencies
+uv sync --group test
+
 # Run all tests
 uv run pytest
 
@@ -79,9 +82,9 @@ uv run pytest tests/test_users.py -v
 ```
 
 **Test Coverage:**
-- **365 tests total** with **97% code coverage**
-- 186 unit tests (88% coverage - business logic)
-- 179 integration tests (covering routes, auth, middleware)
+- **387 tests total** with **98% code coverage**
+- 210 unit tests (business logic, data access, core security)
+- 177 integration tests (covering routes, auth, middleware)
 
 See [Testing Guide](tests/README.md) for detailed testing documentation.
 

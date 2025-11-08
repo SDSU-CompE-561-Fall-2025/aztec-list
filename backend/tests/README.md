@@ -4,16 +4,17 @@ This guide explains how to run and work with the test suite for the Aztec List b
 
 ## Test Coverage Summary
 
-**365 total tests with 97% code coverage**
+**387 total tests with 98% code coverage**
 
-- **186 unit tests** (88% coverage) - Business logic and data access
-- **179 integration tests** (97% coverage) - HTTP endpoints and full workflows
+- **210 unit tests** - Business logic, data access, and core security
+- **177 integration tests** - HTTP endpoints and full workflows
 - **All 27 API endpoints** manually tested via Swagger UI
 
 ### Coverage Breakdown
-- **Business Logic**: 97-100% (services and repositories)
+- **Business Logic**: 100% (services and repositories)
 - **API Routes**: 100% (all HTTP endpoints)
-- **Core Infrastructure**: 67-100% (auth, middleware, dependencies)
+- **Core Security**: 100% (authorization policies)
+- **Core Infrastructure**: 67-96% (auth, middleware, dependencies)
 
 ## Setup
 
@@ -22,10 +23,11 @@ This guide explains how to run and work with the test suite for the Aztec List b
 First, install the test dependencies using uv:
 
 ```powershell
-uv sync
+# Install base dependencies + test group
+uv sync --group test
 ```
 
-This includes:
+This installs the base dependencies plus the test group, which includes:
 - `pytest` - Testing framework
 - `pytest-asyncio` - Async test support
 - `pytest-cov` - Code coverage reporting
@@ -44,7 +46,7 @@ uv run pytest
 
 ```powershell
 # Terminal coverage report
-uv run pytest --cov=src/app --cov-report=term
+uv run pytest --cov=src/app --cov-report=term-missing
 ```
 
 ### Generate HTML Coverage Report
@@ -89,26 +91,27 @@ uv run pytest tests/test_auth.py::TestLogin::test_login_success_with_username -v
 tests/
 ├── conftest.py                      # Shared fixtures and configuration
 │
-├── Integration Tests (179 tests)
-├── test_auth.py                     # Authentication & registration (13 tests)
-├── test_users.py                    # User CRUD operations (27 tests)
+├── Integration Tests (177 tests)
+├── test_auth.py                     # Authentication & registration (14 tests)
+├── test_users.py                    # User CRUD operations (25 tests)
 ├── test_profiles.py                 # Profile CRUD & pictures (43 tests)
-├── test_listings.py                 # Listing CRUD & filtering (27 tests)
-├── test_listing_images.py           # Image upload & management (19 tests)
+├── test_listings.py                 # Listing CRUD & filtering (25 tests)
+├── test_listing_images.py           # Image upload & management (16 tests)
 ├── test_admin.py                    # Admin moderation actions (35 tests)
 ├── test_route_errors.py             # Error validation for all routes (19 tests)
 │
-└── unit/                            # Unit Tests (186 tests)
-    ├── test_admin_repository.py     # Admin data access (20 tests)
-    ├── test_admin_service.py        # Admin business logic (25 tests)
-    ├── test_listing_repository.py   # Listing data access (28 tests)
+└── unit/                            # Unit Tests (210 tests)
+    ├── test_admin_repository.py     # Admin data access (30 tests)
+    ├── test_admin_service.py        # Admin business logic (22 tests)
+    ├── test_listing_repository.py   # Listing data access (30 tests)
     ├── test_listing_service.py      # Listing business logic (11 tests)
-    ├── test_listing_image_repository.py  # Image data access (22 tests)
-    ├── test_listing_image_service.py     # Image business logic (21 tests)
+    ├── test_listing_image_repository.py  # Image data access (23 tests)
+    ├── test_listing_image_service.py     # Image business logic (22 tests)
     ├── test_profile_repository.py   # Profile data access (14 tests)
     ├── test_profile_service.py      # Profile business logic (12 tests)
+    ├── test_security.py             # Core security functions (11 tests)
     ├── test_user_repository.py      # User data access (15 tests)
-    └── test_user_service.py         # User business logic (18 tests)
+    └── test_user_service.py         # User business logic (20 tests)
 ```
 
 ### Test Coverage by Module
@@ -352,7 +355,7 @@ def test_validation_error(self, test_client, test_user_token):
 
 ### Unit Tests vs Integration Tests
 
-**Unit Tests (88% coverage):**
+**Unit Tests (90% coverage):**
 - Test business logic in isolation
 - Use mocks for external dependencies
 - Focus on services and repositories
@@ -413,7 +416,7 @@ Now tests will run before each commit.
 5. **Test Both Paths** - Test success cases AND error cases
 6. **Mock External Services** - Don't make real API calls or send emails
 7. **Fast Tests** - Keep tests fast by using in-memory database
-8. **Good Coverage** - Aim for 90%+ code coverage on business logic (currently at 93%)
+8. **Good Coverage** - Aim for 90%+ code coverage on business logic (currently at 100%)
 9. **Test Edge Cases** - Include tests for duplicate data, missing fields, invalid UUIDs
 10. **Integration Tests** - Include complete workflow tests that cover multiple operations
 

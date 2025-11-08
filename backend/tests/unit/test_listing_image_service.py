@@ -80,6 +80,33 @@ class TestListingImageServiceGet:
 
             assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
 
+    def test_get_by_id_listing_not_found_raises_404(
+        self, listing_image_service: ListingImageService, mock_user: User
+    ):
+        """Test getting image when listing doesn't exist raises 404."""
+        image_id = uuid.uuid4()
+        listing_id = uuid.uuid4()
+        mock_image = Image(
+            id=image_id,
+            listing_id=listing_id,
+            url="http://example.com/image.jpg",
+            is_thumbnail=False,
+        )
+
+        with (
+            patch("app.services.listing_image.ListingImageRepository.get_by_id") as mock_get_image,
+            patch("app.services.listing_image.ListingRepository.get_by_id") as mock_get_listing,
+        ):
+            mock_get_image.return_value = mock_image
+            mock_get_listing.return_value = None  # Listing not found
+            db = MagicMock(spec=Session)
+
+            with pytest.raises(HTTPException) as exc_info:
+                listing_image_service.get_by_id(db, image_id, mock_user)
+
+            assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+            assert "Listing not found" in exc_info.value.detail
+
     def test_get_by_id_unauthorized_seller_raises_403(
         self, listing_image_service: ListingImageService
     ):
