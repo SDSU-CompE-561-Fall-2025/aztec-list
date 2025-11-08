@@ -81,7 +81,9 @@ def ensure_can_moderate_user(target_user: User, moderator_user: User) -> None:
         )
 
 
-def ensure_resource_owner(resource_owner_id: UUID, user_id: UUID, resource_name: str = "resource") -> None:
+def ensure_resource_owner(
+    resource_owner_id: UUID, user_id: UUID, resource_name: str = "resource"
+) -> None:
     """
     Ensure user is the owner of a resource.
 

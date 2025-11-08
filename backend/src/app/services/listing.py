@@ -130,10 +130,7 @@ class ListingService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Listing with ID {listing_id} not found",
             )
-
-        # Check authorization: owner only (admins must use admin endpoints)
         ensure_resource_owner(db_listing.seller_id, user_id, "listing")
-
         return ListingRepository.update(db, db_listing, listing)
 
     def delete(self, db: Session, listing_id: uuid.UUID, user_id: uuid.UUID) -> None:
@@ -157,10 +154,7 @@ class ListingService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Listing with ID {listing_id} not found",
             )
-
-        # Check authorization: owner only (admins must use admin endpoints)
         ensure_resource_owner(db_listing.seller_id, user_id, "listing")
-
         ListingRepository.delete(db, db_listing)
 
 

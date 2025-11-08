@@ -330,5 +330,6 @@ class AdminActionService:
 
         return listing_removal
 
+
 # Create a singleton instance
 admin_action_service = AdminActionService()

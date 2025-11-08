@@ -353,9 +353,7 @@ class TestUserServiceUpdate:
             assert mock_user.is_verified is False
             mock_update.assert_called_once()
 
-    def test_update_user_set_is_verified_true(
-        self, user_service: UserService, mock_user: User
-    ):
+    def test_update_user_set_is_verified_true(self, user_service: UserService, mock_user: User):
         """Test explicitly setting is_verified to True (admin operation)."""
         update_data = UserUpdate(is_verified=True)
         mock_user.is_verified = False
@@ -374,9 +372,7 @@ class TestUserServiceUpdate:
             assert mock_user.is_verified is True
             mock_update.assert_called_once()
 
-    def test_update_user_set_is_verified_false(
-        self, user_service: UserService, mock_user: User
-    ):
+    def test_update_user_set_is_verified_false(self, user_service: UserService, mock_user: User):
         """Test explicitly setting is_verified to False."""
         update_data = UserUpdate(is_verified=False)
         mock_user.is_verified = True

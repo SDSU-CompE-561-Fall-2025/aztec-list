@@ -337,9 +337,7 @@ class TestAdminActionRepositoryFilters:
 
         assert count >= 1
 
-    def test_get_filtered_by_date_range(
-        self, db_session: Session, test_admin_action: AdminAction
-    ):
+    def test_get_filtered_by_date_range(self, db_session: Session, test_admin_action: AdminAction):
         """Test filtering by date range."""
         from datetime import datetime, timedelta, timezone
 
@@ -368,7 +366,7 @@ class TestAdminActionRepositoryFilters:
 
         yesterday = datetime.now(timezone.utc) - timedelta(days=1)
         tomorrow = datetime.now(timezone.utc) + timedelta(days=1)
-        
+
         filters = AdminActionFilters(from_date=yesterday, to_date=tomorrow)
         count = AdminActionRepository.count_filtered(db_session, filters)
         assert count >= 1
@@ -385,7 +383,7 @@ class TestAdminActionRepositoryFilters:
             reason="Test",
         )
         AdminActionRepository.create(db_session, admin_user.id, action_data)
-        
+
         filters = AdminActionFilters(target_listing_id=target_listing.id)
         results = AdminActionRepository.get_filtered(db_session, filters)
         assert len(results) >= 1
@@ -402,7 +400,7 @@ class TestAdminActionRepositoryFilters:
             reason="Test",
         )
         AdminActionRepository.create(db_session, admin_user.id, action_data)
-        
+
         filters = AdminActionFilters(target_listing_id=target_listing.id)
         count = AdminActionRepository.count_filtered(db_session, filters)
         assert count >= 1
