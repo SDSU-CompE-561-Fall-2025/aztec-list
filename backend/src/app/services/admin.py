@@ -78,13 +78,12 @@ class AdminActionService:
         Raises:
             HTTPException: If user is already banned
         """
-        existing_actions = AdminActionRepository.get_by_target_user_id(db, user_id)
-        for action in existing_actions:
-            if action.action_type == AdminActionType.BAN:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="User is already banned. Revoke existing ban first if needed.",
-                )
+        ban = AdminActionRepository.has_active_ban(db, user_id)
+        if ban:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User is already banned. Revoke existing ban first if needed.",
+            )
 
     def get_by_id(self, db: Session, action_id: uuid.UUID) -> AdminAction:
         """
@@ -227,8 +226,7 @@ class AdminActionService:
         )
         created_strike = AdminActionRepository.create(db, admin_id, action)
 
-        # Check for auto-escalation to permanent ban
-        strike_count = self._count_active_strikes(db, target_user_id)
+        strike_count = AdminActionRepository.count_strikes(db, target_user_id)
         if strike_count >= settings.moderation.strike_auto_ban_threshold:
             ban_action = AdminActionCreate(
                 target_user_id=target_user_id,
@@ -240,26 +238,6 @@ class AdminActionService:
             AdminActionRepository.create(db, admin_id, ban_action)
 
         return created_strike
-
-    def _count_active_strikes(self, db: Session, user_id: uuid.UUID) -> int:
-        """
-        Count all strikes for a user.
-
-        Args:
-            db: Database session
-            user_id: User ID to check
-
-        Returns:
-            int: Number of strikes
-        """
-        actions = AdminActionRepository.get_by_target_user_id(db, user_id)
-        count = 0
-
-        for action in actions:
-            if action.action_type == AdminActionType.STRIKE:
-                count += 1
-
-        return count
 
     def create_ban(
         self, db: Session, admin_id: uuid.UUID, target_user_id: uuid.UUID, ban: AdminActionBan
@@ -315,6 +293,7 @@ class AdminActionService:
                 detail=f"Admin action with ID {action_id} not found",
             )
 
+        # Prevent self-unbanning (if action has a target user)
         if action.target_user_id == admin_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

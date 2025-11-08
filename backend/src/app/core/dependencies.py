@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import oauth2_scheme, verify_token
 from app.core.database import get_db
-from app.core.security import ensure_admin, ensure_not_banned
+from app.core.security import ensure_admin
 from app.models.user import User
 from app.repository.admin import AdminActionRepository
 from app.services.user import user_service
@@ -101,6 +101,10 @@ def require_not_banned(
     Raises:
         HTTPException: 403 if user has an active ban
     """
-    actions = AdminActionRepository.get_by_target_user_id(db, current_user.id)
-    ensure_not_banned(actions)
+    ban = AdminActionRepository.has_active_ban(db, current_user.id)
+    if ban:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account banned. Contact support for assistance.",
+        )
     return current_user

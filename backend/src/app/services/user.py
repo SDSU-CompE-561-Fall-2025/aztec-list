@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 from fastapi import HTTPException, status
 
 from app.core.auth import get_password_hash, verify_password
-from app.core.security import ensure_not_banned
 from app.repository.admin import AdminActionRepository
 from app.repository.user import UserRepository
 
@@ -165,8 +164,14 @@ class UserService:
                 detail="Incorrect email/username or password",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        actions = AdminActionRepository.get_by_target_user_id(db, user.id)
-        ensure_not_banned(actions)
+
+        # Check if user has an active ban
+        ban = AdminActionRepository.has_active_ban(db, user.id)
+        if ban:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account banned. Contact support for assistance.",
+            )
 
         return user
 
