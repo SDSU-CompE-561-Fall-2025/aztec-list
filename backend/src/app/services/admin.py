@@ -154,41 +154,6 @@ class AdminActionService:
         count = AdminActionRepository.count_filtered(db=db, filters=filters)
         return actions, count
 
-    def _create_internal(
-        self, db: Session, admin_id: uuid.UUID, action: AdminActionCreate
-    ) -> AdminAction:
-        """
-        Create admin action without business logic checks (internal use only).
-
-        Used by specialized methods (create_strike, create_ban) that handle
-        their own validation. Should not be called directly from routes.
-
-        Args:
-            db: Database session
-            admin_id: Admin user ID performing the action
-            action: Admin action creation data
-
-        Returns:
-            AdminAction: Created admin action
-
-        Raises:
-            HTTPException: If target user not found or listing_removal missing target_listing_id
-        """
-        target_user = UserRepository.get_by_id(db, action.target_user_id)
-        if not target_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Target user with ID {action.target_user_id} not found",
-            )
-
-        if action.action_type == AdminActionType.LISTING_REMOVAL and not action.target_listing_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="target_listing_id is required when action_type is listing_removal",
-            )
-
-        return AdminActionRepository.create(db, admin_id, action)
-
     def create_strike(
         self,
         db: Session,
