@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select
 
+from app.core.enums import AdminActionType
 from app.models.admin import AdminAction
 
 if TYPE_CHECKING:
@@ -17,7 +18,6 @@ if TYPE_CHECKING:
 
     from sqlalchemy.orm import Session
 
-    from app.core.enums import AdminActionType
     from app.schemas.admin import AdminActionCreate, AdminActionFilters
 
 
@@ -75,6 +75,54 @@ class AdminActionRepository:
             .order_by(AdminAction.created_at.desc())
         )
         return list(db.scalars(query).all())
+
+    @staticmethod
+    def has_active_ban(db: Session, user_id: uuid.UUID) -> AdminAction | None:
+        """
+        Check if user has an active ban.
+
+        This is optimized to check only for BAN actions, avoiding fetching
+        all admin actions for the user.
+
+        Note: Revoked bans are hard-deleted, so any existing BAN is active.
+
+        Args:
+            db: Database session
+            user_id: User ID to check
+
+        Returns:
+            AdminAction | None: The active ban action if found, None otherwise
+        """
+        query = (
+            select(AdminAction)
+            .where(
+                AdminAction.target_user_id == user_id,
+                AdminAction.action_type == AdminActionType.BAN,
+            )
+            .limit(1)
+        )
+        return db.scalars(query).first()
+
+    @staticmethod
+    def count_strikes(db: Session, user_id: uuid.UUID) -> int:
+        """
+        Count the number of active strikes for a user.
+
+        This is optimized to count only STRIKE actions at the database level,
+        avoiding fetching all admin actions for the user.
+
+        Args:
+            db: Database session
+            user_id: User ID to check
+
+        Returns:
+            int: Number of strike actions for the user
+        """
+        query = select(func.count()).where(
+            AdminAction.target_user_id == user_id,
+            AdminAction.action_type == AdminActionType.STRIKE,
+        )
+        return db.scalar(query) or 0
 
     @staticmethod
     def get_by_target_listing_id(db: Session, target_listing_id: uuid.UUID) -> list[AdminAction]:
