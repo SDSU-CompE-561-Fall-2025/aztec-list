@@ -353,44 +353,6 @@ class TestUserServiceUpdate:
             assert mock_user.is_verified is False
             mock_update.assert_called_once()
 
-    def test_update_user_set_is_verified_true(self, user_service: UserService, mock_user: User):
-        """Test explicitly setting is_verified to True (admin operation)."""
-        update_data = UserUpdate(is_verified=True)
-        mock_user.is_verified = False
-
-        with (
-            patch("app.services.user.UserRepository.get_by_id") as mock_get,
-            patch("app.services.user.UserRepository.update") as mock_update,
-        ):
-            mock_get.return_value = mock_user
-            mock_update.return_value = mock_user
-            db = MagicMock(spec=Session)
-
-            user_service.update(db, mock_user.id, update_data)
-
-            # Verify is_verified was set to True
-            assert mock_user.is_verified is True
-            mock_update.assert_called_once()
-
-    def test_update_user_set_is_verified_false(self, user_service: UserService, mock_user: User):
-        """Test explicitly setting is_verified to False."""
-        update_data = UserUpdate(is_verified=False)
-        mock_user.is_verified = True
-
-        with (
-            patch("app.services.user.UserRepository.get_by_id") as mock_get,
-            patch("app.services.user.UserRepository.update") as mock_update,
-        ):
-            mock_get.return_value = mock_user
-            mock_update.return_value = mock_user
-            db = MagicMock(spec=Session)
-
-            user_service.update(db, mock_user.id, update_data)
-
-            # Verify is_verified was set to False
-            assert mock_user.is_verified is False
-            mock_update.assert_called_once()
-
 
 class TestUserServiceDelete:
     """Test UserService delete method."""

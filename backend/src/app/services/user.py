@@ -106,14 +106,12 @@ class UserService:
         Raises:
             HTTPException: If email already exists
         """
-        # Check if email already exists
         if UserRepository.get_by_email(db, user.email):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already registered",
             )
 
-        # Check if username already exists
         if UserRepository.get_by_username(db, user.username):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -192,7 +190,6 @@ class UserService:
         """
         user = self.get_by_id(db, user_id)
 
-        # Only validate if actually changing
         if update_data.username and update_data.username != user.username:
             if UserRepository.get_by_username(db, update_data.username):
                 raise HTTPException(
@@ -208,11 +205,7 @@ class UserService:
                     detail="Email already registered",
                 )
             user.email = update_data.email
-            # Reset verification when email changes
             user.is_verified = False
-
-        if update_data.is_verified is not None:
-            user.is_verified = update_data.is_verified
 
         return UserRepository.update(db, user)
 

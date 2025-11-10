@@ -82,8 +82,8 @@ uv run pytest tests/test_users.py -v
 ```
 
 **Test Coverage:**
-- **387 tests total** with **98% code coverage**
-- 210 unit tests (business logic, data access, core security)
+- **385 tests total** with **98% code coverage**
+- 208 unit tests (business logic, data access, core security)
 - 177 integration tests (covering routes, auth, middleware)
 
 See [Testing Guide](tests/README.md) for detailed testing documentation.

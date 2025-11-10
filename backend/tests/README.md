@@ -4,9 +4,9 @@ This guide explains how to run and work with the test suite for the Aztec List b
 
 ## Test Coverage Summary
 
-**387 total tests with 98% code coverage**
+**385 total tests with 98% code coverage**
 
-- **210 unit tests** - Business logic, data access, and core security
+- **208 unit tests** - Business logic, data access, and core security
 - **177 integration tests** - HTTP endpoints and full workflows
 - **All 27 API endpoints** manually tested via Swagger UI
 
@@ -100,7 +100,7 @@ tests/
 ├── test_admin.py                    # Admin moderation actions (35 tests)
 ├── test_route_errors.py             # Error validation for all routes (19 tests)
 │
-└── unit/                            # Unit Tests (210 tests)
+└── unit/                            # Unit Tests (208 tests)
     ├── test_admin_repository.py     # Admin data access (30 tests)
     ├── test_admin_service.py        # Admin business logic (22 tests)
     ├── test_listing_repository.py   # Listing data access (30 tests)
@@ -111,7 +111,7 @@ tests/
     ├── test_profile_service.py      # Profile business logic (12 tests)
     ├── test_security.py             # Core security functions (11 tests)
     ├── test_user_repository.py      # User data access (15 tests)
-    └── test_user_service.py         # User business logic (20 tests)
+    └── test_user_service.py         # User business logic (18 tests)
 ```
 
 ### Test Coverage by Module
