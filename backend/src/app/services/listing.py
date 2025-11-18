@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
 
+from app.core.security import ensure_resource_owner
 from app.repository.listing import ListingRepository
 
 if TYPE_CHECKING:
@@ -129,14 +130,7 @@ class ListingService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Listing with ID {listing_id} not found",
             )
-
-        # Check authorization: owner only (admins must use admin endpoints)
-        if db_listing.seller_id != user_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only the owner can update their listing",
-            )
-
+        ensure_resource_owner(db_listing.seller_id, user_id, "listing")
         return ListingRepository.update(db, db_listing, listing)
 
     def delete(self, db: Session, listing_id: uuid.UUID, user_id: uuid.UUID) -> None:
@@ -160,14 +154,7 @@ class ListingService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Listing with ID {listing_id} not found",
             )
-
-        # Check authorization: owner only (admins must use admin endpoints)
-        if db_listing.seller_id != user_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only the owner can delete their listing",
-            )
-
+        ensure_resource_owner(db_listing.seller_id, user_id, "listing")
         ListingRepository.delete(db, db_listing)
 
 

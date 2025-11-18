@@ -37,16 +37,14 @@ class ListingRepository:
     ) -> Select[tuple[Listing]]:
         query = select(Listing).where(Listing.seller_id == seller_id)
 
-        # Filter by active status unless include_inactive is True
         if not params.include_inactive:
             query = query.where(Listing.is_active)
 
-        # Apply sorting
         if params.sort == ListingSortOrder.PRICE_ASC:
             query = query.order_by(Listing.price.asc(), Listing.created_at.desc())
         elif params.sort == ListingSortOrder.PRICE_DESC:
             query = query.order_by(Listing.price.desc(), Listing.created_at.desc())
-        else:  # default to RECENT
+        else:  # ListingSortOrder.RECENT (default)
             query = query.order_by(Listing.created_at.desc())
 
         return query
@@ -55,7 +53,6 @@ class ListingRepository:
     def _apply_search_filters(params: ListingSearchParams) -> Select[tuple[Listing]]:
         query = select(Listing).where(Listing.is_active)
 
-        # Apply filters
         if params.search_text:
             # Full-text search over title and description
             # Escape SQL wildcards (%, _) to prevent wildcard injection
@@ -83,12 +80,11 @@ class ListingRepository:
         if params.seller_id:
             query = query.where(Listing.seller_id == params.seller_id)
 
-        # Apply sorting
         if params.sort == ListingSortOrder.PRICE_ASC:
             query = query.order_by(Listing.price.asc(), Listing.created_at.desc())
         elif params.sort == ListingSortOrder.PRICE_DESC:
             query = query.order_by(Listing.price.desc(), Listing.created_at.desc())
-        else:  # default to RECENT
+        else:  # ListingSortOrder.RECENT (default)
             query = query.order_by(Listing.created_at.desc())
 
         return query
@@ -145,8 +141,6 @@ class ListingRepository:
             list[Listing]: List of listings (empty if none found)
         """
         query = ListingRepository._apply_seller_filters(seller_id, params)
-
-        # Count the listings
         return db.scalar(select(func.count()).select_from(query.subquery())) or 0
 
     @staticmethod
@@ -226,7 +220,6 @@ class ListingRepository:
         # Convert ListingUpdate model fields into dictionary
         update_data = listing.model_dump(exclude_unset=True)
 
-        # Update only the fields present in the request
         for field, value in update_data.items():
             setattr(db_listing, field, value)
 

@@ -10,7 +10,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import get_current_user, get_db
+from app.core.dependencies import get_db, require_not_banned
 from app.models.listing_image import Image
 from app.models.user import User
 from app.schemas.listing_image import ImageCreate, ImagePublic, ImageUpdate
@@ -20,34 +20,6 @@ listing_images_router = APIRouter(
     prefix="/listings",
     tags=["Listing Images"],
 )
-
-
-@listing_images_router.get(
-    "/{listing_id}/images/{image_id}",
-    response_model=ImagePublic,
-    summary="Get a specific image",
-)
-async def get_image(
-    image_id: uuid.UUID,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
-) -> Image:
-    """
-    Get a specific image by ID.
-
-    Args:
-        image_id: ID of the image
-        db: Database session
-        current_user: Current authenticated user
-
-    Returns:
-        ImagePublic: The image
-
-    Raises:
-        HTTPException: 404 if image not found
-        HTTPException: 403 if user is not authorized
-    """
-    return ListingImageService.get_by_id(db, image_id, current_user)
 
 
 @listing_images_router.post(
@@ -60,7 +32,7 @@ async def create_image(
     listing_id: uuid.UUID,
     image: ImageCreate,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[User, Depends(require_not_banned)],
 ) -> Image:
     """
     Add a new image to a listing.
@@ -94,7 +66,7 @@ async def update_image(
     image_id: uuid.UUID,
     image_update: ImageUpdate,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[User, Depends(require_not_banned)],
 ) -> Image:
     """
     Update an existing image.
@@ -135,7 +107,7 @@ async def update_image(
 async def delete_image(
     image_id: uuid.UUID,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[User, Depends(require_not_banned)],
 ) -> None:
     """
     Delete an image from a listing.

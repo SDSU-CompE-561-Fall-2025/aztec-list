@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import require_admin, require_not_banned
+from app.core.dependencies import get_current_user, require_admin, require_not_banned
 from app.models.admin import AdminAction
 from app.models.user import User
 from app.schemas.admin import (
@@ -92,7 +92,7 @@ async def get_admin_action(
 )
 async def delete_admin_action(
     action_id: uuid.UUID,
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     """
@@ -125,7 +125,7 @@ async def delete_admin_action(
 async def strike_user(
     user_id: uuid.UUID,
     strike: AdminActionStrike,
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> AdminAction:
     """
@@ -157,7 +157,7 @@ async def strike_user(
 async def ban_user(
     user_id: uuid.UUID,
     ban: AdminActionBan,
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> AdminAction:
     """
@@ -188,7 +188,7 @@ async def ban_user(
 async def remove_listing(
     listing_id: uuid.UUID,
     removal: AdminListingRemoval,
-    admin: Annotated[User, Depends(require_admin)],
+    admin: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> AdminListingRemovalResponse:
     """

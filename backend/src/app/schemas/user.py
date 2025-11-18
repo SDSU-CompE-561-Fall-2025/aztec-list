@@ -28,7 +28,6 @@ class UserUpdate(BaseModel):
 
     username: str | None = None
     email: EmailStr | None = None
-    is_verified: bool | None = None
 
 
 class UserPublic(UserBase):

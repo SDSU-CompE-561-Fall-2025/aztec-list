@@ -129,6 +129,63 @@ class TestListingRepositoryGet:
 
         assert count == 2
 
+    def test_get_by_seller_sort_by_price_asc(self, db_session: Session, test_user: User):
+        """Test getting listings by seller sorted by price ascending."""
+        cheap = Listing(
+            seller_id=test_user.id,
+            title="Cheap Item",
+            description="Low price",
+            price=Decimal("10.00"),
+            category=Category.ELECTRONICS,
+            condition=Condition.NEW,
+        )
+        expensive = Listing(
+            seller_id=test_user.id,
+            title="Expensive Item",
+            description="High price",
+            price=Decimal("200.00"),
+            category=Category.ELECTRONICS,
+            condition=Condition.NEW,
+        )
+        db_session.add_all([expensive, cheap])
+        db_session.commit()
+
+        params = UserListingsParams(sort=ListingSortOrder.PRICE_ASC)
+        results = ListingRepository.get_by_seller(db_session, test_user.id, params)
+
+        assert len(results) >= 2
+        assert results[0].price == Decimal("10.00")
+        assert results[1].price == Decimal("200.00")
+
+    def test_get_by_seller_sort_by_price_desc(self, db_session: Session, test_user: User):
+        """Test getting listings by seller sorted by price descending."""
+        cheap = Listing(
+            seller_id=test_user.id,
+            title="Cheap Item",
+            description="Cheap",
+            price=Decimal("10.00"),
+            category=Category.ELECTRONICS,
+            condition=Condition.NEW,
+        )
+        expensive = Listing(
+            seller_id=test_user.id,
+            title="Expensive Item",
+            description="Expensive",
+            price=Decimal("200.00"),
+            category=Category.ELECTRONICS,
+            condition=Condition.NEW,
+        )
+        db_session.add_all([cheap, expensive])
+        db_session.commit()
+
+        params = UserListingsParams(sort=ListingSortOrder.PRICE_DESC)
+        results = ListingRepository.get_by_seller(db_session, test_user.id, params)
+
+        assert len(results) >= 2
+        # Most expensive should come first
+        assert results[0].price == Decimal("200.00")
+        assert results[1].price == Decimal("10.00")
+
 
 class TestListingRepositorySearch:
     """Test ListingRepository search and filter methods."""

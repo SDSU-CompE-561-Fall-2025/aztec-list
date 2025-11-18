@@ -83,7 +83,6 @@ class ProfileService:
         Raises:
             HTTPException: If profile already exists for this user
         """
-        # Check if profile already exists for this user
         existing_profile = ProfileRepository.get_by_user_id(db, user_id)
         if existing_profile:
             raise HTTPException(
@@ -91,8 +90,9 @@ class ProfileService:
                 detail="Profile already exists for this user",
             )
 
-        # Convert Pydantic model to dict suitable for database
-        profile_data = self._prepare_profile_data(profile.model_dump())
+        profile_data = profile.model_dump()
+        if profile_data.get("profile_picture_url"):
+            profile_data["profile_picture_url"] = str(profile_data["profile_picture_url"])
 
         return ProfileRepository.create(db, user_id, profile_data)
 
@@ -118,29 +118,11 @@ class ProfileService:
                 detail=f"Profile for user ID {user_id} not found",
             )
 
-        # Convert Pydantic model to dict suitable for database
-        update_data = self._prepare_profile_data(profile.model_dump(exclude_unset=True))
+        update_data = profile.model_dump(exclude_unset=True)
+        if update_data.get("profile_picture_url"):
+            update_data["profile_picture_url"] = str(update_data["profile_picture_url"])
 
         return ProfileRepository.update(db, db_profile, update_data)
-
-    def _prepare_profile_data(self, profile_data: dict) -> dict:
-        """
-        Convert profile data dictionary to database-ready format.
-
-        Args:
-            profile_data: Profile data dictionary from Pydantic model
-
-        Returns:
-            dict: Database-ready profile data
-        """
-        # Convert HttpUrl to str if present
-        if (
-            "profile_picture_url" in profile_data
-            and profile_data["profile_picture_url"] is not None
-        ):
-            profile_data["profile_picture_url"] = str(profile_data["profile_picture_url"])
-
-        return profile_data
 
     def update_profile_picture(
         self, db: Session, user_id: uuid.UUID, data: ProfilePictureUpdate
@@ -165,7 +147,6 @@ class ProfileService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Profile for user ID {user_id} not found",
             )
-
         return ProfileRepository.update_profile_picture(db, db_profile, str(data.picture_url))
 
     def delete(self, db: Session, user_id: uuid.UUID) -> None:
@@ -185,7 +166,6 @@ class ProfileService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Profile for user ID {user_id} not found",
             )
-
         ProfileRepository.delete(db, db_profile)
 
 

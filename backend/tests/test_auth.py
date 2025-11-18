@@ -4,10 +4,14 @@ Test authentication endpoints.
 Tests for user registration, login, and token-based authentication.
 """
 
+import uuid
+
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
+from app.core.enums import AdminActionType
+from app.models.admin import AdminAction
 from app.models.user import User
 
 
@@ -114,6 +118,30 @@ class TestLogin:
         response = client.post("/api/v1/auth/login", data={"username": "test"})
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+    def test_login_banned_user(
+        self, client: TestClient, test_user: User, test_admin: User, db_session
+    ):
+        """Test that a banned user cannot login."""
+        # Create a ban action for the test user
+        ban = AdminAction(
+            id=uuid.uuid4(),
+            admin_id=test_admin.id,
+            target_user_id=test_user.id,
+            action_type=AdminActionType.BAN,
+            reason="Test ban for login verification",
+        )
+        db_session.add(ban)
+        db_session.commit()
+
+        # Attempt to login with banned user
+        response = client.post(
+            "/api/v1/auth/login",
+            data={"username": test_user.username, "password": "testpassword123"},
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert "banned" in response.json()["detail"].lower()
 
 
 class TestTokenAuthentication:

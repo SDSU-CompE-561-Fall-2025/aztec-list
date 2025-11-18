@@ -12,34 +12,12 @@ from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
 
-from app.core.enums import AdminActionType, UserRole
+from app.core.enums import UserRole
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from uuid import UUID
 
-    from app.models.admin import AdminAction
     from app.models.user import User
-
-
-def ensure_not_banned(actions: Sequence[AdminAction]) -> None:
-    """
-    Ensure user does not have an active ban.
-
-    Pure authorization policy function that checks a collection of admin actions
-    for any BAN entries.
-
-    Args:
-        actions: Sequence of admin actions to check
-
-    Raises:
-        HTTPException: 403 if any BAN action is found
-    """
-    for action in actions:
-        if action.action_type == AdminActionType.BAN:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Account banned. Contact support for assistance.",
-            )
 
 
 def ensure_admin(user: User) -> None:
@@ -100,4 +78,32 @@ def ensure_can_moderate_user(target_user: User, moderator_user: User) -> None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Cannot moderate admin accounts. Contact system administrator.",
+        )
+
+
+def ensure_resource_owner(
+    resource_owner_id: UUID, user_id: UUID, resource_name: str = "resource"
+) -> None:
+    """
+    Ensure user is the owner of a resource.
+
+    Generic ownership check that can be used for listings, profiles, images, etc.
+    Prevents users from modifying resources they don't own.
+
+    Args:
+        resource_owner_id: ID of the user who owns the resource
+        user_id: ID of the user attempting the action
+        resource_name: Name of the resource type for error message (default: "resource")
+
+    Raises:
+        HTTPException: 403 if user is not the owner
+
+    Example:
+        >>> ensure_resource_owner(listing.seller_id, current_user.id, "listing")
+        >>> ensure_resource_owner(profile.user_id, current_user.id, "profile")
+    """
+    if resource_owner_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Only the owner can modify this {resource_name}",
         )

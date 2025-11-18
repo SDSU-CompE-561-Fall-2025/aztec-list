@@ -78,13 +78,12 @@ class AdminActionService:
         Raises:
             HTTPException: If user is already banned
         """
-        existing_actions = AdminActionRepository.get_by_target_user_id(db, user_id)
-        for action in existing_actions:
-            if action.action_type == AdminActionType.BAN:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="User is already banned. Revoke existing ban first if needed.",
-                )
+        ban = AdminActionRepository.has_active_ban(db, user_id)
+        if ban:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User is already banned. Revoke existing ban first if needed.",
+            )
 
     def get_by_id(self, db: Session, action_id: uuid.UUID) -> AdminAction:
         """
@@ -155,41 +154,6 @@ class AdminActionService:
         count = AdminActionRepository.count_filtered(db=db, filters=filters)
         return actions, count
 
-    def _create_internal(
-        self, db: Session, admin_id: uuid.UUID, action: AdminActionCreate
-    ) -> AdminAction:
-        """
-        Create admin action without business logic checks (internal use only).
-
-        Used by specialized methods (create_strike, create_ban) that handle
-        their own validation. Should not be called directly from routes.
-
-        Args:
-            db: Database session
-            admin_id: Admin user ID performing the action
-            action: Admin action creation data
-
-        Returns:
-            AdminAction: Created admin action
-
-        Raises:
-            HTTPException: If target user not found or listing_removal missing target_listing_id
-        """
-        target_user = UserRepository.get_by_id(db, action.target_user_id)
-        if not target_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Target user with ID {action.target_user_id} not found",
-            )
-
-        if action.action_type == AdminActionType.LISTING_REMOVAL and not action.target_listing_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="target_listing_id is required when action_type is listing_removal",
-            )
-
-        return AdminActionRepository.create(db, admin_id, action)
-
     def create_strike(
         self,
         db: Session,
@@ -227,8 +191,7 @@ class AdminActionService:
         )
         created_strike = AdminActionRepository.create(db, admin_id, action)
 
-        # Check for auto-escalation to permanent ban
-        strike_count = self._count_active_strikes(db, target_user_id)
+        strike_count = AdminActionRepository.count_strikes(db, target_user_id)
         if strike_count >= settings.moderation.strike_auto_ban_threshold:
             ban_action = AdminActionCreate(
                 target_user_id=target_user_id,
@@ -240,26 +203,6 @@ class AdminActionService:
             AdminActionRepository.create(db, admin_id, ban_action)
 
         return created_strike
-
-    def _count_active_strikes(self, db: Session, user_id: uuid.UUID) -> int:
-        """
-        Count all strikes for a user.
-
-        Args:
-            db: Database session
-            user_id: User ID to check
-
-        Returns:
-            int: Number of strikes
-        """
-        actions = AdminActionRepository.get_by_target_user_id(db, user_id)
-        count = 0
-
-        for action in actions:
-            if action.action_type == AdminActionType.STRIKE:
-                count += 1
-
-        return count
 
     def create_ban(
         self, db: Session, admin_id: uuid.UUID, target_user_id: uuid.UUID, ban: AdminActionBan
@@ -371,10 +314,8 @@ class AdminActionService:
         )
         listing_removal = AdminActionRepository.create(db, admin_id, removal_action)
 
-        # Only issue strike if user is not already banned (cleanup without additional penalty)
         try:
             self._check_user_not_banned(db, seller_id)
-            # User is not banned, issue strike which may trigger auto-ban
             self.create_strike(
                 db=db,
                 admin_id=admin_id,
@@ -382,15 +323,10 @@ class AdminActionService:
                 strike=AdminActionStrike(reason=reason),
             )
         except HTTPException as e:
-            # Only skip strike if user is already banned (400 BAD_REQUEST)
-            # Re-raise any other exceptions (e.g., user not found)
             if e.status_code != status.HTTP_400_BAD_REQUEST:
                 raise
 
-        # Admin removal bypasses owner check - use repository directly
-        db_listing = ListingRepository.get_by_id(db, listing_id)
-        if db_listing:
-            ListingRepository.delete(db, db_listing)
+        ListingRepository.delete(db, listing)
 
         return listing_removal
 

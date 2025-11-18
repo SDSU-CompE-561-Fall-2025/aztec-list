@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 from fastapi import HTTPException, status
 
 from app.core.auth import get_password_hash, verify_password
-from app.core.security import ensure_not_banned
 from app.repository.admin import AdminActionRepository
 from app.repository.user import UserRepository
 
@@ -107,14 +106,12 @@ class UserService:
         Raises:
             HTTPException: If email already exists
         """
-        # Check if email already exists
         if UserRepository.get_by_email(db, user.email):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already registered",
             )
 
-        # Check if username already exists
         if UserRepository.get_by_username(db, user.username):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -165,8 +162,14 @@ class UserService:
                 detail="Incorrect email/username or password",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        actions = AdminActionRepository.get_by_target_user_id(db, user.id)
-        ensure_not_banned(actions)
+
+        # Check if user has an active ban
+        ban = AdminActionRepository.has_active_ban(db, user.id)
+        if ban:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account banned. Contact support for assistance.",
+            )
 
         return user
 
@@ -187,7 +190,6 @@ class UserService:
         """
         user = self.get_by_id(db, user_id)
 
-        # Only validate if actually changing
         if update_data.username and update_data.username != user.username:
             if UserRepository.get_by_username(db, update_data.username):
                 raise HTTPException(
@@ -203,11 +205,7 @@ class UserService:
                     detail="Email already registered",
                 )
             user.email = update_data.email
-            # Reset verification when email changes
             user.is_verified = False
-
-        if update_data.is_verified is not None:
-            user.is_verified = update_data.is_verified
 
         return UserRepository.update(db, user)
 

@@ -126,6 +126,115 @@ class TestAdminActionRepositoryGet:
         assert len(results) >= 1
         assert all(action.action_type == AdminActionType.STRIKE for action in results)
 
+    def test_has_active_ban_with_ban(
+        self, db_session: Session, admin_user: User, test_user: User, target_listing: Listing
+    ):
+        """Test has_active_ban returns ban when user is banned."""
+        # Create a ban action
+        ban_action = AdminAction(
+            admin_id=admin_user.id,
+            target_user_id=test_user.id,
+            target_listing_id=target_listing.id,
+            action_type=AdminActionType.BAN,
+            reason="Test ban",
+        )
+        db_session.add(ban_action)
+        db_session.commit()
+
+        result = AdminActionRepository.has_active_ban(db_session, test_user.id)
+
+        assert result is not None
+        assert result.id == ban_action.id
+        assert result.action_type == AdminActionType.BAN
+
+    def test_has_active_ban_without_ban(
+        self, db_session: Session, admin_user: User, test_user: User, target_listing: Listing
+    ):
+        """Test has_active_ban returns None when user is not banned."""
+        # Create non-ban actions
+        strike_action = AdminAction(
+            admin_id=admin_user.id,
+            target_user_id=test_user.id,
+            target_listing_id=target_listing.id,
+            action_type=AdminActionType.STRIKE,
+            reason="Test strike",
+        )
+        removal_action = AdminAction(
+            admin_id=admin_user.id,
+            target_user_id=test_user.id,
+            target_listing_id=target_listing.id,
+            action_type=AdminActionType.LISTING_REMOVAL,
+            reason="Test listing removal",
+        )
+        db_session.add_all([strike_action, removal_action])
+        db_session.commit()
+
+        result = AdminActionRepository.has_active_ban(db_session, test_user.id)
+
+        assert result is None
+
+    def test_has_active_ban_no_actions(self, db_session: Session):
+        """Test has_active_ban returns None when user has no actions."""
+        random_user_id = uuid.uuid4()
+        result = AdminActionRepository.has_active_ban(db_session, random_user_id)
+
+        assert result is None
+
+    def test_count_strikes_with_strikes(
+        self, db_session: Session, admin_user: User, test_user: User, target_listing: Listing
+    ):
+        """Test count_strikes returns correct count when user has strikes."""
+        # Create multiple strikes
+        for i in range(3):
+            strike_action = AdminAction(
+                admin_id=admin_user.id,
+                target_user_id=test_user.id,
+                target_listing_id=target_listing.id,
+                action_type=AdminActionType.STRIKE,
+                reason=f"Strike {i}",
+            )
+            db_session.add(strike_action)
+        # Add a ban to ensure it's not counted
+        ban_action = AdminAction(
+            admin_id=admin_user.id,
+            target_user_id=test_user.id,
+            target_listing_id=target_listing.id,
+            action_type=AdminActionType.BAN,
+            reason="Ban",
+        )
+        db_session.add(ban_action)
+        db_session.commit()
+
+        result = AdminActionRepository.count_strikes(db_session, test_user.id)
+
+        assert result == 3
+
+    def test_count_strikes_no_strikes(
+        self, db_session: Session, admin_user: User, test_user: User, target_listing: Listing
+    ):
+        """Test count_strikes returns 0 when user has no strikes."""
+        # Create non-strike actions
+        ban_action = AdminAction(
+            admin_id=admin_user.id,
+            target_user_id=test_user.id,
+            target_listing_id=target_listing.id,
+            action_type=AdminActionType.BAN,
+            reason="Ban",
+        )
+        db_session.add(ban_action)
+        db_session.commit()
+
+        result = AdminActionRepository.count_strikes(db_session, test_user.id)
+
+        assert result == 0
+
+    def test_count_strikes_no_actions(self, db_session: Session):
+        """Test count_strikes returns 0 when user has no actions."""
+        random_user_id = uuid.uuid4()
+        result = AdminActionRepository.count_strikes(db_session, random_user_id)
+
+        assert result == 0
+
     def test_get_all(self, db_session: Session, test_admin_action: AdminAction):
         """Test getting all admin actions with pagination."""
         results = AdminActionRepository.get_all(db_session, offset=0, limit=10)
@@ -226,6 +335,74 @@ class TestAdminActionRepositoryFilters:
         filters = AdminActionFilters(action_type=AdminActionType.STRIKE)
         count = AdminActionRepository.count_filtered(db_session, filters)
 
+        assert count >= 1
+
+    def test_get_filtered_by_date_range(self, db_session: Session, test_admin_action: AdminAction):
+        """Test filtering by date range."""
+        from datetime import datetime, timedelta, timezone
+
+        # Test from_date filter
+        yesterday = datetime.now(timezone.utc) - timedelta(days=1)
+        filters = AdminActionFilters(from_date=yesterday)
+        results = AdminActionRepository.get_filtered(db_session, filters)
+        assert len(results) >= 1
+
+        # Test to_date filter
+        tomorrow = datetime.now(timezone.utc) + timedelta(days=1)
+        filters = AdminActionFilters(to_date=tomorrow)
+        results = AdminActionRepository.get_filtered(db_session, filters)
+        assert len(results) >= 1
+
+        # Test both from_date and to_date
+        filters = AdminActionFilters(from_date=yesterday, to_date=tomorrow)
+        results = AdminActionRepository.get_filtered(db_session, filters)
+        assert len(results) >= 1
+
+    def test_count_filtered_with_date_range(
+        self, db_session: Session, test_admin_action: AdminAction
+    ):
+        """Test counting filtered results with date range."""
+        from datetime import datetime, timedelta, timezone
+
+        yesterday = datetime.now(timezone.utc) - timedelta(days=1)
+        tomorrow = datetime.now(timezone.utc) + timedelta(days=1)
+
+        filters = AdminActionFilters(from_date=yesterday, to_date=tomorrow)
+        count = AdminActionRepository.count_filtered(db_session, filters)
+        assert count >= 1
+
+    def test_get_filtered_with_target_listing_id_in_filters(
+        self, db_session: Session, target_listing: Listing, admin_user: User, test_user: User
+    ):
+        """Test get_filtered applies target_listing_id filter correctly."""
+        # Create an action with target_listing_id
+        action_data = AdminActionCreate(
+            target_user_id=test_user.id,
+            target_listing_id=target_listing.id,
+            action_type=AdminActionType.LISTING_REMOVAL,
+            reason="Test",
+        )
+        AdminActionRepository.create(db_session, admin_user.id, action_data)
+
+        filters = AdminActionFilters(target_listing_id=target_listing.id)
+        results = AdminActionRepository.get_filtered(db_session, filters)
+        assert len(results) >= 1
+
+    def test_count_filtered_with_target_listing_id(
+        self, db_session: Session, target_listing: Listing, admin_user: User, test_user: User
+    ):
+        """Test count_filtered applies target_listing_id filter correctly."""
+        # Create an action with target_listing_id
+        action_data = AdminActionCreate(
+            target_user_id=test_user.id,
+            target_listing_id=target_listing.id,
+            action_type=AdminActionType.LISTING_REMOVAL,
+            reason="Test",
+        )
+        AdminActionRepository.create(db_session, admin_user.id, action_data)
+
+        filters = AdminActionFilters(target_listing_id=target_listing.id)
+        count = AdminActionRepository.count_filtered(db_session, filters)
         assert count >= 1
 
 
