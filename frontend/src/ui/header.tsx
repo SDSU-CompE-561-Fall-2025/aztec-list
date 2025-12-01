@@ -1,9 +1,12 @@
 export default function Header() {
     return (
-        <div>
-            <div className="bg-gray-400 h-46">
-                header placeholder 
+        <>
+            <div className="bg-gray-400 h-46 flex items-center justify-center">
+                <form>
+                    <input type="text" placeholder="Search" className="bg-gray-100 text-black">
+                    </input>
+                </form> 
             </div>
-        </div>
+        </>
     ) 
 };
