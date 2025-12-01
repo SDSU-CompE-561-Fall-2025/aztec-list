@@ -1,6 +1,0 @@
-(public) is simply a folder for organization and won't show up in the URL meaning that is at the root level
-
-app/(public)/listings === app/listings
-
-all routes in the folder are public - no user authentication needed
-
