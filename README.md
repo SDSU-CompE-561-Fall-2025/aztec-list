@@ -56,7 +56,7 @@ uv run fastapi dev src/app/main.py
 - **Always run backend commands from the `backend/` directory**
 
 ## Quickstart (Frontend / Next.js)
-```
+```bash
 # 0) Make sure that Node.js is installed (until we get the docker environment running)
 node -v      
 
@@ -64,16 +64,16 @@ node -v
 cd frontend
 
 # 2) Install JS dependencies (run once, or when package.json changes)
-npm install  # shortcut: `npm i`
+npm install  
 
 # 3) Run the Next.js dev server (dev mode)
-npm run dev  # default: http://localhost:3000
+npm run dev  
 
 # 4) Open the app in your browser
-# Go to http://localhost:3000 and manually navigate to pages, e.g.:
-#   http://localhost:3000/
-#   http://localhost:3000/listings
-#   ...etc, until routing is wired up to use links/nav
+Go to http://localhost:3000 and manually navigate to pages, e.g.:
+   http://localhost:3000/
+   http://localhost:3000/listings
+   ...etc, until routing is wired up to use links/nav
 ```
 
 ## Testing
