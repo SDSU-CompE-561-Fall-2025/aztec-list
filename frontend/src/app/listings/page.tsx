@@ -1,47 +1,43 @@
+'use client';
+
 import Grid from '@/ui/grid';
 import Search from '@/ui/search';
-import { searchListings } from '@/lib/api';
-import { ListingSummary } from '@/lib/types';
+import { useSearchParams } from 'next/navigation';
+import { useListings } from '@/lib/hooks/useListings';
 
-interface ListingsPageProps {
-  searchParams: Promise<{
-    q?: string;
-  }>;
-}
-
-export default async function ListingsPage({ searchParams }: ListingsPageProps) {
-  const params = await searchParams;
-  const searchQuery = params.q;
+export default function ListingsPage() {
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get('q') || undefined;
   
-  // Fetch listings from API
-  let listings: ListingSummary[] = [];
-  let error: string | null = null;
-  
-  try {
-    const response = await searchListings(searchQuery);
-    listings = response.items;
-  } catch (err) {
-    error = err instanceof Error ? err.message : 'Failed to fetch listings';
-    console.error('Error fetching listings:', err);
-  }
+  const { data, isLoading, isError, error } = useListings(searchQuery);
 
   return (
     <div className="container mx-auto px-4 py-8">
       
-      {error ? (
-        <div className="text-center text-red-600 py-8">
-          <p>Error: {error}</p>
+      {isLoading && (
+        <div className="text-center text-gray-600 py-8">
+          <p>Loading listings...</p>
         </div>
-      ) : listings.length === 0 ? (
+      )}
+      
+      {isError && (
+        <div className="text-center text-red-600 py-8">
+          <p>Error: {error?.message || 'Failed to fetch listings'}</p>
+        </div>
+      )}
+      
+      {data && data.items.length === 0 && (
         <div className="text-center text-gray-500 py-8">
           <p>No listings found{searchQuery ? ` for "${searchQuery}"` : ''}.</p>
         </div>
-      ) : (
+      )}
+      
+      {data && data.items.length > 0 && (
         <>
           <div className="mb-4 text-gray-600">
-            <p>Found {listings.length} listing{listings.length !== 1 ? 's' : ''}{searchQuery ? ` for "${searchQuery}"` : ''}</p>
+            <p>Found {data.count} listing{data.count !== 1 ? 's' : ''}{searchQuery ? ` for "${searchQuery}"` : ''}</p>
           </div>
-          <Grid listings={listings} />
+          <Grid listings={data.items} />
         </>
       )}
     </div>
