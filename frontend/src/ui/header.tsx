@@ -1,12 +1,11 @@
+import Search from "./search";
+
 export default function Header() {
     return (
-        <>
-            <div className="bg-gray-400 h-46 flex items-center justify-center">
-                <form>
-                    <input type="text" placeholder="Search" className="bg-gray-100 text-black">
-                    </input>
-                </form> 
-            </div>
-        </>
+        <div className="bg-gray-900 px-4 py-8">
+              <div className="mb-8 flex justify-center">
+                <Search />
+              </div>
+        </div>
     ) 
 };
