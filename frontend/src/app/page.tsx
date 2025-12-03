@@ -1,18 +1,24 @@
-import { Grid } from "@/components/custom/grid";
-import { Search } from "@/components/custom/search";
-import { Input } from "@/components/ui/input";
+"use client";
 
-export default function Home() {
+import { useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { Search } from "@/components/custom/search";
+import createListingQueryOptions from "@/queryOptions/createListingQueryOptions";
+
+export default function ListingsPage() {
+  const searchParams = useSearchParams();
+
+  const filters = {
+    q: searchParams.get("q") ?? "",
+  };
+
+  const query = createListingQueryOptions(filters);
+  const { data } = useQuery(query);
+
   return (
-    <>
-      Temp text
-      <Search></Search>
-      
-    </>
+    <div>
+      <Search />
+      <div>{JSON.stringify(data)}</div>
+    </div>
   );
 }
-
-
-
-
-
