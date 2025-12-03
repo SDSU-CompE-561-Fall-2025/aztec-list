@@ -7,5 +7,4 @@ export default function createListingQueryOptions(filters: listingParams) {
     queryKey: ["listings", filters],
     queryFn: () => getListings(filters),
   });
-
 }

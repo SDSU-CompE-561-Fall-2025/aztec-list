@@ -12,8 +12,7 @@ export default function ListingsPage() {
     q: searchParams.get("q") ?? "",
   };
 
-  const query = createListingQueryOptions(filters);
-  const { data } = useQuery(query);
+  const { data } = useQuery(createListingQueryOptions(filters));
 
   return (
     <div>
