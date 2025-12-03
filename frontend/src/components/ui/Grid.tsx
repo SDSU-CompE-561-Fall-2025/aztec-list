@@ -1,5 +1,6 @@
 'use client';
 
+import createListingQueryOptions from "@/queryOptions/createListingQueryOptions";
 import { useQuery } from "@tanstack/react-query";
 
 const getListings = async(): Promise<any> => {
@@ -9,12 +10,16 @@ const getListings = async(): Promise<any> => {
 
 export function Grid() {
 
-  const { data, refetch } = useQuery({
-    queryKey: ["listings"],
-    queryFn: getListings,
-  });
+  const { data, error } = useQuery(createListingQueryOptions());
+
+  if (error) {
+    return <div>error</div>
+  }
 
   return (
-    <div>{JSON.stringify(data)}</div>
+    <>
+      <div>{JSON.stringify(data)}</div>
+      <button onClick={ () => alert("button is cllicked")  }>click me</button>
+    </>
   );
 };
