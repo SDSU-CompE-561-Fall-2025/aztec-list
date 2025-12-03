@@ -1,4 +1,4 @@
-import { listingsParams } from "@/types/listingParams";
+import { listingsParams } from "@/types/listing/listingParams";
 
 export const getListings = async (
   params: listingsParams = {}
