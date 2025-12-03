@@ -1,11 +1,13 @@
-import { Grid } from "@/components/ui/Grid";
+import { Grid } from "@/components/custom/grid";
+import { Search } from "@/components/custom/search";
 import { Input } from "@/components/ui/input";
 
 export default function Home() {
   return (
     <>
-      some temp text
-      <Grid></Grid>
+      Temp text
+      <Search></Search>
+      
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { getListings } from "@/lib/api";
 import { queryOptions } from "@tanstack/react-query";
 
 export default function createListingQueryOptions() {
