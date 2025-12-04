@@ -154,7 +154,17 @@ export function SearchFilters() {
             min="0"
             placeholder="Min"
             value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || parseInt(value) >= 0) {
+                setMinPrice(value);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "-" || e.key === "e" || e.key === "E") {
+                e.preventDefault();
+              }
+            }}
             className={`w-full bg-gray-800 text-gray-100 border ${
               priceError ? "border-red-500" : "border-gray-700"
             } rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -164,7 +174,17 @@ export function SearchFilters() {
             min="0"
             placeholder="Max"
             value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || parseInt(value) >= 0) {
+                setMaxPrice(value);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "-" || e.key === "e" || e.key === "E") {
+                e.preventDefault();
+              }
+            }}
             className={`w-full bg-gray-800 text-gray-100 border ${
               priceError ? "border-red-500" : "border-gray-700"
             } rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
