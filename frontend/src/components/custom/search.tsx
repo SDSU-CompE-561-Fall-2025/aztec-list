@@ -1,17 +1,19 @@
 'use client';
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "../ui/input";
+import { LISTINGS_BASE_URL, DEFAULT_SORT } from "@/lib/constants";
 
 export function Search() {
   const searchParams = useSearchParams();
-  const pathname = usePathname();
   const { replace } = useRouter();
 
   function handleSearch(item: string) {
-    const params = new URLSearchParams();
-    item ? params.set('q', item) : params.delete('q', item);
-    replace(`${pathname}?${params.toString()}`);
+    if (item) {
+      replace(`${LISTINGS_BASE_URL}?q=${encodeURIComponent(item)}&sort=${DEFAULT_SORT}`);
+    } else {
+      replace(`${LISTINGS_BASE_URL}?sort=${DEFAULT_SORT}`);
+    }
   }
 
   return (

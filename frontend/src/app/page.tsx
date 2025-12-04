@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "@/components/custom/search";
 import createListingQueryOptions from "@/queryOptions/createListingQueryOptions";
+import "./globals.css";
 
 export default function ListingsPage() {
   const searchParams = useSearchParams();
