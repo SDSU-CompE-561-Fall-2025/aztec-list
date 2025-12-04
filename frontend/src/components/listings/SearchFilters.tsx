@@ -134,7 +134,7 @@ export function SearchFilters() {
         <select
           value={currentCategory}
           onChange={(e) => handleCategoryChange(e.target.value)}
-          className="w-full bg-gray-800 text-gray-100 border border-gray-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full bg-gray-800 text-gray-100 border border-gray-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           <option value="">All Categories</option>
           {categories.map((cat) => (
@@ -167,7 +167,7 @@ export function SearchFilters() {
             }}
             className={`w-full bg-gray-800 text-gray-100 border ${
               priceError ? "border-red-500" : "border-gray-700"
-            } rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            } rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500`}
           />
           <input
             type="number"
@@ -187,7 +187,7 @@ export function SearchFilters() {
             }}
             className={`w-full bg-gray-800 text-gray-100 border ${
               priceError ? "border-red-500" : "border-gray-700"
-            } rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            } rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500`}
           />
           {priceError && (
             <p className="text-xs text-red-500">Min price must be less than max price</p>
@@ -205,7 +205,7 @@ export function SearchFilters() {
                 type="checkbox"
                 checked={selectedConditions.includes(condition)}
                 onChange={() => handleConditionToggle(condition)}
-                className="rounded border-gray-700 bg-gray-800 text-blue-500 focus:ring-2 focus:ring-blue-500"
+                className="rounded border-gray-700 bg-gray-800 text-purple-500 focus:ring-2 focus:ring-purple-500"
               />
               {formatConditionLabel(condition)}
             </label>
@@ -219,7 +219,7 @@ export function SearchFilters() {
         <select
           value={currentSort}
           onChange={(e) => handleSortChange(e.target.value)}
-          className="w-full bg-gray-800 text-gray-100 border border-gray-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full bg-gray-800 text-gray-100 border border-gray-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           {sortOptions.map((sort) => (
             <option key={sort} value={sort}>
@@ -232,7 +232,7 @@ export function SearchFilters() {
       {/* Apply Filters Button */}
       <button
         onClick={handleApplyFilters}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md text-sm transition-colors"
+        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md text-sm transition-colors"
       >
         Apply Filters
       </button>
