@@ -1,5 +1,6 @@
 import { ListingSummary } from "@/types/listing/listing";
 import { ListingCard } from "./ListingCard";
+import { SKELETON_LOADING_COUNT } from "@/lib/constants";
 
 interface SearchResultsProps {
   listings: ListingSummary[];
@@ -10,7 +11,7 @@ export function SearchResults({ listings, isLoading }: SearchResultsProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-3 gap-4">
-        {Array.from({ length: 15 }).map((_, i) => (
+        {Array.from({ length: SKELETON_LOADING_COUNT }).map((_, i) => (
           <div key={i} className="flex flex-col gap-2">
             <div className="aspect-square bg-gray-800 rounded-md animate-pulse" />
             <div className="h-4 bg-gray-800 rounded animate-pulse" />

@@ -12,14 +12,17 @@ export function PaginationControls({ count }: PaginationControlsProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const offset = parseInt(searchParams.get("offset") || "0");
-  const totalPages = Math.ceil(count / DEFAULT_LIMIT);
-  const currentPage = Math.floor(offset / DEFAULT_LIMIT) + 1;
+  const offsetParam = searchParams.get("offset");
+  const parsedOffset = offsetParam ? parseInt(offsetParam, 10) : 0;
+  const offset = isNaN(parsedOffset) || parsedOffset < 0 ? 0 : parsedOffset;
+
+  const totalPages = Math.max(1, Math.ceil(count / DEFAULT_LIMIT));
+  const currentPage = Math.min(Math.max(1, Math.floor(offset / DEFAULT_LIMIT) + 1), totalPages);
 
   const handlePageChange = (newPage: number) => {
     const newOffset = (newPage - 1) * DEFAULT_LIMIT;
     const params = new URLSearchParams(searchParams.toString());
-    
+
     if (newOffset > 0) {
       params.set("offset", newOffset.toString());
     } else {
@@ -42,11 +45,11 @@ export function PaginationControls({ count }: PaginationControlsProps) {
       >
         Previous
       </button>
-      
+
       <span className="text-sm text-gray-300">
         Page {currentPage} of {totalPages}
       </span>
-      
+
       <button
         onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}

@@ -1,22 +1,11 @@
-import { listingsParams } from "@/types/listing/listingParams";
+import { ListingsParams } from "@/types/listing/listingParams";
 import { ListingSearchResponse } from "@/types/listing/listing";
+import { API_BASE_URL } from "@/lib/constants";
 
-export const getListings = async (
-  params: listingsParams = {}
-): Promise<ListingSearchResponse> => {
-  const {
-    q,
-    category,
-    minPrice,
-    maxPrice,
-    condition,
-    sellerId,
-    limit,
-    offset,
-    sort,
-  } = params;
+export const getListings = async (params: ListingsParams = {}): Promise<ListingSearchResponse> => {
+  const { q, category, minPrice, maxPrice, condition, sellerId, limit, offset, sort } = params;
 
-  const url = new URL("http://127.0.0.1:8000/api/v1/listings");
+  const url = new URL(`${API_BASE_URL}/listings`);
 
   // Match FastAPI parameter names 1:1
   if (q) url.searchParams.set("search_text", q);
@@ -30,7 +19,17 @@ export const getListings = async (
   if (sort) url.searchParams.set("sort", sort);
 
   const res = await fetch(url.toString());
-  if (!res.ok) throw new Error("Failed to fetch listings");
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to fetch listings: ${res.status} ${errorText}`);
+  }
 
-  return res.json();
+  const data = await res.json();
+
+  // Validate response structure
+  if (!data || typeof data !== "object" || !Array.isArray(data.items)) {
+    throw new Error("Invalid response format from API");
+  }
+
+  return data as ListingSearchResponse;
 };

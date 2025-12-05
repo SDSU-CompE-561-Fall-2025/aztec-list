@@ -16,9 +16,7 @@ interface HeaderProps {
 
 function sanitizeSearchInput(input: string): string {
   // Remove any potentially dangerous characters, keep alphanumeric, spaces, and common punctuation
-  return input
-    .replace(/[^\w\s\-.,!?'"@#$%&*()]/g, "")
-    .trim();
+  return input.replace(/[^\w\s\-.,!?'"@#$%&*()]/g, "").trim();
 }
 
 export function Header({ isSignedIn = false, userAvatar, userName }: HeaderProps) {
@@ -28,9 +26,9 @@ export function Header({ isSignedIn = false, userAvatar, userName }: HeaderProps
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const sanitizedQuery = sanitizeSearchInput(searchQuery);
-    
+
     if (!sanitizedQuery) {
       // If empty after sanitization, just navigate to listings
       router.push(`${LISTINGS_BASE_URL}?sort=${DEFAULT_SORT}`);
@@ -38,13 +36,17 @@ export function Header({ isSignedIn = false, userAvatar, userName }: HeaderProps
     }
 
     const isOnListingsPage = pathname === LISTINGS_BASE_URL;
-    
+
     if (isOnListingsPage) {
       // If already on listings page, update the URL with new search
-      router.replace(`${LISTINGS_BASE_URL}?q=${encodeURIComponent(sanitizedQuery)}&sort=${DEFAULT_SORT}`);
+      router.replace(
+        `${LISTINGS_BASE_URL}?q=${encodeURIComponent(sanitizedQuery)}&sort=${DEFAULT_SORT}`
+      );
     } else {
       // If on home page or elsewhere, navigate to listings
-      router.push(`${LISTINGS_BASE_URL}?q=${encodeURIComponent(sanitizedQuery)}&sort=${DEFAULT_SORT}`);
+      router.push(
+        `${LISTINGS_BASE_URL}?q=${encodeURIComponent(sanitizedQuery)}&sort=${DEFAULT_SORT}`
+      );
     }
   };
 

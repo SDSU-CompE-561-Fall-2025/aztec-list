@@ -15,13 +15,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-        <body>
-          <Providers>
-            <Header isSignedIn={false} />
-            {children}
-          </Providers>
-        </body>
+      <body>
+        <Providers>
+          <Header isSignedIn={false} />
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }
-
