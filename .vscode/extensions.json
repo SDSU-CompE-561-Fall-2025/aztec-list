@@ -1,10 +1,12 @@
 {
   "recommendations": [
+    // Frontend
     "esbenp.prettier-vscode",
     "dbaeumer.vscode-eslint",
-    "editorconfig.editorconfig",
     "bradlc.vscode-tailwindcss",
-    "formulahendry.auto-rename-tag",
-    "dsznajder.es7-react-js-snippets"
+    // Python
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "charliermarsh.ruff"
   ]
 }

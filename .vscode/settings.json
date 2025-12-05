@@ -1,0 +1,27 @@
+{
+  // Format on save for all languages
+  "editor.formatOnSave": true,
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+
+  // Frontend: Prettier
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // Python: Ruff
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "python.analysis.typeCheckingMode": "basic",
+
+  // Tailwind CSS v4
+  "css.validate": false,
+  "tailwindCSS.experimental.configFile": "frontend/tailwind.config.ts",
+
+  // Hide build artifacts
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
+    "**/node_modules": true
+  }
+}
