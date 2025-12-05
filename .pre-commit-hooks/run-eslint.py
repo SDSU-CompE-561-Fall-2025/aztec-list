@@ -1,31 +1,10 @@
 """Run ESLint on frontend files."""
-from __future__ import annotations
-
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-
-def resolve_runner() -> list[str]:
-    """Return the CLI to run, preferring bunx when available."""
-    if shutil.which("bunx"):
-        return ["bunx"]
-    if shutil.which("bun"):
-        return ["bun", "x"]
-    if shutil.which("npx"):
-        return ["npx"]
-    raise SystemExit("Neither bun nor npm (npx) is installed.")
-
-
-# Change to frontend directory
+runner = "bunx" if shutil.which("bunx") else "npx"
 frontend_dir = Path(__file__).parent.parent / "frontend"
-
-# Strip 'frontend/' prefix from filenames
-filenames = [f.removeprefix("frontend/") for f in sys.argv[1:]]
-
-# Run eslint with all passed filenames
-command = resolve_runner() + ["eslint", "--fix"] + filenames
-result = subprocess.run(command, cwd=frontend_dir)
-
-sys.exit(result.returncode)
+files = [f.removeprefix("frontend/") for f in sys.argv[1:]]
+sys.exit(subprocess.run([runner, "eslint", "--fix", *files], cwd=frontend_dir).returncode)
