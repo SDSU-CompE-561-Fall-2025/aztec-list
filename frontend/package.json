@@ -1,9 +1,9 @@
 {
-  "name": "frontend",
+  "name": "aztec-list",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "echo Dev server: http://localhost:3000 && next dev",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
