@@ -4,6 +4,11 @@
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
 
+  // Markdown needs trailing spaces for line breaks
+  "[markdown]": {
+    "files.trimTrailingWhitespace": false
+  },
+
   // Frontend: Prettier
   "editor.defaultFormatter": "esbenp.prettier-vscode",
 

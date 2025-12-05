@@ -1,6 +1,7 @@
 # Aztec List
 
 ## Overview
+
 Aztec List is an OfferUp-style marketplace for college students. Students can post items with photos and descriptions, browse/search listings, and (in later iterations) coordinate sales via messaging. Prices are typically lower than MSRP.
 
 ## Project Structure
@@ -17,10 +18,12 @@ This is a monorepo containing both backend and frontend:
 ## Backend Quickstart
 
 ### Requirements
+
 - [uv](https://docs.astral.sh/uv/) installed
 - Python **3.13** (recommended). `uv python install` will fetch it for you.
 
 ### Steps
+
 ```bash
 # 1) Clone
 git clone https://github.com/SDSU-CompE-561-Fall-2025/aztec-list.git
@@ -46,6 +49,7 @@ uv run fastapi dev src/app/main.py
 ```
 
 **Important Notes**:
+
 - Open http://127.0.0.1:8000/docs for Swagger UI
 - Run `uv run uvicorn --app-dir src app.main:app --reload` to start the app without FastAPI dev wrapper
 - The `.env` file lives at the **project root** (shared between backend/frontend)
@@ -55,10 +59,12 @@ uv run fastapi dev src/app/main.py
 ## Frontend Quickstart
 
 ### Requirements
+
 - Node.js 20+ (Next.js runtime)
-- [Bun](https://bun.sh/docs/installation) ≥ 1.1 *(optional, but the fastest way to install/run scripts)*
+- [Bun](https://bun.sh/docs/installation) ≥ 1.1 _(optional, but the fastest way to install/run scripts)_
 
 ### Steps
+
 ```bash
 # 1) From the repo root, hop into the frontend workspace
 cd frontend
@@ -86,6 +92,7 @@ This monorepo uses the **[pre-commit](https://pre-commit.com/)** framework to en
 ### One-Time Setup
 
 **1. Install pre-commit** (run from repo root):
+
 ```bash
 # Install the pre-commit tool
 uv tool install pre-commit
@@ -94,34 +101,40 @@ uv tool install pre-commit
 pre-commit install
 ```
 
-**2. Install VS Code Extensions** (optional but recommended):
+**2. Install VS Code Extensions** (recommended):
 
 Open the workspace and install recommended extensions when prompted, or install manually:
-- **Prettier** (`esbenp.prettier-vscode`) - Auto-format on save
-- **ESLint** (`dbaeumer.vscode-eslint`) - Real-time linting for TypeScript/JavaScript
-- **EditorConfig** (`editorconfig.editorconfig`) - Consistent editor settings
+
+- **Prettier** (`esbenp.prettier-vscode`) - Frontend formatter
+- **ESLint** (`dbaeumer.vscode-eslint`) - Frontend linter
 - **Tailwind CSS IntelliSense** (`bradlc.vscode-tailwindcss`) - Tailwind autocomplete
+- **Python** (`ms-python.python`) - Core Python support
+- **Pylance** (`ms-python.vscode-pylance`) - Python type checking
+- **Ruff** (`charliermarsh.ruff`) - Python formatter/linter
 
-The workspace settings (`.vscode/settings.json`) are already configured to:
-- Format files on save with Prettier
+The workspace settings (`.vscode/settings.json`) are configured to:
+
+- Format files on save (Prettier for frontend, Ruff for Python)
 - Trim trailing whitespace
-
-**Note:** ESLint runs on commit via pre-commit hooks, not on save. This avoids unintended changes during development while still enforcing code quality standards.
+- Basic type checking for Python
 
 ### What Runs Automatically on Commit
 
 Pre-commit hooks run **only on staged files** and are path-aware:
 
 #### Backend Files (`backend/**/*.py`)
+
 - ✅ **Ruff** - Fast Python linter and formatter
 - ✅ **Check AST** - Validate Python syntax
 - ✅ **Check docstrings** - Ensure docstring placement
 
 #### Frontend Files (`frontend/**/*.{ts,tsx,js,jsx}`)
+
 - ✅ **ESLint** - Lint and auto-fix TypeScript/JavaScript
 - ✅ **Prettier** - Format code consistently
 
 #### All Files
+
 - ✅ **Check large files** - Prevent accidentally committing large files
 - ✅ **Detect private keys** - Block commits with secrets
 - ✅ **Fix line endings** - Normalize to LF
@@ -148,11 +161,8 @@ pre-commit run
 pre-commit autoupdate
 ```
 
-#### Project-Specific Commands
-
-For backend-specific commands (Ruff, Python linting), see [backend/README.md](backend/README.md)
-
-For frontend-specific commands (ESLint, Prettier), see [frontend/README.md](frontend/README.md)
+For backend-specific commands (Ruff, pytest), see [backend/README.md](backend/README.md).  
+For frontend-specific commands (ESLint, Prettier), see [frontend/README.md](frontend/README.md).
 
 ### Configuration Files
 
@@ -160,12 +170,13 @@ For frontend-specific commands (ESLint, Prettier), see [frontend/README.md](fron
 - **`backend/pyproject.toml`** - Ruff configuration for Python linting/formatting
 - **`frontend/.prettierrc`** - Prettier formatting rules
 - **`frontend/eslint.config.mjs`** - ESLint linting rules
-- **`frontend/.editorconfig`** - Editor settings (indentation, line endings)
-- **`.vscode/settings.json`** - VS Code auto-format/auto-fix settings
+- **`.vscode/settings.json`** - VS Code workspace settings (formatters, type checking)
+- **`.vscode/extensions.json`** - Recommended VS Code extensions
 
 ## Testing
 
 For detailed testing documentation, see:
+
 - Backend: [backend/tests/README.md](backend/tests/README.md)
 - Frontend: Coming soon
 
@@ -176,11 +187,13 @@ The application uses environment variables for configuration. These are loaded f
 ### Setup Steps:
 
 1. **Copy the example file:**
+
    ```bash
    cp .env.example .env
    ```
 
 2. **Generate a secure secret key:**
+
    ```bash
    uv run python -c "import secrets; print(secrets.token_urlsafe(32))"
    ```
@@ -192,6 +205,7 @@ The application uses environment variables for configuration. These are loaded f
 ### Configuration Options:
 
 #### Security Settings (Required)
+
 ```bash
 # IMPORTANT: Generate a secure key with:
 # uv run python -c "import secrets; print(secrets.token_urlsafe(32))"
@@ -201,6 +215,7 @@ JWT__ACCESS_TOKEN_EXPIRE_MINUTES=30
 ```
 
 #### Database Settings
+
 ```bash
 # SQLite (default for development):
 DB__DATABASE_URL="sqlite:///./aztec_list.db"
@@ -212,6 +227,7 @@ DB__ECHO=false  # Set to true for SQL query logging
 ```
 
 #### Application Settings
+
 ```bash
 APP__TITLE="Aztec List"
 APP__DESCRIPTION="API for an OfferUp-style marketplace for college students"
@@ -221,6 +237,7 @@ APP__REDOC_URL="/redoc"    # ReDoc UI path (set to null to disable)
 ```
 
 #### CORS Settings
+
 ```bash
 # WARNING: The default localhost origins are for DEVELOPMENT ONLY!
 # In production, override with your actual frontend domain(s).
@@ -233,6 +250,7 @@ CORS__ALLOWED_HEADERS='["*"]'
 ```
 
 #### Logging Settings
+
 ```bash
 # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 LOGGING__LEVEL="INFO"
@@ -244,12 +262,14 @@ LOGGING__EXCLUDED_PATHS='["/health", "/docs", "/redoc", "/openapi.json"]'
 ```
 
 #### Moderation Settings
+
 ```bash
 # Number of strikes before automatic permanent ban
 MODERATION__STRIKE_AUTO_BAN_THRESHOLD=3
 ```
 
 #### Listing Settings
+
 ```bash
 # Maximum number of images allowed per listing
 LISTING__MAX_IMAGES_PER_LISTING=10
