@@ -14,13 +14,13 @@ This is a monorepo containing both backend and frontend:
   - Frontend commands will run from `frontend/` directory
 - **`docs/`** - API documentation and design specs
 
-## Backend Setup
+## Backend Quickstart
 
 ### Requirements
 - [uv](https://docs.astral.sh/uv/) installed
 - Python **3.13** (recommended). `uv python install` will fetch it for you.
 
-### Quickstart
+### Steps
 ```bash
 # 1) Clone
 git clone https://github.com/SDSU-CompE-561-Fall-2025/aztec-list.git
@@ -55,26 +55,32 @@ uv run fastapi dev src/app/main.py
 - The `.venv/` directory lives in **`backend/`** (Python dependencies)
 - **Always run backend commands from the `backend/` directory**
 
-## Quickstart (Frontend / Next.js)
-```bash
-# 0) Make sure that Node.js is installed (until we get the docker environment running)
-node -v      
+## Frontend Quickstart
 
-# 1) Navigate to the frontend app (from project root)
+### Requirements
+- Node.js 20+ (Next.js runtime)
+- [Bun](https://bun.sh/docs/installation) ≥ 1.1 *(optional, but the fastest way to install/run scripts)*
+
+### Steps
+```bash
+# 1) From the repo root, hop into the frontend workspace
 cd frontend
 
-# 2) Install JS dependencies (run once, or when package.json changes)
-npm install  
+# 2) Install dependencies (prefer Bun)
+bun install
+# fallbacks: npm install | yarn install | pnpm install
 
-# 3) Run the Next.js dev server (dev mode)
-npm run dev  
+# 3) Start the dev server
+bun dev
+# fallbacks: npm run dev | yarn dev | pnpm dev
 
-# 4) Open the app in your browser
-Go to http://localhost:3000 and manually navigate to pages, e.g.:
-   http://localhost:3000/
-   http://localhost:3000/listings
-   ...etc, until routing is wired up to use links/nav
+# 4) Open your browser at the Next.js URL printed above
+# (or go directly to http://localhost:3000)
 ```
+
+- Bun is preferred, but the npm/yarn/pnpm commands listed in the comments behave the same if that fits your setup better.
+- The `dev` script echoes `Dev server: http://localhost:3000` before handing off to Next.js so the link is always visible/clickable.
+- Other scripts map 1:1: e.g., `bun run lint` ↔ `npm run lint`, `bun run build` ↔ `npm run build`, etc.
 
 ## Testing
 
