@@ -2,40 +2,13 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Category } from "@/types/listing/filters/category";
-import { Condition } from "@/types/listing/filters/condition";
-import { Sort } from "@/types/listing/filters/sort";
+import { CATEGORIES, Category } from "@/types/listing/filters/category";
+import { CONDITIONS, Condition } from "@/types/listing/filters/condition";
+import { SORT_OPTIONS, Sort } from "@/types/listing/filters/sort";
 import { formatCategoryLabel, formatConditionLabel, formatSortLabel } from "@/lib/utils";
 import { LISTINGS_BASE_URL, DEFAULT_SORT } from "@/lib/constants";
 
-const categories: Category[] = [
-  "electronics",
-  "textbooks",
-  "furniture",
-  "dorm",
-  "appliances",
-  "clothing",
-  "shoes",
-  "accessories",
-  "bikes",
-  "sports_equipment",
-  "tools",
-  "office_supplies",
-  "music",
-  "musical_instruments",
-  "video_games",
-  "collectibles",
-  "art",
-  "baby_kids",
-  "pet_supplies",
-  "tickets",
-  "services",
-  "other",
-];
-
-const conditions: Condition[] = ["new", "like_new", "good", "fair", "poor"];
-
-const sortOptions: Sort[] = ["recent", "price_asc", "price_desc"];
+const PRICE_ERROR_MESSAGE = "Min price must be less than max price";
 
 export function SearchFilters() {
   const router = useRouter();
@@ -47,22 +20,27 @@ export function SearchFilters() {
   const [maxPrice, setMaxPrice] = useState("");
   const [priceError, setPriceError] = useState(false);
 
-  // Local state for condition checkboxes
-  const [selectedConditions, setSelectedConditions] = useState<Condition[]>([]);
+  // Derive condition from URL - local state is only for UI interaction before "Apply"
+  const urlConditionParam = searchParams.get("condition");
+  const urlCondition =
+    urlConditionParam && CONDITIONS.includes(urlConditionParam as Condition)
+      ? (urlConditionParam as Condition)
+      : null;
 
-  // Initialize condition state from URL
+  const [selectedConditions, setSelectedConditions] = useState<Condition[]>(
+    urlCondition ? [urlCondition] : []
+  );
+
+  // Sync local state when URL changes externally (browser back/forward)
   useEffect(() => {
-    const conditionParam = searchParams.get("condition");
-    if (conditionParam) {
-      setSelectedConditions([conditionParam as Condition]);
-    } else {
-      setSelectedConditions([]);
-    }
-  }, [searchParams]);
+    const newConditions = urlCondition ? [urlCondition] : [];
+    setSelectedConditions(newConditions);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]); // Only depend on searchParams to avoid triggering on urlCondition recalculation
 
   const updateURL = (updates: Record<string, string | undefined>) => {
     const params = new URLSearchParams(searchParams.toString());
-    
+
     Object.entries(updates).forEach(([key, value]) => {
       if (value && value !== "") {
         params.set(key, value);
@@ -74,6 +52,16 @@ export function SearchFilters() {
     router.replace(`${pathname}?${params.toString()}`);
   };
 
+  const validatePriceRange = (min?: number, max?: number): boolean => {
+    if ((min !== undefined && isNaN(min)) || (max !== undefined && isNaN(max))) {
+      return false;
+    }
+    if (min !== undefined && max !== undefined && min > max) {
+      return false;
+    }
+    return true;
+  };
+
   const handleCategoryChange = (value: string) => {
     updateURL({ category: value || undefined });
   };
@@ -83,18 +71,16 @@ export function SearchFilters() {
   };
 
   const handleApplyFilters = () => {
-    // Validate price range
-    const min = minPrice ? parseInt(minPrice) : undefined;
-    const max = maxPrice ? parseInt(maxPrice) : undefined;
+    const min = minPrice ? parseInt(minPrice, 10) : undefined;
+    const max = maxPrice ? parseInt(maxPrice, 10) : undefined;
 
-    if (min !== undefined && max !== undefined && min > max) {
+    if (!validatePriceRange(min, max)) {
       setPriceError(true);
       return;
     }
 
     setPriceError(false);
 
-    // Build condition param (only single value for now)
     const conditionValue = selectedConditions.length > 0 ? selectedConditions[0] : undefined;
 
     updateURL({
@@ -114,17 +100,38 @@ export function SearchFilters() {
   };
 
   const handleConditionToggle = (condition: Condition) => {
-    setSelectedConditions(prev => {
+    setSelectedConditions((prev) => {
       if (prev.includes(condition)) {
-        return prev.filter(c => c !== condition);
+        return prev.filter((c) => c !== condition);
       } else {
         return [condition]; // Only allow one selection
       }
     });
   };
 
-  const currentCategory = searchParams.get("category") || "";
-  const currentSort = searchParams.get("sort") || DEFAULT_SORT;
+  const handlePriceChange = (value: string, setter: (val: string) => void) => {
+    if (value === "" || parseInt(value, 10) >= 0) {
+      setter(value);
+    }
+  };
+
+  const handlePriceKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "-" || e.key === "e" || e.key === "E") {
+      e.preventDefault();
+    }
+  };
+
+  const currentCategoryParam = searchParams.get("category");
+  const currentCategory =
+    currentCategoryParam && CATEGORIES.includes(currentCategoryParam as Category)
+      ? currentCategoryParam
+      : "";
+
+  const currentSortParam = searchParams.get("sort");
+  const currentSort =
+    currentSortParam && SORT_OPTIONS.includes(currentSortParam as Sort)
+      ? currentSortParam
+      : DEFAULT_SORT;
 
   return (
     <aside className="w-80 bg-gray-900 p-6 rounded-lg space-y-6">
@@ -137,7 +144,7 @@ export function SearchFilters() {
           className="w-full bg-gray-800 text-gray-100 border border-gray-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           <option value="">All Categories</option>
-          {categories.map((cat) => (
+          {CATEGORIES.map((cat) => (
             <option key={cat} value={cat}>
               {formatCategoryLabel(cat)}
             </option>
@@ -154,17 +161,8 @@ export function SearchFilters() {
             min="0"
             placeholder="Min"
             value={minPrice}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value === "" || parseInt(value) >= 0) {
-                setMinPrice(value);
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "-" || e.key === "e" || e.key === "E") {
-                e.preventDefault();
-              }
-            }}
+            onChange={(e) => handlePriceChange(e.target.value, setMinPrice)}
+            onKeyDown={handlePriceKeyDown}
             className={`w-full bg-gray-800 text-gray-100 border ${
               priceError ? "border-red-500" : "border-gray-700"
             } rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500`}
@@ -174,24 +172,13 @@ export function SearchFilters() {
             min="0"
             placeholder="Max"
             value={maxPrice}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value === "" || parseInt(value) >= 0) {
-                setMaxPrice(value);
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "-" || e.key === "e" || e.key === "E") {
-                e.preventDefault();
-              }
-            }}
+            onChange={(e) => handlePriceChange(e.target.value, setMaxPrice)}
+            onKeyDown={handlePriceKeyDown}
             className={`w-full bg-gray-800 text-gray-100 border ${
               priceError ? "border-red-500" : "border-gray-700"
             } rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500`}
           />
-          {priceError && (
-            <p className="text-xs text-red-500">Min price must be less than max price</p>
-          )}
+          {priceError && <p className="text-xs text-red-500">{PRICE_ERROR_MESSAGE}</p>}
         </div>
       </div>
 
@@ -199,8 +186,11 @@ export function SearchFilters() {
       <div>
         <h3 className="text-sm font-semibold text-gray-100 mb-3">Condition</h3>
         <div className="space-y-2">
-          {conditions.map((condition) => (
-            <label key={condition} className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+          {CONDITIONS.map((condition) => (
+            <label
+              key={condition}
+              className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer"
+            >
               <input
                 type="checkbox"
                 checked={selectedConditions.includes(condition)}
@@ -221,7 +211,7 @@ export function SearchFilters() {
           onChange={(e) => handleSortChange(e.target.value)}
           className="w-full bg-gray-800 text-gray-100 border border-gray-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
-          {sortOptions.map((sort) => (
+          {SORT_OPTIONS.map((sort) => (
             <option key={sort} value={sort}>
               {formatSortLabel(sort)}
             </option>
