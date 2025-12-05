@@ -53,14 +53,14 @@ repos:
     hooks:
       - id: frontend-prettier
         name: Frontend Prettier
-        entry: bash -c 'cd frontend && npx prettier --write'
+        entry: python .pre-commit-hooks/run-prettier.py
         language: system
         files: ^frontend/.*\.(ts|tsx|js|jsx|json|css|md)$
         pass_filenames: true
 
       - id: frontend-eslint
         name: Frontend ESLint
-        entry: bash -c 'cd frontend && npx eslint --fix'
+        entry: python .pre-commit-hooks/run-eslint.py
         language: system
         files: ^frontend/.*\.(ts|tsx|js|jsx)$
         pass_filenames: true
