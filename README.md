@@ -41,10 +41,7 @@ cd backend
 uv python install
 uv sync
 
-# 5) (optional) Install Git hooks (ruff, EOF/line-endings, etc.)
-uv run pre-commit install
-
-# 6) Run the API (dev)
+# 5) Run the API (dev)
 uv run fastapi dev src/app/main.py
 ```
 
@@ -81,6 +78,90 @@ bun dev
 - Bun is preferred, but the npm/yarn/pnpm commands listed in the comments behave the same if that fits your setup better.
 - The `dev` script echoes `Dev server: http://localhost:3000` before handing off to Next.js so the link is always visible/clickable.
 - Other scripts map 1:1: e.g., `bun run lint` ↔ `npm run lint`, `bun run build` ↔ `npm run build`, etc.
+
+## Code Quality & Pre-commit Hooks
+
+This monorepo uses the **[pre-commit](https://pre-commit.com/)** framework to enforce code quality standards across both backend (Python) and frontend (TypeScript/JavaScript). Pre-commit hooks run automatically on staged files when you commit, ensuring consistent formatting and catching common issues.
+
+### One-Time Setup
+
+**1. Install pre-commit** (run from repo root):
+```bash
+# Install the pre-commit tool
+uv tool install pre-commit
+
+# Install the git hooks
+pre-commit install
+```
+
+**2. Install VS Code Extensions** (optional but recommended):
+
+Open the workspace and install recommended extensions when prompted, or install manually:
+- **Prettier** (`esbenp.prettier-vscode`) - Auto-format on save
+- **ESLint** (`dbaeumer.vscode-eslint`) - Real-time linting for TypeScript/JavaScript
+- **EditorConfig** (`editorconfig.editorconfig`) - Consistent editor settings
+- **Tailwind CSS IntelliSense** (`bradlc.vscode-tailwindcss`) - Tailwind autocomplete
+
+The workspace settings (`.vscode/settings.json`) are already configured to:
+- Format files on save with Prettier
+- Trim trailing whitespace
+
+**Note:** ESLint runs on commit via pre-commit hooks, not on save. This avoids unintended changes during development while still enforcing code quality standards.
+
+### What Runs Automatically on Commit
+
+Pre-commit hooks run **only on staged files** and are path-aware:
+
+#### Backend Files (`backend/**/*.py`)
+- ✅ **Ruff** - Fast Python linter and formatter
+- ✅ **Check AST** - Validate Python syntax
+- ✅ **Check docstrings** - Ensure docstring placement
+
+#### Frontend Files (`frontend/**/*.{ts,tsx,js,jsx}`)
+- ✅ **ESLint** - Lint and auto-fix TypeScript/JavaScript
+- ✅ **Prettier** - Format code consistently
+
+#### All Files
+- ✅ **Check large files** - Prevent accidentally committing large files
+- ✅ **Detect private keys** - Block commits with secrets
+- ✅ **Fix line endings** - Normalize to LF
+- ✅ **Trim trailing whitespace**
+- ✅ **Fix end-of-file** - Ensure final newline
+- ✅ **Validate JSON/YAML/TOML** - Check syntax
+
+**If unfixable errors are found, the commit is blocked.** Fix the issues and try again.
+
+### Manual Commands
+
+#### Run Pre-commit Hooks Manually
+
+```bash
+# From repo root:
+
+# Run all hooks on all files (useful for CI or initial setup)
+pre-commit run --all-files
+
+# Run only on staged files (same as what happens on commit)
+pre-commit run
+
+# Update hook versions
+pre-commit autoupdate
+```
+
+#### Project-Specific Commands
+
+For backend-specific commands (Ruff, Python linting), see [backend/README.md](backend/README.md)
+
+For frontend-specific commands (ESLint, Prettier), see [frontend/README.md](frontend/README.md)
+
+### Configuration Files
+
+- **`.pre-commit-config.yaml`** (repo root) - Defines all hooks and which files they run on
+- **`backend/pyproject.toml`** - Ruff configuration for Python linting/formatting
+- **`frontend/.prettierrc`** - Prettier formatting rules
+- **`frontend/eslint.config.mjs`** - ESLint linting rules
+- **`frontend/.editorconfig`** - Editor settings (indentation, line endings)
+- **`.vscode/settings.json`** - VS Code auto-format/auto-fix settings
 
 ## Testing
 
