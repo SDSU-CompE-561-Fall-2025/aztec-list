@@ -113,21 +113,17 @@ All 27 API endpoints have been manually tested using Swagger UI.
 ### Code Quality
 
 ```bash
-# Run linter
-uv run ruff check .
+# Lint and format all Python files
+uv run ruff check --fix src/
 
-# Auto-fix issues
-uv run ruff check --fix .
+# Format only (no linting)
+uv run ruff format src/
 
-# Format code
-uv run ruff format .
+# Check without making changes
+uv run ruff check src/
 ```
 
-### Pre-commit Hooks
-
-```bash
-uv run pre-commit install
-```
+**Note:** Pre-commit hooks automatically run Ruff on staged files when you commit. See the main [README.md](../README.md#code-quality--pre-commit-hooks) for details.
 
 ## Environment Variables
 

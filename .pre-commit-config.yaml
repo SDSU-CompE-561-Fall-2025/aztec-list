@@ -1,0 +1,66 @@
+ci:
+  autofix_prs: true
+  autoupdate_schedule: weekly
+  autofix_commit_msg: "fix(pre_commit): 🎨 auto format pre-commit hooks"
+  autoupdate_commit_msg: "chore(pre_commit): ⬆ pre_commit autoupdate"
+
+repos:
+  # Common hooks for all files
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-illegal-windows-names
+      - id: check-json
+        exclude: "^\\.vscode/.*\\.json$"
+      - id: check-shebang-scripts-are-executable
+      - id: check-symlinks
+      - id: check-yaml
+        args: ["--unsafe"]
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=auto]
+      - id: trailing-whitespace
+        exclude: "\\.md$"
+
+  # Backend Python hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-ast
+        files: ^backend/.*\.py$
+      - id: check-builtin-literals
+        files: ^backend/.*\.py$
+      - id: check-docstring-first
+        files: ^backend/.*\.py$
+      - id: check-toml
+        files: ^backend/.*\.toml$
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.13.1
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^backend/src/.*\.py$
+      - id: ruff-format
+        files: ^backend/src/.*\.py$
+
+  # Frontend JavaScript/TypeScript hooks
+  - repo: local
+    hooks:
+      - id: frontend-prettier
+        name: Frontend Prettier
+        entry: python .pre-commit-hooks/run-prettier.py
+        language: system
+        files: ^frontend/.*\.(ts|tsx|js|jsx|json|css|md)$
+        pass_filenames: true
+
+      - id: frontend-eslint
+        name: Frontend ESLint
+        entry: python .pre-commit-hooks/run-eslint.py
+        language: system
+        files: ^frontend/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: true

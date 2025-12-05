@@ -1,0 +1,42 @@
+import { ListingSummary } from "@/types/listing/listing";
+import { ListingCard } from "./ListingCard";
+import { SKELETON_LOADING_COUNT } from "@/lib/constants";
+
+interface SearchResultsProps {
+  listings: ListingSummary[];
+  isLoading: boolean;
+}
+
+export function SearchResults({ listings, isLoading }: SearchResultsProps) {
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-3 gap-4">
+        {Array.from({ length: SKELETON_LOADING_COUNT }).map((_, i) => (
+          <div key={i} className="flex flex-col gap-2">
+            <div className="aspect-square bg-gray-800 rounded-md animate-pulse" />
+            <div className="h-4 bg-gray-800 rounded animate-pulse" />
+            <div className="h-6 bg-gray-800 rounded animate-pulse w-24" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (listings.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <p className="text-gray-400 text-center">
+          No listings match your search. Try adjusting your filters.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-3 gap-4">
+      {listings.map((listing) => (
+        <ListingCard key={listing.id} listing={listing} />
+      ))}
+    </div>
+  );
+}
