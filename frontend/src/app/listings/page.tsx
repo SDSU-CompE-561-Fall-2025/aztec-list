@@ -2,44 +2,53 @@
 
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import createListingQueryOptions from "@/queryOptions/createListingQueryOptions";
+import { createListingQueryOptions } from "@/queryOptions/createListingQueryOptions";
 import { SearchFilters } from "@/components/listings/SearchFilters";
 import { SearchResults } from "@/components/listings/SearchResults";
 import { PaginationControls } from "@/components/listings/PaginationControls";
+import { ErrorState } from "@/components/custom/ErrorState";
 import { DEFAULT_SORT, DEFAULT_LIMIT } from "@/lib/constants";
-import { Category } from "@/types/listing/filters/category";
-import { Condition } from "@/types/listing/filters/condition";
-import { Sort } from "@/types/listing/filters/sort";
+import { CATEGORIES, Category } from "@/types/listing/filters/category";
+import { CONDITIONS, Condition } from "@/types/listing/filters/condition";
+import { SORT_OPTIONS, Sort } from "@/types/listing/filters/sort";
 
 export default function ListingsPage() {
   const searchParams = useSearchParams();
 
-  // Extract all filter parameters from URL
+  // Extract and validate filter parameters from URL
+  const parsePrice = (value: string | null): number | undefined => {
+    if (!value) return undefined;
+    const parsed = parseInt(value, 10);
+    return isNaN(parsed) || parsed < 0 ? undefined : parsed;
+  };
+
+  const categoryParam = searchParams.get("category");
+  const conditionParam = searchParams.get("condition");
+  const sortParam = searchParams.get("sort");
+
   const filters = {
     q: searchParams.get("q") || undefined,
-    category: (searchParams.get("category") as Category) || undefined,
-    minPrice: searchParams.get("minPrice") ? parseInt(searchParams.get("minPrice")!) : undefined,
-    maxPrice: searchParams.get("maxPrice") ? parseInt(searchParams.get("maxPrice")!) : undefined,
-    condition: (searchParams.get("condition") as Condition) || undefined,
-    sort: (searchParams.get("sort") as Sort) || DEFAULT_SORT,
+    category:
+      categoryParam && CATEGORIES.includes(categoryParam as Category)
+        ? (categoryParam as Category)
+        : undefined,
+    minPrice: parsePrice(searchParams.get("minPrice")),
+    maxPrice: parsePrice(searchParams.get("maxPrice")),
+    condition:
+      conditionParam && CONDITIONS.includes(conditionParam as Condition)
+        ? (conditionParam as Condition)
+        : undefined,
+    sort:
+      sortParam && SORT_OPTIONS.includes(sortParam as Sort) ? (sortParam as Sort) : DEFAULT_SORT,
     limit: DEFAULT_LIMIT,
-    offset: searchParams.get("offset") ? parseInt(searchParams.get("offset")!) : 0,
+    offset: parseInt(searchParams.get("offset") ?? "0", 10) || 0,
   };
 
   // Use TanStack Query to fetch listings
-  const { data, isLoading, isError, error } = useQuery(
-    createListingQueryOptions(filters)
-  );
+  const { data, isLoading, isError, error } = useQuery(createListingQueryOptions(filters));
 
   if (isError) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-red-500 font-semibold mb-2">Error loading listings</p>
-          <p className="text-gray-400 text-sm">{error.message}</p>
-        </div>
-      </div>
-    );
+    return <ErrorState error={error} />;
   }
 
   return (
@@ -66,10 +75,7 @@ export default function ListingsPage() {
             )}
 
             {/* Results grid */}
-            <SearchResults
-              listings={data?.items || []}
-              isLoading={isLoading}
-            />
+            <SearchResults listings={data?.items || []} isLoading={isLoading} />
 
             {/* Pagination controls */}
             {data && <PaginationControls count={data.count} />}
