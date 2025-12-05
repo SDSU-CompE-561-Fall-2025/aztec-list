@@ -1,6 +1,7 @@
 "use client";
 
 import { SidebarIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import { SearchForm } from "@/components/search-form";
 import {
@@ -17,6 +18,15 @@ import { useSidebar } from "@/components/ui/sidebar";
 
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
+  const pathname = usePathname();
+
+  // Generate breadcrumbs from pathname
+  const pathSegments = pathname.split("/").filter(Boolean);
+  const breadcrumbs = pathSegments.map((segment, index) => {
+    const href = "/" + pathSegments.slice(0, index + 1).join("/");
+    const label = segment.charAt(0).toUpperCase() + segment.slice(1);
+    return { href, label, isLast: index === pathSegments.length - 1 };
+  });
 
   return (
     <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
@@ -28,12 +38,21 @@ export function SiteHeader() {
         <Breadcrumb className="hidden sm:block">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="#">Building Your Application</BreadcrumbLink>
+              <BreadcrumbLink href="/">Home</BreadcrumbLink>
             </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-            </BreadcrumbItem>
+            {breadcrumbs.length > 0 && <BreadcrumbSeparator />}
+            {breadcrumbs.map((crumb) => (
+              <BreadcrumbItem key={crumb.href}>
+                {crumb.isLast ? (
+                  <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                ) : (
+                  <>
+                    <BreadcrumbLink href={crumb.href}>{crumb.label}</BreadcrumbLink>
+                    <BreadcrumbSeparator />
+                  </>
+                )}
+              </BreadcrumbItem>
+            ))}
           </BreadcrumbList>
         </Breadcrumb>
         <SearchForm className="w-full sm:ml-auto sm:w-auto" />
