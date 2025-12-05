@@ -21,8 +21,11 @@ def resolve_runner() -> list[str]:
 # Change to frontend directory
 frontend_dir = Path(__file__).parent.parent / "frontend"
 
+# Strip 'frontend/' prefix from filenames
+filenames = [f.removeprefix("frontend/") for f in sys.argv[1:]]
+
 # Run eslint with all passed filenames
-command = resolve_runner() + ["eslint", "--fix"] + sys.argv[1:]
+command = resolve_runner() + ["eslint", "--fix"] + filenames
 result = subprocess.run(command, cwd=frontend_dir)
 
 sys.exit(result.returncode)

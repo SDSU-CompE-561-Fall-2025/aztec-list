@@ -21,8 +21,11 @@ def resolve_runner() -> list[str]:
 # Change to frontend directory
 frontend_dir = Path(__file__).parent.parent / "frontend"
 
+# Strip 'frontend/' prefix from filenames
+filenames = [f.removeprefix("frontend/") for f in sys.argv[1:]]
+
 # Run prettier with all passed filenames
-command = resolve_runner() + ["prettier", "--write"] + sys.argv[1:]
+command = resolve_runner() + ["prettier", "--write"] + filenames
 result = subprocess.run(command, cwd=frontend_dir)
 
 sys.exit(result.returncode)
