@@ -91,9 +91,6 @@ export const deleteListing = async (listingId: string): Promise<void> => {
   }
 };
 
-export const toggleListingActive = async (
-  listingId: string,
-  isActive: boolean
-): Promise<void> => {
+export const toggleListingActive = async (listingId: string, isActive: boolean): Promise<void> => {
   return updateListing(listingId, { is_active: isActive });
 };

@@ -67,11 +67,7 @@ export function ProfileListingCard({
             onClick={() => onToggleActive(listing.id, !listing.is_active)}
             disabled={isTogglingActive}
           >
-            {listing.is_active ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
+            {listing.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </Button>
           <Button
             size="icon"

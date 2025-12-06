@@ -64,7 +64,11 @@ export default function ProfilePage() {
 
       // Optimistically update
       queryClient.setQueryData(
-        ["user-listings", user.id, { limit: DEFAULT_LIMIT, offset, sort: "recent", include_inactive: true }],
+        [
+          "user-listings",
+          user.id,
+          { limit: DEFAULT_LIMIT, offset, sort: "recent", include_inactive: true },
+        ],
         (old: any) => {
           if (!old) return old;
           return {
@@ -82,7 +86,11 @@ export default function ProfilePage() {
       // Rollback on error
       if (context?.previousData) {
         queryClient.setQueryData(
-          ["user-listings", user.id, { limit: DEFAULT_LIMIT, offset, sort: "recent", include_inactive: true }],
+          [
+            "user-listings",
+            user.id,
+            { limit: DEFAULT_LIMIT, offset, sort: "recent", include_inactive: true },
+          ],
           context.previousData
         );
       }
@@ -203,9 +211,7 @@ export default function ProfilePage() {
                     <ProfileListingCard
                       key={listing.id}
                       listing={listing}
-                      onToggleActive={(id, isActive) =>
-                        toggleMutation.mutate({ id, isActive })
-                      }
+                      onToggleActive={(id, isActive) => toggleMutation.mutate({ id, isActive })}
                       onDelete={(id) => deleteMutation.mutate(id)}
                       isTogglingActive={toggleMutation.isPending}
                       isDeleting={deleteMutation.isPending}
