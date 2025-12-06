@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import { HeaderClient } from "@/components/custom/header-client";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "AztecList Campus",
@@ -19,6 +20,7 @@ export default function RootLayout({
         <Providers>
           <HeaderClient />
           {children}
+          <Toaster />
         </Providers>
       </body>
     </html>

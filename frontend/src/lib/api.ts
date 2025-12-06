@@ -1,4 +1,5 @@
 import { ListingsParams } from "@/types/listing/listingParams";
+import { UserListingsParams } from "@/types/listing/userListingsParams";
 import { ListingSearchResponse } from "@/types/listing/listing";
 import { API_BASE_URL } from "@/lib/constants";
 
@@ -32,4 +33,67 @@ export const getListings = async (params: ListingsParams = {}): Promise<ListingS
   }
 
   return data as ListingSearchResponse;
+};
+
+export const getUserListings = async (
+  userId: string,
+  params: UserListingsParams = {}
+): Promise<ListingSearchResponse> => {
+  // Use the existing getListings function with sellerId filter
+  // Note: sellerId is the same as userId (user owns their listings)
+  return getListings({
+    sellerId: userId,
+    limit: params.limit,
+    offset: params.offset,
+    sort: params.sort,
+    // Note: include_inactive is not supported by the main listings endpoint
+    // Backend filters by is_active=true by default
+  });
+};
+
+export const updateListing = async (
+  listingId: string,
+  data: Partial<{
+    title: string;
+    description: string;
+    price: number;
+    category: string;
+    condition: string;
+    is_active: boolean;
+  }>
+): Promise<void> => {
+  const url = new URL(`${API_BASE_URL}/listings/${listingId}`);
+
+  const res = await fetch(url.toString(), {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to update listing: ${res.status} ${errorText}`);
+  }
+};
+
+export const deleteListing = async (listingId: string): Promise<void> => {
+  const url = new URL(`${API_BASE_URL}/listings/${listingId}`);
+
+  const res = await fetch(url.toString(), {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to delete listing: ${res.status} ${errorText}`);
+  }
+};
+
+export const toggleListingActive = async (
+  listingId: string,
+  isActive: boolean
+): Promise<void> => {
+  return updateListing(listingId, { is_active: isActive });
 };
