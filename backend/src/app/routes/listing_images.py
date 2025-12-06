@@ -7,7 +7,7 @@ This module defines API endpoints for listing image operations.
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_db, require_not_banned
@@ -23,10 +23,51 @@ listing_images_router = APIRouter(
 
 
 @listing_images_router.post(
+    "/{listing_id}/images/upload",
+    response_model=ImagePublic,
+    status_code=status.HTTP_201_CREATED,
+    summary="Upload an image file to a listing",
+)
+async def upload_image(
+    listing_id: uuid.UUID,
+    file: Annotated[UploadFile, File(description="Image file to upload")],
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_not_banned)],
+) -> Image:
+    """
+    Upload an image file to a listing.
+
+    Accepts multipart/form-data file upload. Validates file type, size, and saves
+    to disk with a unique filename. Creates image record in database.
+
+    Only the seller of the listing can upload images. Maximum 10 images per listing.
+    The first image uploaded will automatically be set as the thumbnail.
+
+    Args:
+        listing_id: ID of the listing
+        file: Image file (jpg, png, webp, gif - max 5MB)
+        db: Database session
+        current_user: Current authenticated user
+
+    Returns:
+        ImagePublic: The created image with URL to access the uploaded file
+
+    Raises:
+        HTTPException: 404 if listing not found
+        HTTPException: 403 if user is not the seller
+        HTTPException: 400 if validation fails or max images exceeded
+        HTTPException: 413 if file too large
+        HTTPException: 415 if unsupported file type
+    """
+    return await ListingImageService.upload(db, listing_id, file, current_user)
+
+
+@listing_images_router.post(
     "/{listing_id}/images",
     response_model=ImagePublic,
     status_code=status.HTTP_201_CREATED,
-    summary="Add a new image to a listing",
+    summary="Add a new image to a listing (URL-based - deprecated)",
+    deprecated=True,
 )
 async def create_image(
     listing_id: uuid.UUID,
@@ -35,7 +76,12 @@ async def create_image(
     current_user: Annotated[User, Depends(require_not_banned)],
 ) -> Image:
     """
-    Add a new image to a listing.
+    Add a new image to a listing using URL.
+
+    DEPRECATED: Use POST /listings/{listing_id}/images/upload instead for file uploads.
+
+    This endpoint is kept for backwards compatibility but is deprecated in favor
+    of the file upload endpoint.
 
     Only the seller of the listing can add images. Maximum 10 images per listing.
     If this is the first image or is_thumbnail is True, it will be set as the thumbnail.

@@ -58,6 +58,29 @@ class ListingSettings(BaseModel):
     )
 
 
+class StorageSettings(BaseModel):
+    """File storage configuration for uploaded images."""
+
+    upload_dir: str = Field(
+        default="uploads/images",
+        description="Directory for storing uploaded images (relative to backend root)",
+    )
+    max_file_size_mb: int = Field(
+        default=5,
+        ge=1,
+        le=50,
+        description="Maximum file size in megabytes for image uploads",
+    )
+    allowed_extensions: list[str] = Field(
+        default=[".jpg", ".jpeg", ".png", ".webp", ".gif"],
+        description="Allowed file extensions for image uploads",
+    )
+    allowed_mime_types: list[str] = Field(
+        default=["image/jpeg", "image/png", "image/webp", "image/gif"],
+        description="Allowed MIME types for image uploads",
+    )
+
+
 class CORSSettings(BaseModel):
     """
     Cross-Origin Resource Sharing (CORS) configuration.
@@ -162,6 +185,7 @@ class Settings(BaseSettings):
     jwt: JWTSettings = Field(default_factory=JWTSettings)
     moderation: ModerationSettings = Field(default_factory=ModerationSettings)
     listing: ListingSettings = Field(default_factory=ListingSettings)
+    storage: StorageSettings = Field(default_factory=StorageSettings)
     cors: CORSSettings = Field(default_factory=CORSSettings)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
 

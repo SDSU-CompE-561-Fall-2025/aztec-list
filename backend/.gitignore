@@ -1,0 +1,25 @@
+# Uploaded files - user content should not be committed
+uploads/
+
+# Local environment files
+.env.local
+
+# Database files
+aztec_list.db
+aztec_list.db-journal
+*.db
+*.db-journal
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
