@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ImageUploadPlaceholder } from "@/components/listings/ImageUploadPlaceholder";
+import { ImageUpload } from "@/components/listings/ImageUpload";
 import { createListing } from "@/lib/api";
 import { CATEGORIES, Category } from "@/types/listing/filters/category";
 import { CONDITIONS, Condition } from "@/types/listing/filters/condition";
@@ -25,6 +25,7 @@ export default function CreateListingPage() {
   const [category, setCategory] = useState<Category | "">("");
   const [condition, setCondition] = useState<Condition | "">("");
   const [isActive, setIsActive] = useState(true);
+  const [createdListingId, setCreatedListingId] = useState<string | null>(null);
 
   // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -90,9 +91,9 @@ export default function CreateListingPage() {
         condition,
         is_active: isActive,
       }),
-    onSuccess: () => {
-      toast.success("Listing created successfully");
-      router.push("/profile");
+    onSuccess: (data) => {
+      setCreatedListingId(data.id);
+      toast.success("Listing created successfully! You can now add images.");
     },
     onError: (error) => {
       toast.error(error.message || "Failed to create listing");
@@ -117,13 +118,30 @@ export default function CreateListingPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Image Upload */}
-          <div className="space-y-2">
-            <Label htmlFor="image" className="text-gray-200">
-              Images
-            </Label>
-            <ImageUploadPlaceholder />
-          </div>
+          {/* Image Upload - only shown after listing is created */}
+          {createdListingId && (
+            <div className="bg-gray-900 border border-purple-500/30 rounded-lg p-6 mb-6">
+              <h3 className="text-lg font-semibold text-white mb-4">Add Images</h3>
+              <ImageUpload listingId={createdListingId} />
+              <div className="mt-4 pt-4 border-t border-gray-800">
+                <Button
+                  type="button"
+                  onClick={() => router.push("/profile")}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  Done - Go to Profile
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {!createdListingId && (
+            <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 mb-6">
+              <p className="text-blue-300 text-sm">
+                💡 Create your listing first, then you'll be able to upload images
+              </p>
+            </div>
+          )}
 
           {/* Title */}
           <div className="space-y-2">
@@ -239,43 +257,42 @@ export default function CreateListingPage() {
           {/* Active Status */}
           <div className="flex items-center gap-3 p-4 bg-gray-900 rounded-lg">
             <input
+              id="is_active"
               type="checkbox"
-              id="isActive"
               checked={isActive}
               onChange={(e) => setIsActive(e.target.checked)}
-              className="w-4 h-4 accent-purple-600"
+              className="w-4 h-4 text-purple-600 bg-gray-800 border-gray-700 rounded focus:ring-purple-500"
             />
-            <div>
-              <Label htmlFor="isActive" className="text-gray-200 cursor-pointer">
-                Make listing visible
-              </Label>
-              <p className="text-gray-400 text-sm">
-                {isActive
-                  ? "Your listing will be visible to other users immediately"
-                  : "Your listing will be hidden from other users"}
-              </p>
-            </div>
+            <Label htmlFor="is_active">Active Status</Label>
           </div>
 
           {/* Actions */}
           <div className="flex gap-4 pt-4">
-            <Button
-              type="submit"
-              disabled={createMutation.isPending}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              {createMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                "Create Listing"
-              )}
-            </Button>
-            <Button type="button" variant="outline" asChild>
-              <Link href="/profile">Cancel</Link>
-            </Button>
+            {!createdListingId ? (
+              <>
+                <Button
+                  type="submit"
+                  disabled={createMutation.isPending}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  {createMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create Listing"
+                  )}
+                </Button>
+                <Button type="button" variant="outline" asChild>
+                  <Link href="/profile">Cancel</Link>
+                </Button>
+              </>
+            ) : (
+              <Button type="button" variant="outline" asChild>
+                <Link href="/profile">Skip Images - Go to Profile</Link>
+              </Button>
+            )}
           </div>
         </form>
       </div>

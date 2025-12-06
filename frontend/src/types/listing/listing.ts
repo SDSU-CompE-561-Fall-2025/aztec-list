@@ -21,6 +21,15 @@ export interface ListingSearchResponse {
   count: number;
 }
 
+export interface ImagePublic {
+  id: string;
+  listing_id: string;
+  url: string;
+  is_thumbnail: boolean;
+  alt_text: string | null;
+  created_at: string;
+}
+
 export interface ListingPublic {
   id: string;
   seller_id: string;
@@ -33,4 +42,5 @@ export interface ListingPublic {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  images?: ImagePublic[];
 }

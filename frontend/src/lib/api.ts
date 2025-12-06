@@ -1,6 +1,6 @@
 import { ListingsParams } from "@/types/listing/listingParams";
 import { UserListingsParams } from "@/types/listing/userListingsParams";
-import { ListingSearchResponse, ListingPublic } from "@/types/listing/listing";
+import { ListingSearchResponse, ListingPublic, ImagePublic } from "@/types/listing/listing";
 import { API_BASE_URL } from "@/lib/constants";
 import { getAuthToken } from "@/lib/auth";
 
@@ -203,4 +203,48 @@ export const createListing = async (data: {
   }
 
   return responseData as ListingPublic;
+};
+
+export const uploadListingImage = async (listingId: string, file: File): Promise<ImagePublic> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${API_BASE_URL}/listings/${listingId}/images/upload`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to upload image: ${res.status} ${errorText}`);
+  }
+
+  return res.json();
+};
+
+export const deleteListingImage = async (listingId: string, imageId: string): Promise<void> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/listings/${listingId}/images/${imageId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to delete image: ${res.status} ${errorText}`);
+  }
 };

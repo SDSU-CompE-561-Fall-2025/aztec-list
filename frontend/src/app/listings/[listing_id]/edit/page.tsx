@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ImageUploadPlaceholder } from "@/components/listings/ImageUploadPlaceholder";
+import { ImageUpload } from "@/components/listings/ImageUpload";
 import { getListing, updateListing } from "@/lib/api";
 import { CATEGORIES, Category } from "@/types/listing/filters/category";
 import { CONDITIONS, Condition } from "@/types/listing/filters/condition";
@@ -348,10 +348,9 @@ export default function EditListingPage() {
             </label>
           </div>
 
-          {/* Image Placeholder */}
-          <div>
-            <Label className="text-gray-200 block mb-2">Images</Label>
-            <ImageUploadPlaceholder />
+          {/* Image Upload */}
+          <div className="bg-gray-900 rounded-lg p-6">
+            <ImageUpload listingId={listingId} existingImages={listing?.images || []} />
           </div>
 
           {/* Actions */}
