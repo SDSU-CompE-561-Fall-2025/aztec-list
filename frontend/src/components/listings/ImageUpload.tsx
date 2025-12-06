@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { uploadListingImage, deleteListingImage } from "@/lib/api";
 import type { ImagePublic } from "@/types/listing/listing";
-import { API_BASE_URL } from "@/lib/constants";
+import { STATIC_BASE_URL } from "@/lib/constants";
 
 interface ImageUploadProps {
   listingId: string;
@@ -119,9 +119,10 @@ export function ImageUpload({
           {images.map((image) => (
             <div key={image.id} className="relative group aspect-square">
               <img
-                src={`${API_BASE_URL.replace("/api/v1", "")}${image.url}`}
+                src={`${STATIC_BASE_URL}${image.url}`}
                 alt={image.alt_text || "Listing image"}
                 className="w-full h-full object-cover rounded-md border border-gray-700"
+                loading="lazy"
               />
               {image.is_thumbnail && (
                 <div className="absolute top-2 left-2 bg-purple-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
