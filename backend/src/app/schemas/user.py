@@ -7,7 +7,7 @@ This module contains Pydantic models for user request/response validation.
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 
 
 class UserBase(BaseModel):
@@ -15,6 +15,15 @@ class UserBase(BaseModel):
 
     username: str
     email: EmailStr
+
+    @field_validator("email")
+    @classmethod
+    def validate_edu_email(cls, v: str) -> str:
+        """Validate that email ends with .edu domain."""
+        if not v.lower().endswith(".edu"):
+            msg = "Email must be from a .edu domain"
+            raise ValueError(msg)
+        return v
 
 
 class UserCreate(UserBase):
