@@ -6,17 +6,22 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { LISTINGS_BASE_URL, DEFAULT_SORT } from "@/lib/constants";
+import { useAuth } from "@/contexts/AuthContext";
+import { LogOut, Settings, User } from "lucide-react";
 
-interface HeaderProps {
-  isSignedIn?: boolean;
-  userAvatar?: string;
-  userName?: string;
-}
-
-export function Header({ isSignedIn = false, userAvatar, userName }: HeaderProps) {
+export function Header() {
   const router = useRouter();
   const pathname = usePathname();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = (e: React.FormEvent) => {
@@ -73,27 +78,58 @@ export function Header({ isSignedIn = false, userAvatar, userName }: HeaderProps
 
         {/* Auth Buttons / User Menu */}
         <div className="flex items-center gap-3">
-          {!isSignedIn ? (
+          {isLoading ? (
+            // Show placeholder while checking auth to avoid hydration mismatch
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-16 bg-gray-800 rounded animate-pulse" />
+              <div className="h-9 w-20 bg-gray-800 rounded animate-pulse" />
+            </div>
+          ) : !isAuthenticated ? (
             <>
               <Button variant="outline" asChild>
-                <Link href="/sign-in">Sign In</Link>
+                <Link href="/login">Login</Link>
               </Button>
               <Button asChild>
-                <Link href="/register">Register</Link>
+                <Link href="/signup">Sign Up</Link>
               </Button>
             </>
           ) : (
-            <>
-              <Button variant="outline" asChild>
-                <Link href="/settings">Settings</Link>
-              </Button>
-              <Avatar className="cursor-pointer">
-                <AvatarImage src={userAvatar} alt={userName || "User"} />
-                <AvatarFallback className="bg-purple-600 text-white">
-                  {userName ? userName.charAt(0).toUpperCase() : "U"}
-                </AvatarFallback>
-              </Avatar>
-            </>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="cursor-pointer">
+                  <AvatarImage src="" alt={user?.username || "User"} />
+                  <AvatarFallback className="bg-purple-600 text-white">
+                    {user?.username ? user.username.charAt(0).toUpperCase() : "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user?.username}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile" className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout} className="cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>

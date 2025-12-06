@@ -1,0 +1,131 @@
+/**
+ * Authentication API functions.
+ */
+
+import { API_BASE_URL } from "@/lib/constants";
+import { AuthToken, LoginCredentials, SignupData, User } from "@/types/auth";
+
+/**
+ * Authenticate user and return access token.
+ *
+ * @param credentials - User login credentials (username/email and password)
+ * @returns AuthToken with access token and user data
+ * @throws Error if authentication fails
+ */
+export const login = async (credentials: LoginCredentials): Promise<AuthToken> => {
+  const formData = new URLSearchParams();
+  formData.append("username", credentials.username);
+  formData.append("password", credentials.password);
+
+  const res = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ detail: "Authentication failed" }));
+    throw new Error(errorData.detail || "Invalid credentials");
+  }
+
+  const data = await res.json();
+  return data as AuthToken;
+};
+
+/**
+ * Register a new user account.
+ *
+ * @param signupData - New user registration data
+ * @returns Created user's public information
+ * @throws Error if registration fails
+ */
+export const signup = async (signupData: SignupData): Promise<User> => {
+  const res = await fetch(`${API_BASE_URL}/auth/signup`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(signupData),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ detail: "Registration failed" }));
+    throw new Error(errorData.detail || "Could not create account");
+  }
+
+  const data = await res.json();
+  return data as User;
+};
+
+/**
+ * Store authentication token in localStorage.
+ *
+ * @param token - JWT access token
+ */
+export const setAuthToken = (token: string): void => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("auth_token", token);
+  }
+};
+
+/**
+ * Retrieve authentication token from localStorage.
+ *
+ * @returns Stored token or null if not found
+ */
+export const getAuthToken = (): string | null => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("auth_token");
+  }
+  return null;
+};
+
+/**
+ * Remove authentication token from localStorage.
+ */
+export const removeAuthToken = (): void => {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("auth_token");
+  }
+};
+
+/**
+ * Store user data in localStorage.
+ *
+ * @param user - User object to store
+ */
+export const setStoredUser = (user: User): void => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("user", JSON.stringify(user));
+  }
+};
+
+/**
+ * Retrieve user data from localStorage.
+ *
+ * @returns Stored user or null if not found
+ */
+export const getStoredUser = (): User | null => {
+  if (typeof window !== "undefined") {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        return JSON.parse(userStr) as User;
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null;
+};
+
+/**
+ * Remove user data from localStorage.
+ */
+export const removeStoredUser = (): void => {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("user");
+  }
+};

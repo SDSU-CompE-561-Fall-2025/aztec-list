@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
-import { Header } from "@/components/custom/header";
+import { HeaderClient } from "@/components/custom/header-client";
 
 export const metadata: Metadata = {
   title: "AztecList Campus",
@@ -17,7 +17,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Providers>
-          <Header isSignedIn={false} />
+          <HeaderClient />
           {children}
         </Providers>
       </body>
