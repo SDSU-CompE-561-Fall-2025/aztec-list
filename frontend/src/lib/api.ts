@@ -1,7 +1,8 @@
 import { ListingsParams } from "@/types/listing/listingParams";
 import { UserListingsParams } from "@/types/listing/userListingsParams";
-import { ListingSearchResponse } from "@/types/listing/listing";
+import { ListingSearchResponse, ListingPublic } from "@/types/listing/listing";
 import { API_BASE_URL } from "@/lib/constants";
+import { getAuthToken } from "@/lib/auth";
 
 export const getListings = async (params: ListingsParams = {}): Promise<ListingSearchResponse> => {
   const { q, category, minPrice, maxPrice, condition, sellerId, limit, offset, sort } = params;
@@ -62,12 +63,18 @@ export const updateListing = async (
     is_active: boolean;
   }>
 ): Promise<void> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
   const url = new URL(`${API_BASE_URL}/listings/${listingId}`);
 
   const res = await fetch(url.toString(), {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(data),
   });
@@ -79,10 +86,18 @@ export const updateListing = async (
 };
 
 export const deleteListing = async (listingId: string): Promise<void> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
   const url = new URL(`${API_BASE_URL}/listings/${listingId}`);
 
   const res = await fetch(url.toString(), {
     method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
 
   if (!res.ok) {
@@ -93,4 +108,23 @@ export const deleteListing = async (listingId: string): Promise<void> => {
 
 export const toggleListingActive = async (listingId: string, isActive: boolean): Promise<void> => {
   return updateListing(listingId, { is_active: isActive });
+};
+
+export const getListing = async (listingId: string): Promise<ListingPublic> => {
+  const url = new URL(`${API_BASE_URL}/listings/${listingId}`);
+
+  const res = await fetch(url.toString());
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to fetch listing: ${res.status} ${errorText}`);
+  }
+
+  const data = await res.json();
+
+  // Validate response structure
+  if (!data || typeof data !== "object") {
+    throw new Error("Invalid response format from API");
+  }
+
+  return data as ListingPublic;
 };

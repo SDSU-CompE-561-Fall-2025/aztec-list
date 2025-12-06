@@ -53,7 +53,7 @@ export function ProfileListingCard({
           <Button
             size="icon"
             variant="secondary"
-            className="h-8 w-8 bg-gray-900/90 hover:bg-gray-800"
+            className="h-9 w-9 bg-gray-900/90 hover:bg-gray-800 border border-purple-400 hover:border-purple-300 hover:shadow-lg hover:shadow-purple-500/20 text-white"
             asChild
           >
             <Link href={`/listings/${listing.id}/edit`}>
@@ -63,7 +63,7 @@ export function ProfileListingCard({
           <Button
             size="icon"
             variant="secondary"
-            className="h-8 w-8 bg-gray-900/90 hover:bg-gray-800"
+            className="h-9 w-9 bg-gray-900/90 hover:bg-gray-800 border border-blue-400 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/20 text-white"
             onClick={() => onToggleActive(listing.id, !listing.is_active)}
             disabled={isTogglingActive}
           >
@@ -72,7 +72,7 @@ export function ProfileListingCard({
           <Button
             size="icon"
             variant="secondary"
-            className="h-8 w-8 bg-gray-900/90 hover:bg-red-900"
+            className="h-9 w-9 bg-gray-900/90 hover:bg-gray-800 border border-red-400 hover:border-red-300 hover:shadow-lg hover:shadow-red-500/20 text-white"
             onClick={() => setShowDeleteDialog(true)}
             disabled={isDeleting}
           >
