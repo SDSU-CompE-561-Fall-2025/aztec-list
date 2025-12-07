@@ -6,14 +6,17 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_not_banned
+from app.models.profile import Profile
 from app.models.user import User
 from app.schemas.listing import (
     ListingSearchResponse,
     ListingSummary,
     UserListingsParams,
 )
+from app.schemas.profile import ProfilePublic
 from app.schemas.user import UserPublic, UserUpdate
 from app.services.listing import listing_service
+from app.services.profile import profile_service
 from app.services.user import user_service
 
 user_router = APIRouter(
@@ -50,7 +53,7 @@ async def get_current_user_info(
 
 @user_router.get(
     "/{user_id}",
-    summary="Get a user's public profile",
+    summary="Get a user's basic info",
     status_code=status.HTTP_200_OK,
     response_model=UserPublic,
 )
@@ -59,7 +62,7 @@ async def get_user(
     db: Annotated[Session, Depends(get_db)],
 ) -> User:
     """
-    Get public user profile by ID.
+    Get basic user info by ID.
 
     Args:
         user_id: The user's unique identifier (UUID)
@@ -72,6 +75,34 @@ async def get_user(
         HTTPException: 404 if user not found, 500 on database error
     """
     return user_service.get_by_id(db, user_id)
+
+
+@user_router.get(
+    "/{user_id}/profile",
+    summary="Get a user's public profile",
+    status_code=status.HTTP_200_OK,
+    response_model=ProfilePublic,
+)
+async def get_user_profile(
+    user_id: uuid.UUID,
+    db: Annotated[Session, Depends(get_db)],
+) -> Profile:
+    """
+    Get public profile for a specific user.
+
+    This follows REST conventions where profile is a sub-resource of user.
+
+    Args:
+        user_id: The user's unique identifier (UUID)
+        db: Database session
+
+    Returns:
+        ProfilePublic: User's profile information
+
+    Raises:
+        HTTPException: 404 if profile not found
+    """
+    return profile_service.get_by_user_id(db, user_id)
 
 
 @user_router.get(

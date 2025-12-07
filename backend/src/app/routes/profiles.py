@@ -19,6 +19,7 @@ from app.services.profile import profile_service
 profile_router = APIRouter(
     prefix="/users/profile",
     tags=["Profile"],
+    # Note: Public profiles are accessed via /users/{user_id}/profile in users router
 )
 
 
@@ -34,7 +35,10 @@ async def create_profile(
     db: Annotated[Session, Depends(get_db)],
 ) -> Profile:
     """
-    Create a user profile for the authenticated user after signup.
+    Create a user profile for the authenticated user.
+
+    This endpoint is for authenticated users to create their own profile.
+    Public profiles are accessed via GET /users/{user_id}/profile.
 
     Args:
         profile: Profile creation data (name, campus, contact_info)
@@ -58,7 +62,9 @@ async def get_my_profile(
     db: Annotated[Session, Depends(get_db)],
 ) -> Profile:
     """
-    Retrieve the authenticated user's full profile.
+    Retrieve the authenticated user's own profile.
+
+    For viewing other users' public profiles, use GET /users/{user_id}/profile.
 
     Args:
         current_user: Authenticated user from the JWT token
@@ -82,9 +88,10 @@ async def update_profile(
     db: Annotated[Session, Depends(get_db)],
 ) -> Profile:
     """
-    Update fields of the authenticated user's profile.
+    Update fields of the authenticated user's own profile.
 
     All fields are optional; only provided ones are updated.
+    This endpoint is for authenticated users to update their own profile.
 
     Args:
         profile: Profile update data (name, campus, contact_info)
@@ -112,8 +119,9 @@ async def update_profile_picture(
     db: Annotated[Session, Depends(get_db)],
 ) -> Profile:
     """
-    Upload or replace the user's profile picture.
+    Upload or replace the authenticated user's profile picture.
 
+    This endpoint is for authenticated users to update their own profile picture.
     Note: This is a simplified version that accepts a URL string.
     For actual file upload, use multipart/form-data with File upload.
 
@@ -142,7 +150,9 @@ async def delete_profile(
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     """
-    Delete the authenticated user's profile.
+    Delete the authenticated user's own profile.
+
+    This endpoint is for authenticated users to delete their own profile.
 
     Args:
         current_user: Authenticated user from the JWT token (must not be banned)
