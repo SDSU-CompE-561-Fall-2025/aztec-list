@@ -4,8 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { PaginationControls } from "@/components/listings/PaginationControls";
-import { DEFAULT_LIMIT } from "@/lib/constants";
-import { ChevronLeft, User, Mail } from "lucide-react";
+import { API_BASE_URL, DEFAULT_LIMIT } from "@/lib/constants";
+import { ChevronLeft, User, Mail, Phone, Building2, Calendar } from "lucide-react";
 import { createUserQueryOptions } from "@/queryOptions/createUserQueryOptions";
 import { createUserListingsQueryOptions } from "@/queryOptions/createUserListingsQueryOptions";
 import type { ListingSummary } from "@/types/listing/listing";
@@ -25,6 +25,21 @@ function UserProfileContent() {
     isLoading: isUserLoading,
     isError: isUserError,
   } = useQuery(createUserQueryOptions(userId));
+
+  // Fetch user's profile data
+  const { data: profileData } = useQuery({
+    queryKey: ["profile", userId],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/${userId}/profile`);
+        if (!response.ok) return null;
+        return response.json();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!userId,
+  });
 
   const { data: listingsData, isLoading: isListingsLoading } = useQuery(
     createUserListingsQueryOptions(userId, {
@@ -120,11 +135,44 @@ function UserProfileContent() {
               <User className="w-12 h-12 text-purple-300" />
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-4xl font-bold text-white mb-2">{user.username}</h1>
-              <div className="flex flex-wrap gap-4 text-gray-400">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-5 h-5" />
-                  <span className="text-base">{user.email}</span>
+              <h1 className="text-4xl font-bold text-white mb-2">
+                {profileData?.name ? (
+                  <>
+                    {profileData.name}
+                    <span className="text-2xl text-gray-400 font-normal ml-2">
+                      (@{user.username})
+                    </span>
+                  </>
+                ) : (
+                  user.username
+                )}
+              </h1>
+              <div className="space-y-2 text-base">
+                {profileData?.campus && (
+                  <div className="flex items-center gap-2 text-gray-400">
+                    <Building2 className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{profileData.campus}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-gray-400">
+                  <Mail className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">{user.email}</span>
+                </div>
+                {profileData?.contact_info?.phone && (
+                  <div className="flex items-center gap-2 text-gray-400">
+                    <Phone className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{profileData.contact_info.phone}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-gray-400">
+                  <Calendar className="w-4 h-4 flex-shrink-0" />
+                  <span>
+                    Joined{" "}
+                    {new Date(user.created_at).toLocaleDateString("en-US", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
                 </div>
                 {user.is_verified && (
                   <span className="inline-flex items-center px-3 py-1 bg-green-500/10 text-green-300 text-sm font-semibold rounded-full border border-green-500/30">
@@ -132,13 +180,6 @@ function UserProfileContent() {
                   </span>
                 )}
               </div>
-              <p className="text-base text-gray-500 mt-3">
-                Member since{" "}
-                {new Date(user.created_at).toLocaleDateString("en-US", {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
             </div>
           </div>
         </div>

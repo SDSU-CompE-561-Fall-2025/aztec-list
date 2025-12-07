@@ -219,7 +219,7 @@ export default function ListingDetailPage() {
               <p className="text-sm font-semibold text-gray-500 tracking-widest">Seller</p>
               <button
                 onClick={() => router.push(`/profile/${listing.seller_id}`)}
-                className="flex items-center gap-3 w-full rounded-lg p-2 transition-colors hover:bg-gray-800/40 group text-left cursor-pointer"
+                className="flex items-center gap-3 w-full rounded-lg p-2 group text-left cursor-pointer"
               >
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20">
                   <User className="w-6 h-6 text-purple-300" />
