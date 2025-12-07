@@ -1,6 +1,7 @@
 import { ListingsParams } from "@/types/listing/listingParams";
 import { UserListingsParams } from "@/types/listing/userListingsParams";
 import { ListingSearchResponse, ListingPublic, ImagePublic } from "@/types/listing/listing";
+import { UserPublic } from "@/types/user";
 import { API_BASE_URL } from "@/lib/constants";
 import { getAuthToken } from "@/lib/auth";
 
@@ -259,4 +260,24 @@ export const deleteListingImage = async (listingId: string, imageId: string): Pr
     const errorText = await res.text().catch(() => "Unknown error");
     throw new Error(`Failed to delete image: ${res.status} ${errorText}`);
   }
+};
+
+// User API functions
+
+export const getUser = async (userId: string): Promise<UserPublic> => {
+  const url = new URL(`${API_BASE_URL}/users/${userId}`);
+
+  const res = await fetch(url.toString());
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to fetch user: ${res.status} ${errorText}`);
+  }
+
+  const data = await res.json();
+
+  if (!data || typeof data !== "object") {
+    throw new Error("Invalid response format from API");
+  }
+
+  return data as UserPublic;
 };

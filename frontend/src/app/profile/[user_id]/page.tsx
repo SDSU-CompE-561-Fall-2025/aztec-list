@@ -1,0 +1,190 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { PaginationControls } from "@/components/listings/PaginationControls";
+import { DEFAULT_LIMIT } from "@/lib/constants";
+import { ChevronLeft, User, Mail } from "lucide-react";
+import { createUserQueryOptions } from "@/queryOptions/createUserQueryOptions";
+import { createUserListingsQueryOptions } from "@/queryOptions/createUserListingsQueryOptions";
+import type { ListingSummary } from "@/types/listing/listing";
+import { Suspense } from "react";
+import { UserListingCard } from "@/components/listings/UserListingCard";
+
+function UserProfileContent() {
+  const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const userId = params.user_id as string;
+
+  const offset = parseInt(searchParams.get("offset") ?? "0", 10) || 0;
+
+  const {
+    data: user,
+    isLoading: isUserLoading,
+    isError: isUserError,
+  } = useQuery(createUserQueryOptions(userId));
+
+  const { data: listingsData, isLoading: isListingsLoading } = useQuery(
+    createUserListingsQueryOptions(userId, {
+      limit: DEFAULT_LIMIT,
+      offset,
+      sort: "recent",
+    })
+  );
+
+  const isLoading = isUserLoading || isListingsLoading;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-950">
+        <div className="border-b border-gray-800/50 bg-gray-950/95 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="h-10 w-40 bg-gray-800 rounded animate-pulse" />
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="space-y-6">
+            <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl p-6 h-32 animate-pulse" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl h-80 animate-pulse"
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isUserError || !user) {
+    return (
+      <div className="min-h-screen bg-gray-950">
+        <div className="border-b border-gray-800/50 bg-gray-950/95 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <Button
+              variant="ghost"
+              className="text-gray-400 hover:text-gray-100 hover:bg-gray-800/50 -ml-3"
+              onClick={() => router.push("/")}
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back to listings
+            </Button>
+          </div>
+        </div>
+        <div className="max-w-2xl mx-auto px-6 py-20 text-center">
+          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-2xl p-12">
+            <div className="w-16 h-16 bg-gray-800/50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <User className="w-8 h-8 text-gray-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-100 mb-3">User Not Found</h1>
+            <p className="text-gray-400 mb-8 leading-relaxed">
+              This user could not be found or may have been removed.
+            </p>
+            <Button onClick={() => router.push("/")} className="bg-purple-600 hover:bg-purple-700">
+              Browse All Listings
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const listings = listingsData?.items ?? [];
+  const totalCount = listingsData?.count ?? 0;
+
+  return (
+    <div className="min-h-screen bg-gray-950">
+      <div className="border-b border-gray-800/50 bg-gray-950/95 backdrop-blur-sm sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <Button
+            variant="ghost"
+            className="text-gray-400 hover:text-gray-100 hover:bg-gray-800/50 -ml-3"
+            onClick={() => router.back()}
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* User Profile Header */}
+        <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/60 rounded-xl p-8">
+          <div className="flex items-start gap-6">
+            <div className="w-24 h-24 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20 flex-shrink-0">
+              <User className="w-12 h-12 text-purple-300" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-4xl font-bold text-white mb-2">{user.username}</h1>
+              <div className="flex flex-wrap gap-4 text-gray-400">
+                <div className="flex items-center gap-2">
+                  <Mail className="w-5 h-5" />
+                  <span className="text-base">{user.email}</span>
+                </div>
+                {user.is_verified && (
+                  <span className="inline-flex items-center px-3 py-1 bg-green-500/10 text-green-300 text-sm font-semibold rounded-full border border-green-500/30">
+                    Verified
+                  </span>
+                )}
+              </div>
+              <p className="text-base text-gray-500 mt-3">
+                Member since{" "}
+                {new Date(user.created_at).toLocaleDateString("en-US", {
+                  month: "long",
+                  year: "numeric",
+                })}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Listings Section */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-3xl font-bold text-white">
+              Listings
+              <span className="ml-3 text-gray-500 font-normal text-xl">({totalCount})</span>
+            </h2>
+          </div>
+
+          {listings.length === 0 ? (
+            <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl p-12 text-center">
+              <div className="w-16 h-16 bg-gray-800/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-gray-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-300 mb-2">No Listings Yet</h3>
+              <p className="text-gray-500">This user hasn&apos;t posted any listings.</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {listings.map((listing: ListingSummary) => (
+                  <UserListingCard key={listing.id} listing={listing} />
+                ))}
+              </div>
+
+              {totalCount > DEFAULT_LIMIT && (
+                <div className="flex justify-center pt-4">
+                  <PaginationControls count={totalCount} />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function UserProfilePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <UserProfileContent />
+    </Suspense>
+  );
+}

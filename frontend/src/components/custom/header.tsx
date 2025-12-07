@@ -58,11 +58,11 @@ export function Header() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4 gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="text-2xl font-bold">
+          <div className="text-3xl font-bold">
             <span className="text-purple-500">Aztec</span>
             <span className="text-white">List</span>
           </div>
-          <span className="text-sm text-gray-400">Campus</span>
+          <span className="text-base text-gray-400">Campus</span>
         </Link>
 
         {/* Search Bar */}

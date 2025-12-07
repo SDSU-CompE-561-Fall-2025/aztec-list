@@ -130,8 +130,8 @@ export default function CreateListingPage() {
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Create New Listing</h1>
-          <p className="text-gray-400">Fill in the details to create your listing</p>
+          <h1 className="text-4xl font-bold text-white mb-2">Create New Listing</h1>
+          <p className="text-gray-400 text-lg">Fill in the details to create your listing</p>
         </div>
 
         {/* Form */}
@@ -139,7 +139,7 @@ export default function CreateListingPage() {
           {/* Show info about creating listing first if not created yet */}
           {!createdListingId && (
             <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
-              <p className="text-blue-300 text-sm">
+              <p className="text-blue-300 text-lg">
                 💡 Create your listing first, then you&apos;ll be able to upload images
               </p>
             </div>
@@ -147,7 +147,7 @@ export default function CreateListingPage() {
 
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="title" className="text-gray-200">
+            <Label htmlFor="title" className="text-gray-200 text-lg">
               Title <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -157,17 +157,17 @@ export default function CreateListingPage() {
               onBlur={(e) => handleBlur("title", e.target.value)}
               placeholder="e.g., iPhone 13 Pro Max"
               disabled={!!createdListingId}
-              className={`bg-gray-900 border-gray-700 text-white ${
+              className={`bg-gray-900 border-gray-700 text-white text-base ${
                 errors.title ? "border-red-500" : ""
               }`}
             />
-            {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
-            <p className="text-gray-400 text-sm">{title.length}/100 characters</p>
+            {errors.title && <p className="text-red-500 text-lg">{errors.title}</p>}
+            <p className="text-gray-400 text-lg">{title.length}/100 characters</p>
           </div>
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-gray-200">
+            <Label htmlFor="description" className="text-gray-200 text-lg">
               Description <span className="text-red-500">*</span>
             </Label>
             <textarea
@@ -178,17 +178,17 @@ export default function CreateListingPage() {
               placeholder="Describe your item..."
               rows={5}
               disabled={!!createdListingId}
-              className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none ${
+              className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none ${
                 errors.description ? "border-red-500" : ""
               }`}
             />
-            {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
-            <p className="text-gray-400 text-sm">{description.length}/500 characters</p>
+            {errors.description && <p className="text-red-500 text-lg">{errors.description}</p>}
+            <p className="text-gray-400 text-lg">{description.length}/500 characters</p>
           </div>
 
           {/* Price */}
           <div className="space-y-2">
-            <Label htmlFor="price" className="text-gray-200">
+            <Label htmlFor="price" className="text-gray-200 text-lg">
               Price <span className="text-red-500">*</span>
             </Label>
             <div className="relative">
@@ -203,17 +203,17 @@ export default function CreateListingPage() {
                 onBlur={handlePriceBlur}
                 placeholder="0.00"
                 disabled={!!createdListingId}
-                className={`bg-gray-900 border-gray-700 text-white pl-7 ${
+                className={`bg-gray-900 border-gray-700 text-white text-base pl-7 ${
                   errors.price ? "border-red-500" : ""
                 }`}
               />
             </div>
-            {errors.price && <p className="text-red-500 text-sm">{errors.price}</p>}
+            {errors.price && <p className="text-red-500 text-lg">{errors.price}</p>}
           </div>
 
           {/* Category */}
           <div className="space-y-2">
-            <Label htmlFor="category" className="text-gray-200">
+            <Label htmlFor="category" className="text-gray-200 text-lg">
               Category <span className="text-red-500">*</span>
             </Label>
             <select
@@ -222,7 +222,7 @@ export default function CreateListingPage() {
               onChange={(e) => setCategory(e.target.value as Category)}
               onBlur={(e) => handleBlur("category", e.target.value)}
               disabled={!!createdListingId}
-              className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+              className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white text-base focus:outline-none focus:ring-2 focus:ring-purple-500 ${
                 errors.category ? "border-red-500" : ""
               }`}
             >
@@ -233,12 +233,12 @@ export default function CreateListingPage() {
                 </option>
               ))}
             </select>
-            {errors.category && <p className="text-red-500 text-sm">{errors.category}</p>}
+            {errors.category && <p className="text-red-500 text-lg">{errors.category}</p>}
           </div>
 
           {/* Condition */}
           <div className="space-y-2">
-            <Label htmlFor="condition" className="text-gray-200">
+            <Label htmlFor="condition" className="text-gray-200 text-lg">
               Condition <span className="text-red-500">*</span>
             </Label>
             <select
@@ -247,7 +247,7 @@ export default function CreateListingPage() {
               onChange={(e) => setCondition(e.target.value as Condition)}
               onBlur={(e) => handleBlur("condition", e.target.value)}
               disabled={!!createdListingId}
-              className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+              className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white text-base focus:outline-none focus:ring-2 focus:ring-purple-500 ${
                 errors.condition ? "border-red-500" : ""
               }`}
             >
@@ -258,15 +258,15 @@ export default function CreateListingPage() {
                 </option>
               ))}
             </select>
-            {errors.condition && <p className="text-red-500 text-sm">{errors.condition}</p>}
+            {errors.condition && <p className="text-red-500 text-lg">{errors.condition}</p>}
           </div>
 
           {/* Active Status */}
           <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-gray-200 font-medium">Listing Status</Label>
-                <p className="text-gray-500 text-sm mt-1">
+                <Label className="text-gray-200 font-medium text-lg">Listing Status</Label>
+                <p className="text-gray-500 text-lg mt-1">
                   {isActive ? "Visible to buyers" : "Hidden from buyers"}
                 </p>
               </div>

@@ -153,12 +153,12 @@ function ProfileContent() {
         {/* Profile Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">My Profile</h1>
-            <p className="text-gray-400">Manage your listings and account settings</p>
+            <h1 className="text-4xl font-bold text-white mb-2">My Profile</h1>
+            <p className="text-gray-400 text-lg">Manage your listings and account settings</p>
           </div>
-          <Button asChild className="bg-purple-600 hover:bg-purple-700">
+          <Button asChild className="bg-purple-600 hover:bg-purple-700 text-base">
             <Link href="/listings/create">
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-5 h-5 mr-2" />
               Create Listing
             </Link>
           </Button>
@@ -171,22 +171,22 @@ function ProfileContent() {
               onClick={() => router.push("/profile?status=all")}
               className="bg-gray-900 rounded-lg p-6 text-left transition-all hover:bg-gray-800 hover:shadow-lg"
             >
-              <h3 className="text-gray-400 text-sm font-medium mb-1">Total Listings</h3>
-              <p className="text-3xl font-bold text-white">{totalCount}</p>
+              <h3 className="text-gray-400 text-base font-medium mb-1">Total Listings</h3>
+              <p className="text-4xl font-bold text-white">{totalCount}</p>
             </button>
             <button
               onClick={() => router.push("/profile?status=active")}
               className="bg-gray-900 rounded-lg p-6 text-left transition-all hover:bg-gray-800 hover:shadow-lg hover:shadow-green-500/20"
             >
-              <h3 className="text-gray-400 text-sm font-medium mb-1">Active</h3>
-              <p className="text-3xl font-bold text-green-500">{activeCount}</p>
+              <h3 className="text-gray-400 text-base font-medium mb-1">Active</h3>
+              <p className="text-4xl font-bold text-green-500">{activeCount}</p>
             </button>
             <button
               onClick={() => router.push("/profile?status=inactive")}
               className="bg-gray-900 rounded-lg p-6 text-left transition-all hover:bg-gray-800 hover:shadow-lg hover:shadow-gray-500/20"
             >
-              <h3 className="text-gray-400 text-sm font-medium mb-1">Inactive</h3>
-              <p className="text-3xl font-bold text-gray-500">{inactiveCount}</p>
+              <h3 className="text-gray-400 text-base font-medium mb-1">Inactive</h3>
+              <p className="text-4xl font-bold text-gray-500">{inactiveCount}</p>
             </button>
           </div>
         )}
@@ -194,14 +194,14 @@ function ProfileContent() {
         {/* Listings Section */}
         <div>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold text-gray-100">Your Listings</h2>
+            <h2 className="text-3xl font-semibold text-gray-100">Your Listings</h2>
           </div>
 
           {/* Status Filter Tabs */}
           <div className="flex gap-2 mb-6 border-b border-gray-800">
             <button
               onClick={() => router.push("/profile?status=all")}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
+              className={`px-4 py-2 text-base font-medium transition-colors ${
                 status === "all"
                   ? "text-purple-500 border-b-2 border-purple-500"
                   : "text-gray-400 hover:text-gray-300"
@@ -211,7 +211,7 @@ function ProfileContent() {
             </button>
             <button
               onClick={() => router.push("/profile?status=active")}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
+              className={`px-4 py-2 text-base font-medium transition-colors ${
                 status === "active"
                   ? "text-green-500 border-b-2 border-green-500"
                   : "text-gray-400 hover:text-gray-300"
@@ -221,7 +221,7 @@ function ProfileContent() {
             </button>
             <button
               onClick={() => router.push("/profile?status=inactive")}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
+              className={`px-4 py-2 text-base font-medium transition-colors ${
                 status === "inactive"
                   ? "text-gray-500 border-b-2 border-gray-500"
                   : "text-gray-400 hover:text-gray-300"
@@ -235,8 +235,8 @@ function ProfileContent() {
           {data && totalCount === 0 ? (
             <div className="bg-gray-900 rounded-lg p-12 text-center">
               <div className="max-w-md mx-auto">
-                <h3 className="text-xl font-semibold text-white mb-2">No listings yet</h3>
-                <p className="text-gray-400 mb-6">
+                <h3 className="text-2xl font-semibold text-white mb-2">No listings yet</h3>
+                <p className="text-gray-400 mb-6 text-lg">
                   Start selling by creating your first listing. It only takes a minute!
                 </p>
                 <Button asChild className="bg-purple-600 hover:bg-purple-700" size="lg">
