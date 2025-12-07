@@ -18,20 +18,28 @@ uv run fastapi dev src/app/main.py
 
 ## Environment Configuration
 
-Environment variables are configured in `.env` at the **project root** (one level up from backend/).
+Environment variables are configured in `.env` in the **backend/** directory.
 
 To set up:
+
 ```bash
-# From project root (not backend/)
+# From backend/ directory
 cp .env.example .env
 
 # Generate secret key
 uv run python -c "import secrets; print(secrets.token_urlsafe(32))"
 
-# Edit .env and paste the generated key
+# Edit .env and paste the generated key for JWT__SECRET_KEY
 ```
 
-See [Environment Configuration](../README.md#environment-configuration) in the main README.
+**Key Configuration Options:**
+
+- `JWT__SECRET_KEY` - Required: Secure secret for JWT tokens (generate with command above)
+- `DB__DATABASE_URL` - Database connection (default: SQLite in backend/)
+- `STORAGE__UPLOAD_DIR` - Image upload directory (default: backend/uploads/images)
+- `CORS__ALLOWED_ORIGINS` - Frontend URLs allowed to access API
+
+See `.env.example` for all available options and detailed documentation.
 
 ## API Documentation
 
@@ -82,6 +90,7 @@ uv run pytest tests/test_users.py -v
 ```
 
 **Test Coverage:**
+
 - **385 tests total** with **98% code coverage**
 - 208 unit tests (business logic, data access, core security)
 - 177 integration tests (covering routes, auth, middleware)
@@ -101,6 +110,7 @@ uv run fastapi dev src/app/main.py
 ```
 
 **Using Swagger UI for Manual Testing:**
+
 1. Navigate to http://127.0.0.1:8000/docs
 2. Click "Authorize" button to authenticate (if needed)
 3. Expand any endpoint and click "Try it out"

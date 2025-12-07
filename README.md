@@ -29,7 +29,8 @@ This is a monorepo containing both backend and frontend:
 git clone https://github.com/SDSU-CompE-561-Fall-2025/aztec-list.git
 cd aztec-list
 
-# 2) Configure environment variables (do this once at project root)
+# 2) Configure backend environment variables
+cd backend
 cp .env.example .env
 
 # Generate a secure secret key and copy the output
@@ -37,14 +38,11 @@ uv run python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 # Edit .env and replace JWT__SECRET_KEY with the generated key
 
-# 3) Navigate to backend
-cd backend
-
-# 4) Install Python + sync deps from pyproject/uv.lock
+# 3) Install Python + sync deps from pyproject/uv.lock
 uv python install
 uv sync
 
-# 5) Run the API (dev)
+# 4) Run the API (dev)
 uv run fastapi dev src/app/main.py
 ```
 
@@ -52,7 +50,8 @@ uv run fastapi dev src/app/main.py
 
 - Open http://127.0.0.1:8000/docs for Swagger UI
 - Run `uv run uvicorn --app-dir src app.main:app --reload` to start the app without FastAPI dev wrapper
-- The `.env` file lives at the **project root** (shared between backend/frontend)
+- The backend `.env` file lives in **`backend/`** directory
+- The frontend `.env.local` file lives in **`frontend/`** directory
 - The `.venv/` directory lives in **`backend/`** (Python dependencies)
 - **Always run backend commands from the `backend/` directory**
 
@@ -69,15 +68,19 @@ uv run fastapi dev src/app/main.py
 # 1) From the repo root, hop into the frontend workspace
 cd frontend
 
-# 2) Install dependencies (prefer Bun)
+# 2) Configure frontend environment variables
+cp .env.example .env.local
+# Edit .env.local if you need to change API URLs (defaults work for local dev)
+
+# 3) Install dependencies (prefer Bun)
 bun install
 # fallbacks: npm install | yarn install | pnpm install
 
-# 3) Start the dev server
+# 4) Start the dev server
 bun dev
 # fallbacks: npm run dev | yarn dev | pnpm dev
 
-# 4) Open your browser at the Next.js URL printed above
+# 5) Open your browser at the Next.js URL printed above
 # (or go directly to http://localhost:3000)
 ```
 
