@@ -103,30 +103,30 @@ export function Header() {
                   </AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-60">
                 <DropdownMenuLabel>
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user?.username}</p>
+                  <div className="flex flex-col space-y-1 py-0.5">
+                    <p className="text-sm font-semibold leading-none">{user?.username}</p>
                     <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/profile" className="cursor-pointer">
+                  <Link href="/profile" className="cursor-pointer py-2">
                     <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
+                    <span className="text-sm">Profile</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings" className="cursor-pointer">
+                  <Link href="/settings" className="cursor-pointer py-2">
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+                    <span className="text-sm">Settings</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout} className="cursor-pointer">
+                <DropdownMenuItem onClick={logout} className="cursor-pointer py-2">
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
+                  <span className="text-sm">Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

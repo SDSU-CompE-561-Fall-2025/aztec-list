@@ -3,13 +3,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, User } from "lucide-react";
+import { ChevronLeft, User, Mail, Phone } from "lucide-react";
 import { cn, getConditionColor } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import { createListingDetailQueryOptions } from "@/queryOptions/createListingDetailQueryOptions";
 import { createUserQueryOptions } from "@/queryOptions/createUserQueryOptions";
-import { STATIC_BASE_URL } from "@/lib/constants";
+import { STATIC_BASE_URL, API_BASE_URL } from "@/lib/constants";
 import { Category } from "@/types/listing/filters/category";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const CONDITION_LABELS = {
   new: "New",
@@ -61,7 +68,24 @@ export default function ListingDetailPage() {
     enabled: !!listing?.seller_id,
   });
 
+  // Fetch seller's profile for contact info
+  const { data: sellerProfile } = useQuery({
+    queryKey: ["profile", listing?.seller_id],
+    queryFn: async () => {
+      if (!listing?.seller_id) return null;
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/${listing.seller_id}/profile`);
+        if (!response.ok) return null;
+        return response.json();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!listing?.seller_id,
+  });
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showContactDialog, setShowContactDialog] = useState(false);
 
   const galleryImages = useMemo<GalleryImage[]>(() => {
     if (!listing) {
@@ -239,6 +263,7 @@ export default function ListingDetailPage() {
               <h3 className="text-xl font-semibold text-white">Contact</h3>
               <Button
                 size="lg"
+                onClick={() => setShowContactDialog(true)}
                 className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-semibold text-base"
               >
                 Contact Seller
@@ -346,6 +371,51 @@ export default function ListingDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Contact Dialog */}
+        <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
+          <DialogContent className="bg-gray-900 border-gray-800 sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="text-white text-2xl">Contact Seller</DialogTitle>
+              <DialogDescription className="text-gray-400 text-base">
+                Choose how you&apos;d like to contact {seller?.username}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 pt-6 pb-2">
+              {/* Email Option */}
+              <a
+                href={`mailto:${seller?.email}?subject=${encodeURIComponent(`Interested in: ${listing.title}`)}&body=${encodeURIComponent(`Hi ${seller?.username},\n\nI'm interested in your listing "${listing.title}" on AztecList.\n\n`)}`}
+                className="flex items-center gap-4 p-5 rounded-lg bg-gray-800/50 hover:bg-gray-800 border border-gray-700 hover:border-purple-500/50 transition-all group"
+                onClick={() => setShowContactDialog(false)}
+              >
+                <div className="w-14 h-14 bg-purple-500/10 rounded-full flex items-center justify-center border border-purple-500/20">
+                  <Mail className="w-7 h-7 text-purple-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-semibold text-lg mb-1">Send Email</p>
+                  <p className="text-gray-400 text-sm truncate">{seller?.email}</p>
+                </div>
+              </a>
+
+              {/* Phone Option - Only show if available */}
+              {sellerProfile?.contact_info?.phone && (
+                <a
+                  href={`tel:${sellerProfile.contact_info.phone.replace(/\D/g, "")}`}
+                  className="flex items-center gap-4 p-5 rounded-lg bg-gray-800/50 hover:bg-gray-800 border border-gray-700 hover:border-green-500/50 transition-all group"
+                  onClick={() => setShowContactDialog(false)}
+                >
+                  <div className="w-14 h-14 bg-green-500/10 rounded-full flex items-center justify-center border border-green-500/20">
+                    <Phone className="w-7 h-7 text-green-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-semibold text-lg mb-1">Call</p>
+                    <p className="text-gray-400 text-sm">{sellerProfile.contact_info.phone}</p>
+                  </div>
+                </a>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
