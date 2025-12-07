@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ListingSummary } from "@/types/listing/listing";
 import { formatPrice } from "@/lib/utils";
-import { STATIC_BASE_URL } from "@/lib/constants";
+import { STATIC_BASE_URL, LISTINGS_BASE_URL } from "@/lib/constants";
 import { Edit, Eye, EyeOff, Trash2, ImageIcon } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -33,13 +34,22 @@ export function ProfileListingCard({
   isTogglingActive = false,
   isDeleting = false,
 }: ProfileListingCardProps) {
+  const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [imageError, setImageError] = useState(false);
   const hasImage = listing.thumbnail_url && !imageError;
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on action buttons
+    if ((e.target as HTMLElement).closest("button") || (e.target as HTMLElement).closest("a")) {
+      return;
+    }
+    router.push(`${LISTINGS_BASE_URL}/${listing.id}`);
+  };
+
   return (
     <>
-      <div className="flex flex-col gap-2 relative group">
+      <div className="flex flex-col gap-2 relative group cursor-pointer" onClick={handleCardClick}>
         {/* Image with inactive overlay */}
         <div className="relative aspect-square bg-gray-800 rounded-md overflow-hidden">
           {hasImage ? (
@@ -97,7 +107,9 @@ export function ProfileListingCard({
         </div>
 
         {/* Title */}
-        <h3 className="text-sm font-medium text-gray-100 line-clamp-2">{listing.title}</h3>
+        <h3 className="text-sm font-medium text-gray-100 line-clamp-2 group-hover:text-purple-400 transition-colors">
+          {listing.title}
+        </h3>
 
         {/* Price */}
         <p className="text-lg font-semibold text-gray-100">{formatPrice(listing.price)}</p>

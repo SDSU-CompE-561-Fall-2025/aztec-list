@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ListingSummary } from "@/types/listing/listing";
 import { formatPrice } from "@/lib/utils";
-import { STATIC_BASE_URL } from "@/lib/constants";
+import { STATIC_BASE_URL, LISTINGS_BASE_URL } from "@/lib/constants";
 import { ImageIcon } from "lucide-react";
 
 interface ListingCardProps {
@@ -15,9 +16,12 @@ export function ListingCard({ listing }: ListingCardProps) {
   const hasImage = listing.thumbnail_url && !imageError;
 
   return (
-    <div className="flex flex-col gap-2">
+    <Link
+      href={`${LISTINGS_BASE_URL}/${listing.id}`}
+      className="flex flex-col gap-2 group cursor-pointer"
+    >
       {/* Image or placeholder */}
-      <div className="relative aspect-square bg-gray-800 rounded-md overflow-hidden">
+      <div className="relative aspect-square bg-gray-800 rounded-md overflow-hidden transition-transform group-hover:scale-105">
         {hasImage ? (
           <img
             src={`${STATIC_BASE_URL}${listing.thumbnail_url}`}
@@ -34,10 +38,12 @@ export function ListingCard({ listing }: ListingCardProps) {
       </div>
 
       {/* Title */}
-      <h3 className="text-sm font-medium text-gray-100 line-clamp-2">{listing.title}</h3>
+      <h3 className="text-sm font-medium text-gray-100 line-clamp-2 group-hover:text-purple-400 transition-colors">
+        {listing.title}
+      </h3>
 
       {/* Price */}
       <p className="text-lg font-semibold text-gray-100">{formatPrice(listing.price)}</p>
-    </div>
+    </Link>
   );
 }
