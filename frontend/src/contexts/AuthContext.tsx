@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useSyncExternalStore,
+  ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
   login as apiLogin,
@@ -16,53 +23,73 @@ import { AuthContextType, LoginCredentials, SignupData, User } from "@/types/aut
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-/**
- * Authentication provider component.
- * Manages user authentication state and provides auth methods.
- */
+// Prevents infinite loops from frequent snapshot recalculations
+let cachedAuthSnapshot: User | null = null;
+let isSnapshotInitialized = false;
+
+let authListeners: Array<() => void> = [];
+function subscribeToAuth(callback: () => void) {
+  authListeners.push(callback);
+  return () => {
+    authListeners = authListeners.filter((l) => l !== callback);
+  };
+}
+
+function notifyAuthListeners() {
+  isSnapshotInitialized = false;
+  authListeners.forEach((listener) => listener());
+}
+
+function getAuthSnapshot(): User | null {
+  if (isSnapshotInitialized) {
+    return cachedAuthSnapshot;
+  }
+
+  const token = getAuthToken();
+  const storedUser = getStoredUser();
+  cachedAuthSnapshot = token && storedUser ? storedUser : null;
+  isSnapshotInitialized = true;
+
+  return cachedAuthSnapshot;
+}
+
+function getServerAuthSnapshot(): User | null {
+  return null;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Initialize state from localStorage on mount
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window !== "undefined") {
-      const token = getAuthToken();
-      const storedUser = getStoredUser();
-      return token && storedUser ? storedUser : null;
-    }
-    return null;
-  });
-  const [isLoading] = useState(false);
+  const user = useSyncExternalStore(subscribeToAuth, getAuthSnapshot, getServerAuthSnapshot);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const router = useRouter();
 
-  /**
-   * Authenticate user with credentials.
-   */
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
   const login = async (credentials: LoginCredentials): Promise<void> => {
     try {
+      setIsLoading(true);
       const authToken = await apiLogin(credentials);
 
-      // Store token and user data
       setAuthToken(authToken.access_token);
       setStoredUser(authToken.user);
-      setUser(authToken.user);
 
-      // Don't redirect here - let the calling component handle navigation
+      notifyAuthListeners();
     } catch (error) {
-      // Re-throw to allow component to handle the error
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  /**
-   * Register a new user and log them in.
-   */
   const signup = async (signupData: SignupData): Promise<void> => {
     try {
-      // First create the account
       await apiSignup(signupData);
 
-      // Then automatically log them in
       await login({
-        username: signupData.email, // Use email for login
+        username: signupData.email,
         password: signupData.password,
       });
     } catch (error) {
@@ -70,20 +97,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  /**
-   * Log out the current user.
-   */
   const logout = (): void => {
     removeAuthToken();
     removeStoredUser();
-    setUser(null);
+
+    notifyAuthListeners();
+
     router.push("/");
   };
 
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
-    isLoading,
+    isLoading: isLoading || !isHydrated,
     login,
     signup,
     logout,
