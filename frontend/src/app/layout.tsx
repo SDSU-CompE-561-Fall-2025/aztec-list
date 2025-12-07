@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import { HeaderClient } from "@/components/custom/header-client";
-import { Toaster } from "@/components/ui/sonner";
+import { ToasterClient } from "@/components/ui/toaster-client";
 
 export const metadata: Metadata = {
   title: "AztecList Campus",
@@ -15,12 +15,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <Providers>
           <HeaderClient />
           {children}
-          <Toaster />
+          <ToasterClient />
         </Providers>
       </body>
     </html>

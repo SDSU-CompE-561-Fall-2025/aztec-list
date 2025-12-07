@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { createListingQueryOptions } from "@/queryOptions/createListingQueryOptions";
@@ -12,7 +13,7 @@ import { CATEGORIES, Category } from "@/types/listing/filters/category";
 import { CONDITIONS, Condition } from "@/types/listing/filters/condition";
 import { SORT_OPTIONS, Sort } from "@/types/listing/filters/sort";
 
-export default function ListingsPage() {
+function ListingsContent() {
   const searchParams = useSearchParams();
 
   // Extract and validate filter parameters from URL
@@ -83,5 +84,19 @@ export default function ListingsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ListingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      }
+    >
+      <ListingsContent />
+    </Suspense>
   );
 }

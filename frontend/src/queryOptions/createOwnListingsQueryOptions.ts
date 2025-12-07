@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getOwnListings } from "@/lib/api";
-import type { UserListingsParams } from "@/types/listing/listing";
+import type { UserListingsParams } from "@/types/listing/userListingsParams";
 
 /**
  * Create query options for fetching user's own listings with authentication

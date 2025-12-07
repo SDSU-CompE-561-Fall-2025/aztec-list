@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -12,34 +13,20 @@ import { deleteListing, toggleListingActive } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { createOwnListingsQueryOptions } from "@/queryOptions/createOwnListingsQueryOptions";
 import { toast } from "sonner";
-import type { ListingSummary } from "@/types/listing/listing";
+import { ProtectedRoute } from "@/components/custom/ProtectedRoute";
+import type { ListingSummary, ListingSearchResponse } from "@/types/listing/listing";
 
-export default function ProfilePage() {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+function ProfileContent() {
+  const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-
-  // Redirect to login if not authenticated
-  if (!authLoading && !isAuthenticated) {
-    router.push("/login");
-    return null;
-  }
-
-  // Show loading while checking auth
-  if (authLoading || !user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-400">Loading...</p>
-      </div>
-    );
-  }
 
   const offset = parseInt(searchParams.get("offset") ?? "0", 10) || 0;
   const status = (searchParams.get("status") ?? "all") as "all" | "active" | "inactive";
 
   const { data, isLoading, isError, error } = useQuery(
-    createOwnListingsQueryOptions(user.id, {
+    createOwnListingsQueryOptions(user?.id ?? "", {
       limit: DEFAULT_LIMIT,
       offset,
       sort: "recent",
@@ -67,13 +54,13 @@ export default function ProfilePage() {
     onMutate: async ({ id, isActive }) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({
-        queryKey: ["own-listings", user.id],
+        queryKey: ["own-listings", user?.id],
       });
 
       // Snapshot previous value
       const previousData = queryClient.getQueryData([
         "own-listings",
-        user.id,
+        user?.id,
         { limit: DEFAULT_LIMIT, offset, sort: "recent", include_inactive: true },
       ]);
 
@@ -81,14 +68,14 @@ export default function ProfilePage() {
       queryClient.setQueryData(
         [
           "own-listings",
-          user.id,
+          user?.id,
           { limit: DEFAULT_LIMIT, offset, sort: "recent", include_inactive: true },
         ],
-        (old: any) => {
+        (old: ListingSearchResponse | undefined) => {
           if (!old) return old;
           return {
             ...old,
-            items: old.items.map((item: any) =>
+            items: old.items.map((item: ListingSummary) =>
               item.id === id ? { ...item, is_active: isActive } : item
             ),
           };
@@ -103,7 +90,7 @@ export default function ProfilePage() {
         queryClient.setQueryData(
           [
             "own-listings",
-            user.id,
+            user?.id,
             { limit: DEFAULT_LIMIT, offset, sort: "recent", include_inactive: true },
           ],
           context.previousData
@@ -116,7 +103,7 @@ export default function ProfilePage() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: ["own-listings", user.id],
+        queryKey: ["own-listings", user?.id],
       });
     },
   });
@@ -126,7 +113,7 @@ export default function ProfilePage() {
     mutationFn: deleteListing,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["own-listings", user.id],
+        queryKey: ["own-listings", user?.id],
       });
       toast.success("Listing deleted successfully");
     },
@@ -253,7 +240,8 @@ export default function ProfilePage() {
                   <>
                     <h3 className="text-xl font-semibold text-white mb-2">No active listings</h3>
                     <p className="text-gray-400 mb-6">
-                      All your listings are currently hidden. Click "Inactive" to view them.
+                      All your listings are currently hidden. Click &ldquo;Inactive&rdquo; to view
+                      them.
                     </p>
                   </>
                 )}
@@ -296,13 +284,27 @@ export default function ProfilePage() {
               )}
 
               {/* Pagination controls */}
-              {data && filteredListings.length > 0 && (
-                <PaginationControls count={filteredListings.length} />
-              )}
+              {data && filteredListings.length > 0 && <PaginationControls count={totalCount} />}
             </>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <ProtectedRoute>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center min-h-screen">
+            <p className="text-gray-400">Loading...</p>
+          </div>
+        }
+      >
+        <ProfileContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 }
