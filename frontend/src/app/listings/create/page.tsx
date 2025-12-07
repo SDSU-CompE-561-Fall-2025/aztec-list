@@ -14,6 +14,7 @@ import { CONDITIONS, Condition } from "@/types/listing/filters/condition";
 import { formatCategoryLabel, formatConditionLabel } from "@/lib/utils";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import type { ImagePublic } from "@/types/listing/listing";
 
 export default function CreateListingPage() {
   const router = useRouter();
@@ -26,6 +27,7 @@ export default function CreateListingPage() {
   const [condition, setCondition] = useState<Condition | "">("");
   const [isActive, setIsActive] = useState(true);
   const [createdListingId, setCreatedListingId] = useState<string | null>(null);
+  const [images, setImages] = useState<ImagePublic[]>([]);
 
   // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -38,6 +40,7 @@ export default function CreateListingPage() {
         if (value.length > 100) return "Title must be 100 characters or less";
         return "";
       case "description":
+        if (!value.trim()) return "Description is required";
         if (value.length > 500) return "Description must be 500 characters or less";
         return "";
       case "price":
@@ -66,6 +69,17 @@ export default function CreateListingPage() {
     }));
   };
 
+  // Format price display
+  const handlePriceBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    handleBlur("price", value);
+
+    // Format to 2 decimal places
+    if (value && !isNaN(parseFloat(value))) {
+      setPrice(parseFloat(value).toFixed(2));
+    }
+  };
+
   // Validate all fields
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {
@@ -85,7 +99,7 @@ export default function CreateListingPage() {
     mutationFn: () =>
       createListing({
         title,
-        description: description || "",
+        description,
         price: parseFloat(price),
         category,
         condition,
@@ -107,6 +121,10 @@ export default function CreateListingPage() {
     }
   };
 
+  const handleDone = () => {
+    router.push("/profile");
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 p-8">
       <div className="max-w-3xl mx-auto">
@@ -118,27 +136,11 @@ export default function CreateListingPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Image Upload - only shown after listing is created */}
-          {createdListingId && (
-            <div className="bg-gray-900 border border-purple-500/30 rounded-lg p-6 mb-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Add Images</h3>
-              <ImageUpload listingId={createdListingId} />
-              <div className="mt-4 pt-4 border-t border-gray-800">
-                <Button
-                  type="button"
-                  onClick={() => router.push("/profile")}
-                  className="bg-purple-600 hover:bg-purple-700"
-                >
-                  Done - Go to Profile
-                </Button>
-              </div>
-            </div>
-          )}
-
+          {/* Show info about creating listing first if not created yet */}
           {!createdListingId && (
-            <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 mb-6">
+            <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
               <p className="text-blue-300 text-sm">
-                💡 Create your listing first, then you'll be able to upload images
+                💡 Create your listing first, then you&apos;ll be able to upload images
               </p>
             </div>
           )}
@@ -154,6 +156,7 @@ export default function CreateListingPage() {
               onChange={(e) => setTitle(e.target.value)}
               onBlur={(e) => handleBlur("title", e.target.value)}
               placeholder="e.g., iPhone 13 Pro Max"
+              disabled={!!createdListingId}
               className={`bg-gray-900 border-gray-700 text-white ${
                 errors.title ? "border-red-500" : ""
               }`}
@@ -165,7 +168,7 @@ export default function CreateListingPage() {
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description" className="text-gray-200">
-              Description
+              Description <span className="text-red-500">*</span>
             </Label>
             <textarea
               id="description"
@@ -174,6 +177,7 @@ export default function CreateListingPage() {
               onBlur={(e) => handleBlur("description", e.target.value)}
               placeholder="Describe your item..."
               rows={5}
+              disabled={!!createdListingId}
               className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none ${
                 errors.description ? "border-red-500" : ""
               }`}
@@ -196,8 +200,9 @@ export default function CreateListingPage() {
                 min="0.01"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                onBlur={(e) => handleBlur("price", e.target.value)}
+                onBlur={handlePriceBlur}
                 placeholder="0.00"
+                disabled={!!createdListingId}
                 className={`bg-gray-900 border-gray-700 text-white pl-7 ${
                   errors.price ? "border-red-500" : ""
                 }`}
@@ -216,6 +221,7 @@ export default function CreateListingPage() {
               value={category}
               onChange={(e) => setCategory(e.target.value as Category)}
               onBlur={(e) => handleBlur("category", e.target.value)}
+              disabled={!!createdListingId}
               className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 ${
                 errors.category ? "border-red-500" : ""
               }`}
@@ -240,6 +246,7 @@ export default function CreateListingPage() {
               value={condition}
               onChange={(e) => setCondition(e.target.value as Condition)}
               onBlur={(e) => handleBlur("condition", e.target.value)}
+              disabled={!!createdListingId}
               className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 ${
                 errors.condition ? "border-red-500" : ""
               }`}
@@ -255,16 +262,38 @@ export default function CreateListingPage() {
           </div>
 
           {/* Active Status */}
-          <div className="flex items-center gap-3 p-4 bg-gray-900 rounded-lg">
-            <input
-              id="is_active"
-              type="checkbox"
-              checked={isActive}
-              onChange={(e) => setIsActive(e.target.checked)}
-              className="w-4 h-4 text-purple-600 bg-gray-800 border-gray-700 rounded focus:ring-purple-500"
-            />
-            <Label htmlFor="is_active">Active Status</Label>
+          <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-gray-200 font-medium">Listing Status</Label>
+                <p className="text-gray-500 text-sm mt-1">
+                  {isActive ? "Visible to buyers" : "Hidden from buyers"}
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
+                  disabled={!!createdListingId}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+              </label>
+            </div>
           </div>
+
+          {/* Image Upload - shown after listing is created */}
+          {createdListingId && (
+            <div className="bg-gray-900 border border-purple-500/30 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">Add Images</h3>
+              <ImageUpload
+                listingId={createdListingId}
+                existingImages={images}
+                onImagesChange={setImages}
+              />
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-4 pt-4">
@@ -289,8 +318,12 @@ export default function CreateListingPage() {
                 </Button>
               </>
             ) : (
-              <Button type="button" variant="outline" asChild>
-                <Link href="/profile">Skip Images - Go to Profile</Link>
+              <Button
+                type="button"
+                onClick={handleDone}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                Done
               </Button>
             )}
           </div>
