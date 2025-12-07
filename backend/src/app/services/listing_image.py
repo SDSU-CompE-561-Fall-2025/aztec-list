@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
     from app.models.listing_image import Image
     from app.models.user import User
-    from app.schemas.listing_image import ImageCreate, ImageUpdate
+    from app.schemas.listing_image import ImageUpdate
 
 
 class ListingImageService:
@@ -61,11 +61,12 @@ class ListingImageService:
         return image
 
     @staticmethod
-    async def upload(
+    async def upload(  # noqa: PLR0913
         db: Session,
         listing_id: uuid.UUID,
         file: UploadFile,
         current_user: User,
+        *,
         is_thumbnail: bool = False,
         alt_text: str | None = None,
     ) -> Image:
@@ -101,7 +102,7 @@ class ListingImageService:
             )
 
         # Save file to disk and get URL path
-        url_path = await save_upload_file(file)
+        url_path = await save_upload_file(file, listing_id)
 
         should_be_thumbnail = current_count == 0 or is_thumbnail
 
@@ -114,51 +115,6 @@ class ListingImageService:
 
         if should_be_thumbnail:
             ListingImageRepository.update_listing_thumbnail_url(db, listing_id, url_path)
-
-        return db_image
-
-    @staticmethod
-    def create(db: Session, listing_id: uuid.UUID, image: ImageCreate, current_user: User) -> Image:
-        """
-        Create a new image for a listing.
-
-        Args:
-            db: Database session
-            listing_id: Listing ID from the URL path
-            image: Image creation data (url, is_thumbnail, alt_text)
-            current_user: Current authenticated user
-
-        Returns:
-            Image: Created image
-
-        Raises:
-            HTTPException: 404 if listing not found
-            HTTPException: 403 if user is not the seller
-            HTTPException: 400 if max images exceeded
-        """
-        listing = ListingRepository.get_by_id(db, listing_id)
-        if not listing:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Listing not found")
-        ensure_resource_owner(listing.seller_id, current_user.id, "listing")
-
-        current_count = ListingImageRepository.count_by_listing(db, listing_id)
-        if current_count >= settings.listing.max_images_per_listing:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Maximum {settings.listing.max_images_per_listing} images per listing",
-            )
-
-        should_be_thumbnail = current_count == 0 or image.is_thumbnail
-
-        if should_be_thumbnail and current_count > 0:
-            ListingImageRepository.clear_thumbnail_for_listing(db, listing_id)
-
-        db_image = ListingImageRepository.create(
-            db, listing_id, str(image.url), should_be_thumbnail, image.alt_text
-        )
-
-        if should_be_thumbnail:
-            ListingImageRepository.update_listing_thumbnail_url(db, listing_id, str(db_image.url))
 
         return db_image
 
@@ -232,8 +188,13 @@ class ListingImageService:
         db_image = ListingImageService.get_by_id(db, image_id, current_user)
         listing_id = db_image.listing_id
         was_thumbnail = db_image.is_thumbnail
+        image_url = db_image.url
 
+        # Delete from database first
         ListingImageRepository.delete(db, db_image)
+
+        # Delete physical file after successful database deletion
+        delete_file(image_url)
 
         if was_thumbnail:
             remaining_images = ListingImageRepository.get_by_listing(db, listing_id)

@@ -13,6 +13,7 @@ from fastapi import HTTPException, status
 from app.core.enums import AdminActionType
 from app.core.security import ensure_can_moderate_user
 from app.core.settings import settings
+from app.core.storage import delete_listing_images
 from app.repository.admin import AdminActionRepository
 from app.repository.listing import ListingRepository
 from app.repository.user import UserRepository
@@ -327,6 +328,7 @@ class AdminActionService:
                 raise
 
         ListingRepository.delete(db, listing)
+        delete_listing_images(listing_id)
 
         return listing_removal
 

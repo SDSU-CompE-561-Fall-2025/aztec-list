@@ -1,3 +1,4 @@
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -8,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.v1.routes import api_router
 from app.core.database import Base, engine
 from app.core.logging import configure_logging
-from app.core.middleware import RequestLoggingMiddleware
+from app.core.middleware import RequestLoggingMiddleware, add_cache_headers_middleware
 from app.core.settings import settings
 
 # Configure logging from settings
@@ -24,7 +25,7 @@ upload_dir.mkdir(parents=True, exist_ok=True)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
     """Application lifespan manager - runs on startup and shutdown."""
     # Startup: Verify upload directory exists
     if not upload_dir.exists():
@@ -43,8 +44,11 @@ app = FastAPI(
 )
 
 # Middleware is added in REVERSE order of execution
-# Execution flow: Request → RequestLoggingMiddleware → CORSMiddleware → Routes → Response
-# Add CORS middleware first (executes last, closest to routes)
+# Execution flow: Request → RequestLoggingMiddleware → CORSMiddleware → CacheHeaders → Routes → Response
+# Add cache headers middleware first (executes last, adds cache headers to responses)
+app.middleware("http")(add_cache_headers_middleware)
+
+# Add CORS middleware second (executes second-to-last, before cache headers)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors.allowed_origins,
@@ -53,11 +57,12 @@ app.add_middleware(
     allow_headers=settings.cors.allowed_headers,
 )
 
-# Add request logging middleware second (executes first, outermost layer)
+# Add request logging middleware third (executes first, outermost layer)
 app.add_middleware(RequestLoggingMiddleware)
 
 # Mount static files for serving uploaded images
 # This serves files from the uploads directory at the /uploads URL path
+# Images are cached for 1 year via cache headers middleware (immutable)
 app.mount("/uploads", StaticFiles(directory=str(upload_dir)), name="uploads")
 
 app.include_router(api_router)

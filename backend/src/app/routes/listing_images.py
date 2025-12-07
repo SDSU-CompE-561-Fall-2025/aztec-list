@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import get_db, require_not_banned
 from app.models.listing_image import Image
 from app.models.user import User
-from app.schemas.listing_image import ImageCreate, ImagePublic, ImageUpdate
+from app.schemas.listing_image import ImagePublic, ImageUpdate
 from app.services.listing_image import ListingImageService
 
 listing_images_router = APIRouter(
@@ -60,47 +60,6 @@ async def upload_image(
         HTTPException: 415 if unsupported file type
     """
     return await ListingImageService.upload(db, listing_id, file, current_user)
-
-
-@listing_images_router.post(
-    "/{listing_id}/images",
-    response_model=ImagePublic,
-    status_code=status.HTTP_201_CREATED,
-    summary="Add a new image to a listing (URL-based - deprecated)",
-    deprecated=True,
-)
-async def create_image(
-    listing_id: uuid.UUID,
-    image: ImageCreate,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_not_banned)],
-) -> Image:
-    """
-    Add a new image to a listing using URL.
-
-    DEPRECATED: Use POST /listings/{listing_id}/images/upload instead for file uploads.
-
-    This endpoint is kept for backwards compatibility but is deprecated in favor
-    of the file upload endpoint.
-
-    Only the seller of the listing can add images. Maximum 10 images per listing.
-    If this is the first image or is_thumbnail is True, it will be set as the thumbnail.
-
-    Args:
-        listing_id: ID of the listing
-        image: Image creation data
-        db: Database session
-        current_user: Current authenticated user
-
-    Returns:
-        ImagePublic: The created image
-
-    Raises:
-        HTTPException: 404 if listing not found
-        HTTPException: 403 if user is not the seller
-        HTTPException: 400 if max images exceeded
-    """
-    return ListingImageService.create(db, listing_id, image, current_user)
 
 
 @listing_images_router.patch(
