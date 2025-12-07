@@ -219,7 +219,7 @@ export default function ListingDetailPage() {
               <p className="text-sm font-semibold text-gray-500 tracking-widest">Seller</p>
               <button
                 onClick={() => router.push(`/profile/${listing.seller_id}`)}
-                className="flex items-center gap-3 w-full rounded-lg p-2 transition-colors hover:bg-gray-800/40 group text-left"
+                className="flex items-center gap-3 w-full rounded-lg p-2 transition-colors hover:bg-gray-800/40 group text-left cursor-pointer"
               >
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20">
                   <User className="w-6 h-6 text-purple-300" />
@@ -255,7 +255,7 @@ export default function ListingDetailPage() {
                       key={image.id}
                       onClick={() => setCurrentImageIndex(index)}
                       className={cn(
-                        "w-24 h-24 bg-gray-900 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0",
+                        "w-24 h-24 bg-gray-900 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer",
                         boundedImageIndex === index
                           ? "border-purple-500 ring-2 ring-purple-500/20"
                           : "border-gray-800 hover:border-gray-700 opacity-60 hover:opacity-100"

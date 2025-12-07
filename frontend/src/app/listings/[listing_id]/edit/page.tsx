@@ -276,7 +276,7 @@ function EditForm({
         {/* Breadcrumb Navigation */}
         <button
           onClick={handleNavigateBack}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 group"
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 group cursor-pointer"
         >
           <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="text-base font-medium">Back to Profile</span>
