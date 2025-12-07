@@ -1,4 +1,5 @@
 """Run ESLint on frontend files."""
+
 import shutil
 import subprocess
 import sys
@@ -36,5 +37,6 @@ try:
 except Exception as e:
     print(f"Error running ESLint: {e}", file=sys.stderr)
     import traceback
+
     traceback.print_exc(file=sys.stderr)
     sys.exit(1)
