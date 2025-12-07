@@ -19,7 +19,7 @@ import type { ListingSummary, ListingSearchResponse } from "@/types/listing/list
 import { getAuthToken } from "@/lib/auth";
 
 function ProfileContent() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -38,6 +38,12 @@ function ProfileContent() {
         const response = await fetch(`${API_BASE_URL}/users/profile/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
+        // Handle 401 Unauthorized - invalid/expired token
+        if (response.status === 401) {
+          logout();
+          return null;
+        }
 
         if (!response.ok) {
           // Profile doesn't exist yet
@@ -351,33 +357,6 @@ function ProfileContent() {
                 </svg>
               </button>
             </div>
-          </div>
-        )}
-
-        {/* User Stats */}
-        {data && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <button
-              onClick={() => router.push("/profile?status=all")}
-              className="bg-gray-900 rounded-lg p-6 text-left transition-all hover:bg-gray-800 hover:shadow-lg cursor-pointer"
-            >
-              <h3 className="text-gray-400 text-base font-medium mb-1">Total Listings</h3>
-              <p className="text-4xl font-bold text-white">{totalCount}</p>
-            </button>
-            <button
-              onClick={() => router.push("/profile?status=active")}
-              className="bg-gray-900 rounded-lg p-6 text-left transition-all hover:bg-gray-800 hover:shadow-lg hover:shadow-green-500/20 cursor-pointer"
-            >
-              <h3 className="text-gray-400 text-base font-medium mb-1">Active</h3>
-              <p className="text-4xl font-bold text-green-500">{activeCount}</p>
-            </button>
-            <button
-              onClick={() => router.push("/profile?status=inactive")}
-              className="bg-gray-900 rounded-lg p-6 text-left transition-all hover:bg-gray-800 hover:shadow-lg hover:shadow-gray-500/20 cursor-pointer"
-            >
-              <h3 className="text-gray-400 text-base font-medium mb-1">Inactive</h3>
-              <p className="text-4xl font-bold text-gray-500">{inactiveCount}</p>
-            </button>
           </div>
         )}
 
