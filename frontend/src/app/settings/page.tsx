@@ -41,6 +41,7 @@ export default function SettingsPage() {
   const [name, setName] = useState("");
   const [campus, setCampus] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [originalProfile, setOriginalProfile] = useState<ProfilePublic | null>(null);
   const [profilePictureUrl, setProfilePictureUrl] = useState("");
   const [isProfileLoading, setIsProfileLoading] = useState(false);
@@ -87,6 +88,9 @@ export default function SettingsPage() {
     [name, campus, phone, originalProfile]
   );
 
+  // Check if form is valid for submission
+  const isFormValid = useMemo(() => !phoneError, [phoneError]);
+
   // Account state
   const [username, setUsername] = useState(user?.username ?? "");
   const [isAccountLoading, setIsAccountLoading] = useState(false);
@@ -107,8 +111,50 @@ export default function SettingsPage() {
     }
   }, [user]);
 
+  // Format and validate phone number
+  const formatPhoneNumber = (value: string): string => {
+    // Remove all non-digit characters
+    const digits = value.replace(/\D/g, "");
+
+    // Limit to 10 digits
+    const limited = digits.slice(0, 10);
+
+    // Format as (XXX) XXX-XXXX
+    if (limited.length === 0) return "";
+    if (limited.length <= 3) return `(${limited}`;
+    if (limited.length <= 6) return `(${limited.slice(0, 3)}) ${limited.slice(3)}`;
+    return `(${limited.slice(0, 3)}) ${limited.slice(3, 6)}-${limited.slice(6)}`;
+  };
+
+  const validatePhoneNumber = (value: string): boolean => {
+    if (value === "") {
+      setPhoneError("");
+      return true;
+    }
+    const digits = value.replace(/\D/g, "");
+    if (digits.length !== 10) {
+      setPhoneError("Phone number must be 10 digits");
+      return false;
+    }
+    setPhoneError("");
+    return true;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    setPhone(formatted);
+    validatePhoneNumber(formatted);
+  };
+
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate phone before submitting
+    if (!validatePhoneNumber(phone)) {
+      toast.error("Please enter a valid phone number or leave it empty");
+      return;
+    }
+
     setIsProfileLoading(true);
 
     try {
@@ -439,19 +485,22 @@ export default function SettingsPage() {
                           type="tel"
                           placeholder="(555) 123-4567"
                           value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
+                          onChange={handlePhoneChange}
                           disabled={isProfileLoading}
-                          className="bg-gray-950 border-gray-700 text-white text-base placeholder:text-gray-600"
+                          className={`bg-gray-950 border-gray-700 text-white text-base placeholder:text-gray-600 ${
+                            phoneError ? "border-red-500" : ""
+                          }`}
                         />
+                        {phoneError && <p className="text-sm text-red-500">{phoneError}</p>}
                         <p className="text-sm sm:text-base text-gray-500">
-                          Optional - for buyers to contact you
+                          Optional - US format: (555) 123-4567
                         </p>
                       </div>
 
                       <Button
                         type="submit"
                         className="w-full bg-purple-600 hover:bg-purple-700 text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={isProfileLoading || !hasProfileChanges}
+                        disabled={isProfileLoading || !hasProfileChanges || !isFormValid}
                       >
                         {isProfileLoading ? "Saving..." : "Save Profile"}
                       </Button>
