@@ -4,6 +4,9 @@
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
 
+  // Use LF line endings (Unix-style) for consistency across platforms
+  "files.eol": "\n",
+
   // Markdown needs trailing spaces for line breaks
   "[markdown]": {
     "files.trimTrailingWhitespace": false
