@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 
 from app.core.enums import Category, Condition, ListingSortOrder
 from app.schemas.listing_image import ImagePublic
@@ -79,7 +79,7 @@ class ListingPublic(ListingBase):
 
     id: uuid.UUID
     seller_id: uuid.UUID
-    thumbnail_url: HttpUrl | None = None
+    thumbnail_url: str | None = None
     is_active: bool
     created_at: datetime
     updated_at: datetime
@@ -93,7 +93,7 @@ class ListingSummary(ListingBase):
 
     id: uuid.UUID
     seller_id: uuid.UUID
-    thumbnail_url: HttpUrl | None = None
+    thumbnail_url: str | None = None
     is_active: bool
     created_at: datetime
     updated_at: datetime

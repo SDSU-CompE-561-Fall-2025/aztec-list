@@ -29,6 +29,9 @@ HTTP_SERVER_ERROR_THRESHOLD = 500
 CORRELATION_ID_HEADER = "X-Correlation-ID"
 PROCESS_TIME_HEADER = "X-Process-Time"
 
+# Cacheable image extensions
+CACHEABLE_IMAGE_EXTENSIONS = frozenset((".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"))
+
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """
@@ -183,3 +186,28 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         response.headers[PROCESS_TIME_HEADER] = f"{process_time:.3f}"
 
         return response
+
+
+async def add_cache_headers_middleware(request: Request, call_next: Callable) -> Response:
+    """
+    Add cache headers for static image assets.
+
+    Images use UUID-based filenames and never change, enabling aggressive caching.
+    Follows RFC 7234 best practices with immutable directive.
+    """
+    response = await call_next(request)
+
+    # Only cache GET requests for images
+    if request.method != "GET":
+        return response
+
+    path = request.url.path
+    if not path.startswith("/uploads/images/"):
+        return response
+
+    # Check if it's a cacheable image format
+    if any(path.endswith(ext) for ext in CACHEABLE_IMAGE_EXTENSIONS):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        response.headers["Vary"] = "Accept-Encoding"
+
+    return response

@@ -208,3 +208,8 @@ __marimo__/
 
 # database  file
 aztec_list.db
+
+# Uploaded files (user content - do not commit to git)
+uploads/
+backend/uploads/
+frontend/uploads/

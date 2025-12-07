@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from fastapi import HTTPException, status
 
 from app.core.security import ensure_resource_owner
+from app.core.storage import delete_listing_images
 from app.repository.listing import ListingRepository
 
 if TYPE_CHECKING:
@@ -139,6 +140,7 @@ class ListingService:
 
         Only the listing owner can delete their own listing.
         Admins must use the admin endpoints to remove listings.
+        Also deletes all associated images from the filesystem.
 
         Args:
             db: Database session
@@ -155,7 +157,12 @@ class ListingService:
                 detail=f"Listing with ID {listing_id} not found",
             )
         ensure_resource_owner(db_listing.seller_id, user_id, "listing")
+
+        # Delete from database first (images table CASCADE will handle DB cleanup)
         ListingRepository.delete(db, db_listing)
+
+        # Then delete physical files from filesystem
+        delete_listing_images(listing_id)
 
 
 # Create a singleton instance

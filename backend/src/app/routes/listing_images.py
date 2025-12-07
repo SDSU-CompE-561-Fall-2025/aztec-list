@@ -7,13 +7,13 @@ This module defines API endpoints for listing image operations.
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_db, require_not_banned
 from app.models.listing_image import Image
 from app.models.user import User
-from app.schemas.listing_image import ImageCreate, ImagePublic, ImageUpdate
+from app.schemas.listing_image import ImagePublic, ImageUpdate
 from app.services.listing_image import ListingImageService
 
 listing_images_router = APIRouter(
@@ -23,38 +23,43 @@ listing_images_router = APIRouter(
 
 
 @listing_images_router.post(
-    "/{listing_id}/images",
+    "/{listing_id}/images/upload",
     response_model=ImagePublic,
     status_code=status.HTTP_201_CREATED,
-    summary="Add a new image to a listing",
+    summary="Upload an image file to a listing",
 )
-async def create_image(
+async def upload_image(
     listing_id: uuid.UUID,
-    image: ImageCreate,
+    file: Annotated[UploadFile, File(description="Image file to upload")],
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(require_not_banned)],
 ) -> Image:
     """
-    Add a new image to a listing.
+    Upload an image file to a listing.
 
-    Only the seller of the listing can add images. Maximum 10 images per listing.
-    If this is the first image or is_thumbnail is True, it will be set as the thumbnail.
+    Accepts multipart/form-data file upload. Validates file type, size, and saves
+    to disk with a unique filename. Creates image record in database.
+
+    Only the seller of the listing can upload images. Maximum 10 images per listing.
+    The first image uploaded will automatically be set as the thumbnail.
 
     Args:
         listing_id: ID of the listing
-        image: Image creation data
+        file: Image file (jpg, png, webp, gif - max 5MB)
         db: Database session
         current_user: Current authenticated user
 
     Returns:
-        ImagePublic: The created image
+        ImagePublic: The created image with URL to access the uploaded file
 
     Raises:
         HTTPException: 404 if listing not found
         HTTPException: 403 if user is not the seller
-        HTTPException: 400 if max images exceeded
+        HTTPException: 400 if validation fails or max images exceeded
+        HTTPException: 413 if file too large
+        HTTPException: 415 if unsupported file type
     """
-    return ListingImageService.create(db, listing_id, image, current_user)
+    return await ListingImageService.upload(db, listing_id, file, current_user)
 
 
 @listing_images_router.patch(

@@ -1,10 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "../ui/input";
 import { LISTINGS_BASE_URL, DEFAULT_SORT, MAX_SEARCH_LENGTH } from "@/lib/constants";
 
-export function Search() {
+function SearchBar() {
   const searchParams = useSearchParams();
   const { replace } = useRouter();
 
@@ -35,5 +36,13 @@ export function Search() {
         maxLength={MAX_SEARCH_LENGTH}
       />
     </form>
+  );
+}
+
+export function Search() {
+  return (
+    <Suspense fallback={<Input placeholder="Search..." disabled />}>
+      <SearchBar />
+    </Suspense>
   );
 }

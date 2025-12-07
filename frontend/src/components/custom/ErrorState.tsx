@@ -45,11 +45,6 @@ export function ErrorState({ error, showHero = false }: ErrorStateProps) {
                 ? "The marketplace is currently offline. Please check back soon."
                 : error.message}
             </p>
-            {isNetworkError && (
-              <p className="text-gray-500 text-xs">
-                For developers: Make sure the backend server is running at http://127.0.0.1:8000
-              </p>
-            )}
           </div>
         </div>
       </div>

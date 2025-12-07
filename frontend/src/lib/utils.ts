@@ -18,7 +18,7 @@ export function formatCategoryLabel(category: Category): string {
     clothing: "Clothing",
     shoes: "Shoes",
     accessories: "Accessories",
-    bikes: "Bikes",
+    bicycles: "Bicycles",
     sports_equipment: "Sports Equipment",
     tools: "Tools",
     office_supplies: "Office Supplies",

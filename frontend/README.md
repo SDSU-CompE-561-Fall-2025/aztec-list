@@ -6,6 +6,27 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 See the main [README.md](../README.md#frontend-quickstart) for initial setup instructions.
 
+## Environment Configuration
+
+Environment variables are configured in `.env.local` in the **frontend/** directory.
+
+To set up:
+
+```bash
+# From frontend/ directory
+cp .env.example .env.local
+
+# Edit .env.local to configure API URLs (optional for local development)
+```
+
+**Key Configuration Options:**
+
+- `NEXT_PUBLIC_API_BASE_URL` - Backend API URL including version path (default: http://127.0.0.1:8000/api/v1)
+- `NEXT_PUBLIC_STATIC_BASE_URL` - Static files/images URL (default: http://127.0.0.1:8000)
+- `NEXT_PUBLIC_APP_NAME` - Application name (default: "Aztec List")
+
+See `.env.example` for all available options and production deployment notes.
+
 ## Development
 
 ```bash
