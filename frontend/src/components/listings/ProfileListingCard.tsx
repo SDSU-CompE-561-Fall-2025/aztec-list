@@ -53,13 +53,16 @@ export function ProfileListingCard({
         {/* Image with inactive overlay */}
         <div className="relative aspect-square bg-gray-800 rounded-md overflow-hidden">
           {hasImage ? (
-            <img
-              src={`${STATIC_BASE_URL}${listing.thumbnail_url}`}
-              alt={listing.title}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              onError={() => setImageError(true)}
-            />
+            <>
+              <img
+                src={`${STATIC_BASE_URL}${listing.thumbnail_url}`}
+                alt={listing.title}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                onError={() => setImageError(true)}
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+            </>
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <ImageIcon className="w-12 h-12 text-gray-600" />

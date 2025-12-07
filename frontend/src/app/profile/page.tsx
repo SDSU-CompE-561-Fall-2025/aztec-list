@@ -189,27 +189,27 @@ function ProfileContent() {
     <div className="min-h-screen bg-gray-950 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Profile Banner */}
-        <Card className="mb-8 bg-gray-900 border-gray-800 overflow-hidden">
+        <Card className="mb-6 sm:mb-8 bg-gray-900 border-gray-800 overflow-hidden">
           <CardContent className="p-0">
-            <div className="p-8 flex items-center gap-6">
+            <div className="p-4 sm:p-6 lg:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
               {/* Profile Picture */}
               <div className="flex-shrink-0">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/20 border-2 border-purple-500/30 flex items-center justify-center">
-                  <span className="text-3xl font-bold text-purple-300">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/20 border-2 border-purple-500/30 flex items-center justify-center">
+                  <span className="text-2xl sm:text-3xl font-bold text-purple-300">
                     {user?.username?.substring(0, 2).toUpperCase() || "??"}
                   </span>
                 </div>
               </div>
 
               {/* Profile Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0 w-full">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-3xl font-bold text-white mb-2">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 text-center sm:text-left">
                       {profileData?.name ? (
                         <>
                           {profileData.name}
-                          <span className="text-2xl text-gray-400 font-normal ml-2">
+                          <span className="block sm:inline text-xl sm:text-2xl text-gray-400 font-normal sm:ml-2 mt-1 sm:mt-0">
                             (@{user?.username})
                           </span>
                         </>
@@ -217,9 +217,9 @@ function ProfileContent() {
                         user?.username || "User"
                       )}
                     </h2>
-                    <div className="space-y-2 text-base">
+                    <div className="space-y-2 text-sm sm:text-base">
                       {profileData?.campus && (
-                        <div className="flex items-center gap-2 text-gray-400">
+                        <div className="flex items-center gap-2 text-gray-400 justify-center sm:justify-start">
                           <svg
                             className="w-4 h-4 flex-shrink-0"
                             fill="none"
@@ -236,7 +236,7 @@ function ProfileContent() {
                           <span className="truncate">{profileData.campus}</span>
                         </div>
                       )}
-                      <div className="flex items-center gap-2 text-gray-400">
+                      <div className="flex items-center gap-2 text-gray-400 justify-center sm:justify-start">
                         <svg
                           className="w-4 h-4 flex-shrink-0"
                           fill="none"
@@ -253,7 +253,7 @@ function ProfileContent() {
                         <span className="truncate">{user?.email}</span>
                       </div>
                       {profileData?.contact_info?.phone && (
-                        <div className="flex items-center gap-2 text-gray-400">
+                        <div className="flex items-center gap-2 text-gray-400 justify-center sm:justify-start">
                           <svg
                             className="w-4 h-4 flex-shrink-0"
                             fill="none"
@@ -270,7 +270,7 @@ function ProfileContent() {
                           <span className="truncate">{profileData.contact_info.phone}</span>
                         </div>
                       )}
-                      <div className="flex items-center gap-2 text-gray-400">
+                      <div className="flex items-center gap-2 text-gray-400 justify-center sm:justify-start">
                         <svg
                           className="w-4 h-4 flex-shrink-0"
                           fill="none"
@@ -298,7 +298,7 @@ function ProfileContent() {
                   {/* Edit Profile Button */}
                   <Button
                     asChild
-                    className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white shrink-0"
+                    className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white w-full sm:w-auto shrink-0"
                   >
                     <Link href="/settings">Edit Profile</Link>
                   </Button>
@@ -310,8 +310,8 @@ function ProfileContent() {
 
         {/* Incomplete Profile Banner - Only show if profile is incomplete */}
         {isProfileIncomplete && showIncompleteBanner && (
-          <div className="mb-6">
-            <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 flex items-start gap-3">
+          <div className="mb-4 sm:mb-6">
+            <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row items-start gap-3">
               <div className="flex-shrink-0 mt-0.5">
                 <svg
                   className="w-5 h-5 text-blue-400"
@@ -328,49 +328,52 @@ function ProfileContent() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-blue-300 font-semibold text-base mb-1">
+                <h3 className="text-blue-300 font-semibold text-sm sm:text-base mb-1">
                   Complete Your Profile
                 </h3>
-                <p className="text-blue-200/80 text-base">
+                <p className="text-blue-200/80 text-sm sm:text-base">
                   Add your name, campus, and contact information to help buyers connect with you.
                 </p>
               </div>
-              <Button
-                asChild
-                variant="outline"
-                className="border-blue-500/50 text-blue-300 hover:bg-blue-900/30 hover:text-blue-200 shrink-0"
-              >
-                <Link href="/settings">Complete Profile</Link>
-              </Button>
-              <button
-                onClick={() => setShowIncompleteBanner(false)}
-                className="text-blue-400 hover:text-blue-300 shrink-0 cursor-pointer ml-2"
-                aria-label="Dismiss"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-500/50 text-blue-300 hover:bg-blue-900/30 hover:text-blue-200 flex-1 sm:flex-initial shrink-0"
+                >
+                  <Link href="/settings">Complete Profile</Link>
+                </Button>
+                <button
+                  onClick={() => setShowIncompleteBanner(false)}
+                  className="text-blue-400 hover:text-blue-300 shrink-0 cursor-pointer"
+                  aria-label="Dismiss"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         )}
 
         {/* Listings Section */}
         <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-semibold text-gray-100">Your Listings</h2>
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-gray-100">Your Listings</h2>
           </div>
 
           {/* Status Filter Tabs */}
-          <div className="flex gap-2 mb-6 border-b border-gray-800">
+          <div className="flex gap-2 sm:gap-3 mb-6 border-b border-gray-800 overflow-x-auto">
             <button
               onClick={() => router.push("/profile?status=all")}
-              className={`px-4 py-2 text-base font-medium transition-colors ${
+              className={`px-4 sm:px-6 py-2 sm:py-3 text-base sm:text-lg font-medium transition-colors whitespace-nowrap ${
                 status === "all"
                   ? "text-purple-500 border-b-2 border-purple-500"
                   : "text-gray-400 hover:text-gray-300"
@@ -380,7 +383,7 @@ function ProfileContent() {
             </button>
             <button
               onClick={() => router.push("/profile?status=active")}
-              className={`px-4 py-2 text-base font-medium transition-colors ${
+              className={`px-4 sm:px-6 py-2 sm:py-3 text-base sm:text-lg font-medium transition-colors whitespace-nowrap ${
                 status === "active"
                   ? "text-green-500 border-b-2 border-green-500"
                   : "text-gray-400 hover:text-gray-300"
@@ -390,7 +393,7 @@ function ProfileContent() {
             </button>
             <button
               onClick={() => router.push("/profile?status=inactive")}
-              className={`px-4 py-2 text-base font-medium transition-colors ${
+              className={`px-4 sm:px-6 py-2 sm:py-3 text-base sm:text-lg font-medium transition-colors whitespace-nowrap ${
                 status === "inactive"
                   ? "text-gray-500 border-b-2 border-gray-500"
                   : "text-gray-400 hover:text-gray-300"

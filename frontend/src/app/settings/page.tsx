@@ -203,7 +203,13 @@ export default function SettingsPage() {
 
       const updatedProfile = await response.json();
       setOriginalProfile(updatedProfile);
-      toast.success("Profile saved successfully!");
+      toast.success("Profile saved successfully!", {
+        style: {
+          background: "rgb(20, 83, 45)",
+          color: "white",
+          border: "1px solid rgb(34, 197, 94)",
+        },
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to save profile";
       toast.error(message);
@@ -240,7 +246,13 @@ export default function SettingsPage() {
         throw new Error(errorData.detail || "Failed to update profile picture");
       }
 
-      toast.success("Profile picture updated successfully!");
+      toast.success("Profile picture updated successfully!", {
+        style: {
+          background: "rgb(20, 83, 45)",
+          color: "white",
+          border: "1px solid rgb(34, 197, 94)",
+        },
+      });
       setProfilePictureUrl("");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update profile picture";
@@ -284,7 +296,13 @@ export default function SettingsPage() {
       // Update stored user in localStorage
       setStoredUser(updatedUser);
 
-      toast.success("Account updated successfully!");
+      toast.success("Account updated successfully!", {
+        style: {
+          background: "rgb(20, 83, 45)",
+          color: "white",
+          border: "1px solid rgb(34, 197, 94)",
+        },
+      });
 
       // Reload the page to refresh all components with new username
       window.location.reload();
@@ -326,7 +344,13 @@ export default function SettingsPage() {
       }
 
       // Show success message before logout
-      toast.success("Account deleted successfully");
+      toast.success("Account deleted successfully", {
+        style: {
+          background: "rgb(20, 83, 45)",
+          color: "white",
+          border: "1px solid rgb(34, 197, 94)",
+        },
+      });
 
       // Use logout from AuthContext to properly clear state and redirect
       logout();

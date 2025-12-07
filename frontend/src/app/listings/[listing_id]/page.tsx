@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, User } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getConditionColor } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import { createListingDetailQueryOptions } from "@/queryOptions/createListingDetailQueryOptions";
 import { createUserQueryOptions } from "@/queryOptions/createUserQueryOptions";
@@ -317,7 +317,9 @@ export default function ListingDetailPage() {
                 <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
                   Condition
                 </p>
-                <span className="inline-flex items-center px-4 py-2 bg-gray-800/50 text-gray-100 rounded-lg text-lg font-medium">
+                <span
+                  className={`inline-flex items-center px-4 py-2 bg-gray-800/50 rounded-lg text-lg font-medium ${getConditionColor(listing.condition)}`}
+                >
                   {CONDITION_LABELS[listing.condition]}
                 </span>
               </div>
@@ -336,7 +338,9 @@ export default function ListingDetailPage() {
             </div>
             <div className="space-y-3">
               <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Condition</p>
-              <span className="inline-flex items-center px-4 py-2 bg-gray-800/50 text-gray-100 rounded-lg text-lg font-medium">
+              <span
+                className={`inline-flex items-center px-4 py-2 bg-gray-800/50 rounded-lg text-lg font-medium ${getConditionColor(listing.condition)}`}
+              >
                 {CONDITION_LABELS[listing.condition]}
               </span>
             </div>
