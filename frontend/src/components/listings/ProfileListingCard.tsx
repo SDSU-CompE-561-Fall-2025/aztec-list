@@ -107,12 +107,12 @@ export function ProfileListingCard({
         </div>
 
         {/* Title */}
-        <h3 className="text-lg font-bold text-gray-100 line-clamp-2 group-hover:text-purple-400 transition-colors">
+        <h3 className="text-xl font-bold text-gray-100 line-clamp-2 group-hover:text-purple-400 transition-colors">
           {listing.title}
         </h3>
 
         {/* Price */}
-        <p className="text-xl font-bold text-gray-100">{formatPrice(listing.price)}</p>
+        <p className="text-lg font-semibold text-gray-100">{formatPrice(listing.price)}</p>
       </div>
 
       {/* Delete confirmation dialog */}

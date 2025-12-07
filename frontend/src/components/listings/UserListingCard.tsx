@@ -52,11 +52,11 @@ export function UserListingCard({ listing }: UserListingCardProps) {
 
       {/* Content Section */}
       <div className="p-4 space-y-2">
-        <h3 className="text-xl font-semibold text-white line-clamp-1 group-hover:text-purple-300 transition-colors">
+        <h3 className="text-xl font-bold text-white line-clamp-1 group-hover:text-purple-300 transition-colors">
           {listing.title}
         </h3>
 
-        <p className="text-2xl font-bold text-white">{formatPrice(Number(listing.price))}</p>
+        <p className="text-lg font-semibold text-white">{formatPrice(Number(listing.price))}</p>
 
         <div className="flex items-center gap-2 text-sm text-gray-400">
           <span className="capitalize">{listing.condition.replace("_", " ")}</span>

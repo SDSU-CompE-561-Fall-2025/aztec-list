@@ -108,15 +108,17 @@ export default function SignupPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-3xl font-bold">Create an account</CardTitle>
+          <CardDescription className="text-base">
             Enter your .edu email and information to create your campus account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username" className="text-lg">
+                Username
+              </Label>
               <Input
                 id="username"
                 type="text"
@@ -127,12 +129,15 @@ export default function SignupPage() {
                 disabled={isLoading}
                 autoComplete="username"
                 minLength={3}
+                className="text-base"
               />
-              <p className="text-xs text-muted-foreground">At least 3 characters</p>
+              <p className="text-base text-muted-foreground">At least 3 characters</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-lg">
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -142,12 +147,15 @@ export default function SignupPage() {
                 required
                 disabled={isLoading}
                 autoComplete="email"
+                className="text-base"
               />
-              <p className="text-xs text-muted-foreground">Must be a valid .edu email address</p>
+              <p className="text-base text-muted-foreground">Must be a valid .edu email address</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-lg">
+                Password
+              </Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -184,17 +192,19 @@ export default function SignupPage() {
                       />
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-base text-muted-foreground">
                     Password strength: {strengthInfo.label}
                   </p>
                 </div>
               )}
 
-              <p className="text-xs text-muted-foreground">At least 8 characters</p>
+              <p className="text-base text-muted-foreground">At least 8 characters</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="text-lg">
+                Confirm Password
+              </Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
@@ -224,12 +234,12 @@ export default function SignupPage() {
             </div>
 
             {error && (
-              <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3">
+              <div className="text-lg text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3">
                 {error}
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full text-lg" disabled={isLoading}>
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -241,7 +251,7 @@ export default function SignupPage() {
             </Button>
           </form>
 
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-4 text-center text-base">
             Already have an account?{" "}
             <Link href="/login" className="text-primary hover:underline font-medium">
               Login

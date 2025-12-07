@@ -7,6 +7,7 @@ import { ChevronLeft, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import { createListingDetailQueryOptions } from "@/queryOptions/createListingDetailQueryOptions";
+import { createUserQueryOptions } from "@/queryOptions/createUserQueryOptions";
 import { STATIC_BASE_URL } from "@/lib/constants";
 import { Category } from "@/types/listing/filters/category";
 
@@ -53,6 +54,12 @@ export default function ListingDetailPage() {
   const listingId = params.listing_id as string;
 
   const { data: listing, isLoading, error } = useQuery(createListingDetailQueryOptions(listingId));
+
+  // Fetch seller information
+  const { data: seller } = useQuery({
+    ...createUserQueryOptions(listing?.seller_id ?? ""),
+    enabled: !!listing?.seller_id,
+  });
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -219,7 +226,7 @@ export default function ListingDetailPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-gray-100 text-base font-medium truncate">
-                    Seller ID: {listing.seller_id}
+                    {seller?.username ?? "Loading..."}
                   </p>
                   <span className="text-purple-300 text-sm group-hover:text-purple-200 transition-colors">
                     View profile →
