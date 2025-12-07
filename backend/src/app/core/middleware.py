@@ -29,6 +29,9 @@ HTTP_SERVER_ERROR_THRESHOLD = 500
 CORRELATION_ID_HEADER = "X-Correlation-ID"
 PROCESS_TIME_HEADER = "X-Process-Time"
 
+# Cacheable image extensions
+CACHEABLE_IMAGE_EXTENSIONS = frozenset((".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"))
+
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """
@@ -187,59 +190,24 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 async def add_cache_headers_middleware(request: Request, call_next: Callable) -> Response:
     """
-    Add appropriate cache headers to responses.
+    Add cache headers for static image assets.
 
-    Caching strategy:
-    - Static images: 1 year (immutable, UUID filenames never change)
-    - Public listings: 60 seconds (reduce DB load, data can be slightly stale)
-    - Public user profiles: 5 minutes (semi-static data)
-    - Everything else: No cache (auth, mutations, private user data)
-
-    Important: Caching is ONLY for read-heavy public endpoints. User mutations
-    (POST/PATCH/DELETE) and private data endpoints are never cached.
-
-    Args:
-        request: Incoming HTTP request
-        call_next: Next middleware/route handler in the chain
-
-    Returns:
-        Response with appropriate cache headers
+    Images use UUID-based filenames and never change, enabling aggressive caching.
+    Follows RFC 7234 best practices with immutable directive.
     """
     response = await call_next(request)
-    path = request.url.path
-    method = request.method
 
-    # Only cache GET requests (never cache mutations)
-    if method != "GET":
+    # Only cache GET requests for images
+    if request.method != "GET":
         return response
 
-    # Long-term cache for static images (1 year, immutable)
-    if path.startswith("/uploads/images/") and any(
-        path.endswith(ext) for ext in (".jpg", ".jpeg", ".png", ".gif", ".webp")
-    ):
+    path = request.url.path
+    if not path.startswith("/uploads/images/"):
+        return response
+
+    # Check if it's a cacheable image format
+    if any(path.endswith(ext) for ext in CACHEABLE_IMAGE_EXTENSIONS):
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-
-    # Short-term cache for public listing endpoints (60 seconds)
-    # GET /api/v1/listings - browse/search listings
-    # GET /api/v1/listings/{id} - view single listing
-    # GET /api/v1/users/{user_id}/listings - user's public listings
-    elif path.startswith("/api/v1/listings"):
-        response.headers["Cache-Control"] = "public, max-age=60, must-revalidate"
-    elif "/listings" in path and "/users/" in path:
-        # Matches: /api/v1/users/{user_id}/listings
-        response.headers["Cache-Control"] = "public, max-age=60, must-revalidate"
-
-    # Medium-term cache for public user profiles (5 minutes)
-    # GET /api/v1/users/{user_id} - public user info
-    # Excludes: /api/v1/users/me (private, current user data)
-    elif path.startswith("/api/v1/users/") and not path.endswith("/me"):
-        response.headers["Cache-Control"] = "public, max-age=300, must-revalidate"
-
-    # No cache for:
-    # - /api/v1/users/me (private user data)
-    # - /api/v1/users/profile/ (private profile data)
-    # - /api/v1/auth/* (login, signup)
-    # - /api/v1/admin/* (admin actions)
-    # - All POST/PATCH/DELETE requests
+        response.headers["Vary"] = "Accept-Encoding"
 
     return response

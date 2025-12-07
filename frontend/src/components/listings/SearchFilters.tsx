@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import { CATEGORIES, Category } from "@/types/listing/filters/category";
 import { CONDITIONS, Condition } from "@/types/listing/filters/condition";
 import { SORT_OPTIONS, Sort } from "@/types/listing/filters/sort";
@@ -20,23 +20,26 @@ export function SearchFilters() {
   const [maxPrice, setMaxPrice] = useState("");
   const [priceError, setPriceError] = useState(false);
 
-  // Derive condition from URL - local state is only for UI interaction before "Apply"
+  // Derive condition from URL - this is the source of truth
   const urlConditionParam = searchParams.get("condition");
   const urlCondition =
     urlConditionParam && CONDITIONS.includes(urlConditionParam as Condition)
       ? (urlConditionParam as Condition)
       : null;
 
-  const [selectedConditions, setSelectedConditions] = useState<Condition[]>(
+  // Local state for pending condition changes (before "Apply Filters" is clicked)
+  // Initialize from URL, but allow temporary changes before applying
+  const [selectedConditions, setSelectedConditions] = useState<Condition[]>(() =>
     urlCondition ? [urlCondition] : []
   );
 
-  // Sync local state when URL changes externally (browser back/forward)
-  useEffect(() => {
-    const newConditions = urlCondition ? [urlCondition] : [];
-    setSelectedConditions(newConditions);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]); // Only depend on searchParams to avoid triggering on urlCondition recalculation
+  // Sync with URL when it changes (e.g., browser back/forward, or after applying filters)
+  // Use a ref to track if we need to sync
+  const prevUrlConditionRef = useRef(urlCondition);
+  if (prevUrlConditionRef.current !== urlCondition) {
+    prevUrlConditionRef.current = urlCondition;
+    setSelectedConditions(urlCondition ? [urlCondition] : []);
+  }
 
   const updateURL = (updates: Record<string, string | undefined>) => {
     const params = new URLSearchParams(searchParams.toString());

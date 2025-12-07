@@ -101,7 +101,7 @@ export const updateListing = async (
     condition: string;
     is_active: boolean;
   }>
-): Promise<void> => {
+): Promise<ListingPublic> => {
   const token = getAuthToken();
   if (!token) {
     throw new Error("Authentication required");
@@ -122,6 +122,15 @@ export const updateListing = async (
     const errorText = await res.text().catch(() => "Unknown error");
     throw new Error(`Failed to update listing: ${res.status} ${errorText}`);
   }
+
+  const responseData = await res.json();
+
+  // Validate response structure
+  if (!responseData || typeof responseData !== "object") {
+    throw new Error("Invalid response format from API");
+  }
+
+  return responseData as ListingPublic;
 };
 
 export const deleteListing = async (listingId: string): Promise<void> => {
@@ -145,7 +154,10 @@ export const deleteListing = async (listingId: string): Promise<void> => {
   }
 };
 
-export const toggleListingActive = async (listingId: string, isActive: boolean): Promise<void> => {
+export const toggleListingActive = async (
+  listingId: string,
+  isActive: boolean
+): Promise<ListingPublic> => {
   return updateListing(listingId, { is_active: isActive });
 };
 

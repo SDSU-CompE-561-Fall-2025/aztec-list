@@ -10,6 +10,5 @@ export const createOwnListingsQueryOptions = (userId: string, params: UserListin
   return queryOptions({
     queryKey: ["own-listings", userId, params],
     queryFn: () => getOwnListings(userId, params),
-    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };

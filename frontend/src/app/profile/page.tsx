@@ -98,13 +98,27 @@ function ProfileContent() {
       }
       toast.error("Failed to update listing visibility");
     },
-    onSuccess: (_, { isActive }) => {
+    onSuccess: (updatedListing, { isActive }) => {
+      // Update the cache with the actual server response
+      queryClient.setQueryData(
+        [
+          "own-listings",
+          user?.id,
+          { limit: DEFAULT_LIMIT, offset, sort: "recent", include_inactive: true },
+        ],
+        (old: ListingSearchResponse | undefined) => {
+          if (!old) return old;
+          return {
+            ...old,
+            items: old.items.map((item: ListingSummary) =>
+              item.id === updatedListing.id
+                ? { ...item, is_active: updatedListing.is_active }
+                : item
+            ),
+          };
+        }
+      );
       toast.success(isActive ? "Listing is now visible" : "Listing is now hidden");
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["own-listings", user?.id],
-      });
     },
   });
 

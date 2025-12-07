@@ -13,7 +13,6 @@ export const DEFAULT_LIMIT = 15;
 export const MAX_SEARCH_LENGTH = 200;
 
 // React Query configuration
-export const QUERY_STALE_TIME_MS = 5 * 60 * 1000; // 5 minutes
 export const QUERY_RETRY_COUNT = 1;
 
 // UI configuration
