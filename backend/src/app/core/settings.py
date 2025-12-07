@@ -168,12 +168,12 @@ class Settings(BaseSettings):
     Application settings loaded from environment variables.
 
     Settings can be configured via:
-    - .env file (loaded automatically from project root)
+    - .env file (loaded automatically from backend/ directory)
     - Environment variables with nested structure using __ delimiter
     """
 
     model_config = SettingsConfigDict(
-        env_file="../.env",
+        env_file=".env",
         env_file_encoding="utf-8",
         env_nested_delimiter="__",  # allows APP__TITLE style vars
         case_sensitive=False,
