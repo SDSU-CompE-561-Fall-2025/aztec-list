@@ -18,6 +18,7 @@ import {
   setStoredUser,
   getStoredUser,
   removeStoredUser,
+  AUTH_USER_UPDATED_EVENT,
 } from "@/lib/auth";
 import { AuthContextType, LoginCredentials, SignupData, User } from "@/types/auth";
 
@@ -66,6 +67,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setIsHydrated(true);
+
+    // Listen for custom auth-user-updated events
+    const handleAuthUpdate = () => {
+      notifyAuthListeners();
+    };
+
+    window.addEventListener(AUTH_USER_UPDATED_EVENT, handleAuthUpdate);
+
+    return () => {
+      window.removeEventListener(AUTH_USER_UPDATED_EVENT, handleAuthUpdate);
+    };
   }, []);
 
   const login = async (credentials: LoginCredentials): Promise<void> => {

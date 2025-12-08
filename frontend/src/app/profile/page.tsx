@@ -6,28 +6,18 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { ProfileListingCard } from "@/components/listings/ProfileListingCard";
 import { PaginationControls } from "@/components/listings/PaginationControls";
-import { DEFAULT_LIMIT, STATIC_BASE_URL } from "@/lib/constants";
+import { DEFAULT_LIMIT } from "@/lib/constants";
 import { Plus } from "lucide-react";
 import { deleteListing, toggleListingActive } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { createOwnListingsQueryOptions } from "@/queryOptions/createOwnListingsQueryOptions";
 import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOptions";
+import { getProfilePictureUrl } from "@/lib/profile-picture";
 import { toast } from "sonner";
 import { ProtectedRoute } from "@/components/custom/ProtectedRoute";
 import type { ListingSummary, ListingSearchResponse } from "@/types/listing/listing";
-
-// Helper function to build full URL for profile picture
-const getProfilePictureUrl = (path: string | null | undefined): string | null => {
-  if (!path) return null;
-  const timestamp = Date.now();
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    return `${path}?t=${timestamp}`;
-  }
-  return `${STATIC_BASE_URL}${path}?t=${timestamp}`;
-};
 
 function ProfileContent() {
   const { user } = useAuth();
@@ -119,7 +109,13 @@ function ProfileContent() {
           context.previousData
         );
       }
-      toast.error("Failed to update listing visibility");
+      toast.error("Failed to update listing visibility", {
+        style: {
+          background: "rgb(153, 27, 27)",
+          color: "white",
+          border: "1px solid rgb(220, 38, 38)",
+        },
+      });
     },
     onSuccess: (updatedListing, { isActive }) => {
       // Update the cache with the actual server response
@@ -141,7 +137,13 @@ function ProfileContent() {
           };
         }
       );
-      toast.success(isActive ? "Listing is now visible" : "Listing is now hidden");
+      toast.success(isActive ? "Listing is now visible" : "Listing is now hidden", {
+        style: {
+          background: "rgb(20, 83, 45)",
+          color: "white",
+          border: "1px solid rgb(34, 197, 94)",
+        },
+      });
     },
   });
 
@@ -152,10 +154,22 @@ function ProfileContent() {
       queryClient.invalidateQueries({
         queryKey: ["own-listings", user?.id],
       });
-      toast.success("Listing deleted successfully");
+      toast.success("Listing deleted successfully", {
+        style: {
+          background: "rgb(20, 83, 45)",
+          color: "white",
+          border: "1px solid rgb(34, 197, 94)",
+        },
+      });
     },
     onError: () => {
-      toast.error("Failed to delete listing");
+      toast.error("Failed to delete listing", {
+        style: {
+          background: "rgb(153, 27, 27)",
+          color: "white",
+          border: "1px solid rgb(220, 38, 38)",
+        },
+      });
     },
   });
 
@@ -174,142 +188,145 @@ function ProfileContent() {
     <div className="min-h-screen bg-gray-950 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Profile Banner */}
-        <Card className="mb-6 sm:mb-8 bg-gray-900 border-gray-800 overflow-hidden">
-          <CardContent className="p-0">
-            <div className="p-4 sm:p-6 lg:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-              {/* Profile Picture */}
-              <div className="flex-shrink-0">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/20 border-2 border-purple-500/30 flex items-center justify-center overflow-hidden relative">
-                  {profileData?.profile_picture_url ? (
-                    <Image
-                      src={getProfilePictureUrl(profileData.profile_picture_url) || ""}
-                      alt={user?.username || "Profile"}
-                      fill
-                      sizes="(max-width: 640px) 80px, 96px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <span className="text-2xl sm:text-3xl font-bold text-purple-300">
-                      {user?.username?.substring(0, 2).toUpperCase() || "??"}
-                    </span>
+        <div className="mb-6 sm:mb-8 bg-gray-900/60 backdrop-blur-sm border border-gray-800/60 rounded-xl p-8">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
+            {/* Profile Picture */}
+            <div className="flex-shrink-0">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/20 flex items-center justify-center overflow-hidden relative">
+                {profileData?.profile_picture_url ? (
+                  <Image
+                    src={
+                      getProfilePictureUrl(
+                        profileData.profile_picture_url,
+                        profileData.updated_at
+                      ) || ""
+                    }
+                    alt={user?.username || "Profile"}
+                    fill
+                    sizes="96px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <span className="text-3xl font-bold text-purple-300">
+                    {user?.username?.substring(0, 2).toUpperCase() || "??"}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Profile Info */}
+            <div className="flex-1 min-w-0 w-full">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-2xl font-bold text-white mb-2 text-center sm:text-left">
+                    {profileData?.name ? (
+                      <>
+                        {profileData.name}
+                        <span className="text-lg text-gray-400 font-normal sm:ml-2 block sm:inline mt-1 sm:mt-0">
+                          (@{user?.username})
+                        </span>
+                      </>
+                    ) : (
+                      user?.username || "User"
+                    )}
+                  </h2>
+                  <div className="space-y-2 text-sm">
+                    {profileData?.campus && (
+                      <div className="flex items-center gap-2 text-gray-400 justify-center sm:justify-start">
+                        <svg
+                          className="w-4 h-4 flex-shrink-0"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                          />
+                        </svg>
+                        <span className="truncate">{profileData.campus}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-gray-400 justify-center sm:justify-start">
+                      <svg
+                        className="w-4 h-4 flex-shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <span className="truncate">{user?.email}</span>
+                    </div>
+                    {profileData?.contact_info?.phone && (
+                      <div className="flex items-center gap-2 text-gray-400 justify-center sm:justify-start">
+                        <svg
+                          className="w-4 h-4 flex-shrink-0"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                          />
+                        </svg>
+                        <span className="truncate">{profileData.contact_info.phone}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-gray-400 justify-center sm:justify-start">
+                      <svg
+                        className="w-4 h-4 flex-shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <span>
+                        Joined{" "}
+                        {new Date(user?.created_at || "").toLocaleDateString("en-US", {
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-2 sm:gap-5 w-full sm:w-30 shrink-0">
+                  <Button
+                    asChild
+                    className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white"
+                  >
+                    <Link href="/settings">Edit Profile</Link>
+                  </Button>
+
+                  {totalCount > 0 && (
+                    <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white">
+                      <Link href="/listings/create">Add Listing</Link>
+                    </Button>
                   )}
                 </div>
               </div>
-
-              {/* Profile Info */}
-              <div className="flex-1 min-w-0 w-full">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 text-center sm:text-left">
-                      {profileData?.name ? (
-                        <>
-                          {profileData.name}
-                          <span className="block sm:inline text-lg sm:text-xl text-gray-400 font-normal sm:ml-2 mt-1 sm:mt-0">
-                            (@{user?.username})
-                          </span>
-                        </>
-                      ) : (
-                        user?.username || "User"
-                      )}
-                    </h2>
-                    <div className="space-y-2 text-xs sm:text-sm">
-                      {profileData?.campus && (
-                        <div className="flex items-center gap-2 text-gray-400 justify-center sm:justify-start">
-                          <svg
-                            className="w-4 h-4 flex-shrink-0"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                            />
-                          </svg>
-                          <span className="truncate">{profileData.campus}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 text-gray-400 justify-center sm:justify-start">
-                        <svg
-                          className="w-4 h-4 flex-shrink-0"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                          />
-                        </svg>
-                        <span className="truncate">{user?.email}</span>
-                      </div>
-                      {profileData?.contact_info?.phone && (
-                        <div className="flex items-center gap-2 text-gray-400 justify-center sm:justify-start">
-                          <svg
-                            className="w-4 h-4 flex-shrink-0"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                            />
-                          </svg>
-                          <span className="truncate">{profileData.contact_info.phone}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 text-gray-400 justify-center sm:justify-start">
-                        <svg
-                          className="w-4 h-4 flex-shrink-0"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                        <span>
-                          Joined{" "}
-                          {new Date(user?.created_at || "").toLocaleDateString("en-US", {
-                            month: "long",
-                            year: "numeric",
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex flex-col gap-2 sm:gap-5 w-full sm:w-30 shrink-0">
-                    <Button
-                      asChild
-                      className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white"
-                    >
-                      <Link href="/settings">Edit Profile</Link>
-                    </Button>
-
-                    {totalCount > 0 && (
-                      <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white">
-                        <Link href="/listings/create">Add Listing</Link>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Incomplete Profile Banner - Only show if profile is incomplete */}
         {isProfileIncomplete && showIncompleteBanner && (
@@ -412,7 +429,7 @@ function ProfileContent() {
                 <p className="text-gray-400 mb-6 text-base">
                   Start selling by creating your first listing. It only takes a minute!
                 </p>
-                <Button asChild className="bg-purple-600 hover:bg-purple-700" size="lg">
+                <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white" size="lg">
                   <Link href="/listings/create">
                     <Plus className="w-5 h-5 mr-2" />
                     Create Your First Listing
