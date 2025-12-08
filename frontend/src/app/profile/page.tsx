@@ -156,9 +156,9 @@ function ProfileContent() {
       });
       toast.success("Listing deleted successfully", {
         style: {
-          background: "rgb(153, 27, 27)",
+          background: "rgb(20, 83, 45)",
           color: "white",
-          border: "1px solid rgb(220, 38, 38)",
+          border: "1px solid rgb(34, 197, 94)",
         },
       });
     },
