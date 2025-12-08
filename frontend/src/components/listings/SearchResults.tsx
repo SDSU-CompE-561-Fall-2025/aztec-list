@@ -10,12 +10,12 @@ interface SearchResultsProps {
 export function SearchResults({ listings, isLoading }: SearchResultsProps) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {Array.from({ length: SKELETON_LOADING_COUNT }).map((_, i) => (
           <div key={i} className="flex flex-col gap-2">
             <div className="aspect-square bg-gray-800 rounded-md animate-pulse" />
-            <div className="h-4 bg-gray-800 rounded animate-pulse" />
-            <div className="h-6 bg-gray-800 rounded animate-pulse w-24" />
+            <div className="h-3 bg-gray-800 rounded animate-pulse" />
+            <div className="h-5 bg-gray-800 rounded animate-pulse w-20" />
           </div>
         ))}
       </div>
@@ -33,7 +33,7 @@ export function SearchResults({ listings, isLoading }: SearchResultsProps) {
   }
 
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {listings.map((listing) => (
         <ListingCard key={listing.id} listing={listing} />
       ))}

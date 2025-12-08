@@ -130,8 +130,8 @@ export default function CreateListingPage() {
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Create New Listing</h1>
-          <p className="text-gray-400 text-lg">Fill in the details to create your listing</p>
+          <h1 className="text-2xl font-bold text-white mb-2">Create New Listing</h1>
+          <p className="text-gray-400 text-sm">Fill in the details to create your listing</p>
         </div>
 
         {/* Form */}
@@ -139,7 +139,7 @@ export default function CreateListingPage() {
           {/* Show info about creating listing first if not created yet */}
           {!createdListingId && (
             <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
-              <p className="text-blue-300 text-lg">
+              <p className="text-blue-300 text-sm">
                 💡 Create your listing first, then you&apos;ll be able to upload images
               </p>
             </div>
@@ -147,7 +147,7 @@ export default function CreateListingPage() {
 
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="title" className="text-gray-200 text-lg">
+            <Label htmlFor="title" className="text-gray-200">
               Title <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -157,17 +157,17 @@ export default function CreateListingPage() {
               onBlur={(e) => handleBlur("title", e.target.value)}
               placeholder="e.g., iPhone 13 Pro Max"
               disabled={!!createdListingId}
-              className={`bg-gray-900 border-gray-700 text-white text-base ${
+              className={`bg-gray-900 border-gray-700 text-white ${
                 errors.title ? "border-red-500" : ""
               }`}
             />
-            {errors.title && <p className="text-red-500 text-lg">{errors.title}</p>}
-            <p className="text-gray-400 text-lg">{title.length}/100 characters</p>
+            {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
+            <p className="text-gray-400 text-xs">{title.length}/100 characters</p>
           </div>
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-gray-200 text-lg">
+            <Label htmlFor="description" className="text-gray-200">
               Description <span className="text-red-500">*</span>
             </Label>
             <textarea
@@ -178,17 +178,17 @@ export default function CreateListingPage() {
               placeholder="Describe your item..."
               rows={5}
               disabled={!!createdListingId}
-              className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none ${
+              className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none ${
                 errors.description ? "border-red-500" : ""
               }`}
             />
-            {errors.description && <p className="text-red-500 text-lg">{errors.description}</p>}
-            <p className="text-gray-400 text-lg">{description.length}/500 characters</p>
+            {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
+            <p className="text-gray-400 text-xs">{description.length}/500 characters</p>
           </div>
 
           {/* Price */}
           <div className="space-y-2">
-            <Label htmlFor="price" className="text-gray-200 text-lg">
+            <Label htmlFor="price" className="text-gray-200">
               Price <span className="text-red-500">*</span>
             </Label>
             <div className="relative">

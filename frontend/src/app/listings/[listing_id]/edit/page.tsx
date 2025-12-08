@@ -286,8 +286,8 @@ function EditForm({
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2">Edit Listing</h1>
-              <p className="text-gray-400 text-lg">Update your listing details</p>
+              <h1 className="text-2xl font-bold text-white mb-2">Edit Listing</h1>
+              <p className="text-gray-400 text-sm">Update your listing details</p>
             </div>
             {showSavedIndicator && (
               <div className="flex items-center gap-2 text-green-400 bg-green-950/50 px-4 py-2 rounded-md border border-green-800 animate-in fade-in slide-in-from-right-5">
@@ -302,7 +302,7 @@ function EditForm({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
           <div>
-            <Label htmlFor="title" className="text-gray-200 text-lg">
+            <Label htmlFor="title" className="text-gray-200">
               Title <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -311,16 +311,16 @@ function EditForm({
               onChange={(e) => setTitle(e.target.value)}
               onBlur={(e) => handleBlur("title", e.target.value)}
               maxLength={100}
-              className="mt-1 bg-gray-900 border-gray-700 text-white text-base"
+              className="mt-1 bg-gray-900 border-gray-700 text-white"
               placeholder="e.g., MacBook Pro 2020"
             />
-            {errors.title && <p className="text-red-500 text-lg mt-1">{errors.title}</p>}
-            <p className="text-gray-500 text-lg mt-1">{title.length}/100 characters</p>
+            {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+            <p className="text-gray-500 text-xs mt-1">{title.length}/100 characters</p>
           </div>
 
           {/* Description */}
           <div>
-            <Label htmlFor="description" className="text-gray-200 text-lg">
+            <Label htmlFor="description" className="text-gray-200">
               Description <span className="text-red-500">*</span>
             </Label>
             <textarea
@@ -330,18 +330,18 @@ function EditForm({
               onBlur={(e) => handleBlur("description", e.target.value)}
               maxLength={500}
               rows={4}
-              className="mt-1 w-full rounded-md bg-gray-900 border border-gray-700 text-white text-base p-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="mt-1 w-full rounded-md bg-gray-900 border border-gray-700 text-white p-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder="Describe your item..."
             />
             {errors.description && (
-              <p className="text-red-500 text-lg mt-1">{errors.description}</p>
+              <p className="text-red-500 text-sm mt-1">{errors.description}</p>
             )}
-            <p className="text-gray-500 text-lg mt-1">{description.length}/500 characters</p>
+            <p className="text-gray-500 text-xs mt-1">{description.length}/500 characters</p>
           </div>
 
           {/* Price */}
           <div>
-            <Label htmlFor="price" className="text-gray-200 text-lg">
+            <Label htmlFor="price" className="text-gray-200">
               Price <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -352,15 +352,15 @@ function EditForm({
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               onBlur={handlePriceBlur}
-              className="mt-1 bg-gray-900 border-gray-700 text-white text-base"
+              className="mt-1 bg-gray-900 border-gray-700 text-white"
               placeholder="0.00"
             />
-            {errors.price && <p className="text-red-500 text-lg mt-1">{errors.price}</p>}
+            {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
           </div>
 
           {/* Category */}
           <div>
-            <Label htmlFor="category" className="text-gray-200 text-lg">
+            <Label htmlFor="category" className="text-gray-200">
               Category <span className="text-red-500">*</span>
             </Label>
             <select
@@ -368,7 +368,7 @@ function EditForm({
               value={category}
               onChange={(e) => setCategory(e.target.value as Category)}
               onBlur={(e) => handleBlur("category", e.target.value)}
-              className="mt-1 w-full rounded-md bg-gray-900 border border-gray-700 text-white text-base p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="mt-1 w-full rounded-md bg-gray-900 border border-gray-700 text-white p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="">Select a category</option>
               {CATEGORIES.map((cat) => (
@@ -377,12 +377,12 @@ function EditForm({
                 </option>
               ))}
             </select>
-            {errors.category && <p className="text-red-500 text-lg mt-1">{errors.category}</p>}
+            {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
           </div>
 
           {/* Condition */}
           <div>
-            <Label htmlFor="condition" className="text-gray-200 text-lg">
+            <Label htmlFor="condition" className="text-gray-200">
               Condition <span className="text-red-500">*</span>
             </Label>
             <select
@@ -390,7 +390,7 @@ function EditForm({
               value={condition}
               onChange={(e) => setCondition(e.target.value as Condition)}
               onBlur={(e) => handleBlur("condition", e.target.value)}
-              className="mt-1 w-full rounded-md bg-gray-900 border border-gray-700 text-white text-base p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="mt-1 w-full rounded-md bg-gray-900 border border-gray-700 text-white p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="">Select a condition</option>
               {CONDITIONS.map((cond) => (
@@ -399,15 +399,15 @@ function EditForm({
                 </option>
               ))}
             </select>
-            {errors.condition && <p className="text-red-500 text-lg mt-1">{errors.condition}</p>}
+            {errors.condition && <p className="text-red-500 text-sm mt-1">{errors.condition}</p>}
           </div>
 
           {/* Active Toggle */}
           <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-gray-200 font-medium text-lg">Listing Status</Label>
-                <p className="text-gray-500 text-lg mt-1">
+                <Label className="text-gray-200 font-medium">Listing Status</Label>
+                <p className="text-gray-500 text-sm mt-1">
                   {isActive ? "Visible to buyers" : "Hidden from buyers"}
                 </p>
               </div>

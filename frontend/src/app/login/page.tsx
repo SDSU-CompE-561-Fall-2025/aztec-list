@@ -54,17 +54,15 @@ function LoginForm() {
     <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-3xl font-bold">Login</CardTitle>
-          <CardDescription className="text-base">
+          <CardTitle className="text-2xl font-bold">Login</CardTitle>
+          <CardDescription className="text-sm">
             Enter your email or username below to login to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-lg">
-                Email or Username
-              </Label>
+              <Label htmlFor="username">Email or Username</Label>
               <Input
                 id="username"
                 type="text"
@@ -79,9 +77,7 @@ function LoginForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-lg">
-                Password
-              </Label>
+              <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -106,12 +102,12 @@ function LoginForm() {
             </div>
 
             {error && (
-              <div className="text-lg text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3">
+              <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3">
                 {error}
               </div>
             )}
 
-            <Button type="submit" className="w-full text-lg" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />

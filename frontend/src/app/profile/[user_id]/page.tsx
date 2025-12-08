@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { PaginationControls } from "@/components/listings/PaginationControls";
 import { API_BASE_URL, DEFAULT_LIMIT, STATIC_BASE_URL } from "@/lib/constants";
@@ -141,23 +142,25 @@ function UserProfileContent() {
         {/* User Profile Header */}
         <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/60 rounded-xl p-8">
           <div className="flex items-start gap-6">
-            <div className="w-24 h-24 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20 flex-shrink-0 overflow-hidden">
+            <div className="w-24 h-24 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20 flex-shrink-0 overflow-hidden relative">
               {profileData?.profile_picture_url ? (
-                <img
+                <Image
                   src={getProfilePictureUrl(profileData.profile_picture_url) || ""}
                   alt={user.username}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="96px"
+                  className="object-cover"
                 />
               ) : (
                 <User className="w-12 h-12 text-purple-300" />
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-4xl font-bold text-white mb-2">
+              <h1 className="text-2xl font-bold text-white mb-2">
                 {profileData?.name ? (
                   <>
                     {profileData.name}
-                    <span className="text-2xl text-gray-400 font-normal ml-2">
+                    <span className="text-lg text-gray-400 font-normal ml-2">
                       (@{user.username})
                     </span>
                   </>
@@ -165,7 +168,7 @@ function UserProfileContent() {
                   user.username
                 )}
               </h1>
-              <div className="space-y-2 text-base">
+              <div className="space-y-2 text-sm">
                 {profileData?.campus && (
                   <div className="flex items-center gap-2 text-gray-400">
                     <Building2 className="w-4 h-4 flex-shrink-0" />
@@ -205,9 +208,9 @@ function UserProfileContent() {
         {/* Listings Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-bold text-white">
+            <h2 className="text-xl font-bold text-white">
               Listings
-              <span className="ml-3 text-gray-500 font-normal text-xl">({totalCount})</span>
+              <span className="ml-3 text-gray-500 font-normal text-base">({totalCount})</span>
             </h2>
           </div>
 

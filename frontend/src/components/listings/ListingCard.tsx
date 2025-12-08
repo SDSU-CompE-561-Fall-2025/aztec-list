@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ListingSummary } from "@/types/listing/listing";
 import { formatPrice } from "@/lib/utils";
 import { STATIC_BASE_URL, LISTINGS_BASE_URL } from "@/lib/constants";
@@ -12,8 +12,7 @@ interface ListingCardProps {
 }
 
 export function ListingCard({ listing }: ListingCardProps) {
-  const [imageError, setImageError] = useState(false);
-  const hasImage = listing.thumbnail_url && !imageError;
+  const hasImage = listing.thumbnail_url;
 
   return (
     <Link
@@ -24,12 +23,12 @@ export function ListingCard({ listing }: ListingCardProps) {
       <div className="relative aspect-square bg-gray-800 rounded-md overflow-hidden">
         {hasImage ? (
           <>
-            <img
+            <Image
               src={`${STATIC_BASE_URL}${listing.thumbnail_url}`}
               alt={listing.title}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              onError={() => setImageError(true)}
+              fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover"
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
           </>
@@ -41,12 +40,12 @@ export function ListingCard({ listing }: ListingCardProps) {
       </div>
 
       {/* Title */}
-      <h3 className="text-xl font-bold text-gray-100 line-clamp-2 group-hover:text-purple-400 transition-colors">
+      <h3 className="text-base font-semibold text-gray-100 line-clamp-2 group-hover:text-purple-400 transition-colors">
         {listing.title}
       </h3>
 
       {/* Price */}
-      <p className="text-lg font-semibold text-gray-100">{formatPrice(listing.price)}</p>
+      <p className="text-base font-bold text-gray-100">{formatPrice(listing.price)}</p>
     </Link>
   );
 }

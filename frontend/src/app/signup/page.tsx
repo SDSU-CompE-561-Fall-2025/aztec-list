@@ -108,17 +108,15 @@ export default function SignupPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-3xl font-bold">Create an account</CardTitle>
-          <CardDescription className="text-base">
+          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
+          <CardDescription className="text-sm">
             Enter your .edu email and information to create your campus account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-lg">
-                Username
-              </Label>
+              <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
                 type="text"
@@ -129,15 +127,12 @@ export default function SignupPage() {
                 disabled={isLoading}
                 autoComplete="username"
                 minLength={3}
-                className="text-base"
               />
-              <p className="text-base text-muted-foreground">At least 3 characters</p>
+              <p className="text-xs text-muted-foreground">At least 3 characters</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-lg">
-                Email
-              </Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -147,15 +142,12 @@ export default function SignupPage() {
                 required
                 disabled={isLoading}
                 autoComplete="email"
-                className="text-base"
               />
-              <p className="text-base text-muted-foreground">Must be a valid .edu email address</p>
+              <p className="text-xs text-muted-foreground">Must be a valid .edu email address</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-lg">
-                Password
-              </Label>
+              <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -192,7 +184,7 @@ export default function SignupPage() {
                       />
                     ))}
                   </div>
-                  <p className="text-base text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Password strength: {strengthInfo.label}
                   </p>
                 </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { createListingQueryOptions } from "@/queryOptions/createListingQueryOptions";
 import { SearchResults } from "@/components/listings/SearchResults";
@@ -9,11 +10,13 @@ import { DEFAULT_SORT, DEFAULT_LIMIT } from "@/lib/constants";
 import { ListingsParams } from "@/types/listing/listingParams";
 
 export default function HomePage() {
-  // Use default parameters for landing page
+  const searchParams = useSearchParams();
+
+  // Use default parameters for landing page, but read offset from URL for pagination
   const filters: ListingsParams = {
     sort: DEFAULT_SORT,
     limit: DEFAULT_LIMIT,
-    offset: 0,
+    offset: parseInt(searchParams.get("offset") ?? "0", 10) || 0,
   };
 
   // Use TanStack Query to fetch listings
@@ -27,19 +30,19 @@ export default function HomePage() {
     <div className="min-h-screen bg-gray-950 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Hero Section */}
-        <div className="mb-12 text-center">
-          <h1 className="text-5xl font-bold text-white mb-4">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-white mb-3">
             Welcome to <span className="text-purple-500">AztecList</span> Campus
           </h1>
-          <p className="text-gray-400 text-xl">
+          <p className="text-gray-400 text-base">
             Buy and sell items on campus. Find great deals from fellow students.
           </p>
         </div>
 
         {/* Listings Section */}
         <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-semibold text-gray-100">Latest Listings</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-100">Latest Listings</h2>
             {data && (
               <p className="text-base text-gray-400">
                 {data.count} {data.count === 1 ? "listing" : "listings"} available

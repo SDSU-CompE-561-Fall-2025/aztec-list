@@ -60,7 +60,9 @@ class ListingSearchResponse(BaseModel):
     next_cursor: str | None = Field(
         None, description="Cursor for next page (null for offset pagination)"
     )
-    count: int = Field(..., description="Number of items in current response")
+    count: int = Field(
+        ..., description="Total number of items matching the query (across all pages)"
+    )
 
     model_config = {"from_attributes": True}
 

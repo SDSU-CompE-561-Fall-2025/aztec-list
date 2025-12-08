@@ -7,6 +7,9 @@ import { CONDITIONS, Condition } from "@/types/listing/filters/condition";
 import { SORT_OPTIONS, Sort } from "@/types/listing/filters/sort";
 import { formatCategoryLabel, formatConditionLabel, formatSortLabel } from "@/lib/utils";
 import { LISTINGS_BASE_URL, DEFAULT_SORT } from "@/lib/constants";
+import { Filter } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const PRICE_ERROR_MESSAGE = "Min price must be less than max price";
 
@@ -136,8 +139,10 @@ export function SearchFilters() {
       ? currentSortParam
       : DEFAULT_SORT;
 
-  return (
-    <aside className="w-80 bg-gray-900 p-6 rounded-lg space-y-6">
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  const filtersContent = (
+    <div className="space-y-6">
       {/* Category Section */}
       <div>
         <h3 className="text-sm font-semibold text-gray-100 mb-3">Category</h3>
@@ -237,6 +242,31 @@ export function SearchFilters() {
       >
         Clear Filters
       </button>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Mobile Filter Button */}
+      <div className="lg:hidden mb-4">
+        <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="w-full">
+              <Filter className="w-4 h-4 mr-2" />
+              Filters
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-80 bg-gray-900 border-gray-800">
+            <SheetHeader>
+              <SheetTitle className="text-gray-100">Filters</SheetTitle>
+            </SheetHeader>
+            <div className="mt-6">{filtersContent}</div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:block w-80 bg-gray-900 p-6 rounded-lg">{filtersContent}</aside>
+    </>
   );
 }

@@ -17,7 +17,7 @@ import {
 import { LISTINGS_BASE_URL, DEFAULT_SORT, API_BASE_URL, STATIC_BASE_URL } from "@/lib/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAuthToken } from "@/lib/auth";
-import { LogOut, Settings, User } from "lucide-react";
+import { LogOut, Settings, User, Search } from "lucide-react";
 
 // Helper function to build full URL for profile picture
 const getProfilePictureUrl = (path: string | null | undefined): string | null => {
@@ -114,22 +114,25 @@ export function Header() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4 gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="text-3xl font-bold">
+          <div className="text-2xl font-bold">
             <span className="text-purple-500">Aztec</span>
             <span className="text-white">List</span>
           </div>
-          <span className="text-base text-gray-400">Campus</span>
+          <span className="text-sm text-gray-400">Campus</span>
         </Link>
 
         {/* Search Bar */}
         <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
-          <Input
-            type="text"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-gray-900 border-gray-700 text-gray-100 placeholder:text-gray-500"
-          />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <Input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 bg-gray-900 border-gray-700 text-gray-100 placeholder:text-gray-500"
+            />
+          </div>
         </form>
 
         {/* Auth Buttons / User Menu */}
@@ -162,7 +165,7 @@ export function Header() {
                   </AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-60">
+              <DropdownMenuContent align="end" sideOffset={8} className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1 py-0.5">
                     <p className="text-sm font-semibold leading-none">{user?.username}</p>

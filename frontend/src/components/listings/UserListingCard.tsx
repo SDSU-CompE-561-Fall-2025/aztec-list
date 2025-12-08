@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { ListingSummary } from "@/types/listing/listing";
 import { formatPrice, getConditionColor } from "@/lib/utils";
 import { STATIC_BASE_URL, LISTINGS_BASE_URL } from "@/lib/constants";
@@ -13,8 +13,7 @@ interface UserListingCardProps {
 
 export function UserListingCard({ listing }: UserListingCardProps) {
   const router = useRouter();
-  const [imageError, setImageError] = useState(false);
-  const hasImage = listing.thumbnail_url && !imageError;
+  const hasImage = listing.thumbnail_url;
 
   const handleCardClick = () => {
     router.push(`${LISTINGS_BASE_URL}/${listing.id}`);
@@ -29,12 +28,12 @@ export function UserListingCard({ listing }: UserListingCardProps) {
       <div className="relative w-full aspect-square bg-gray-800/50 overflow-hidden">
         {hasImage ? (
           <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={`${STATIC_BASE_URL}${listing.thumbnail_url}`}
               alt={listing.title}
-              className="w-full h-full object-cover"
-              onError={() => setImageError(true)}
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover"
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
           </>
