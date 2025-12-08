@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, User, Mail, Phone } from "lucide-react";
+import { ChevronLeft, User, Mail, Phone, Edit } from "lucide-react";
 import { cn, getConditionColor } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import { createListingDetailQueryOptions } from "@/queryOptions/createListingDetailQueryOptions";
@@ -12,6 +12,7 @@ import { createUserQueryOptions } from "@/queryOptions/createUserQueryOptions";
 import { STATIC_BASE_URL, API_BASE_URL } from "@/lib/constants";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
 import { Category } from "@/types/listing/filters/category";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -61,6 +62,7 @@ export default function ListingDetailPage() {
   const params = useParams();
   const router = useRouter();
   const listingId = params.listing_id as string;
+  const { user } = useAuth();
 
   const { data: listing, isLoading, error } = useQuery(createListingDetailQueryOptions(listingId));
 
@@ -130,30 +132,90 @@ export default function ListingDetailPage() {
         </div>
         <div className="max-w-7xl mx-auto px-6 py-8 lg:py-12">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
-            <div className="order-1 md:order-1 md:col-span-7 space-y-4">
-              <div className="flex flex-col md:flex-row gap-3 justify-center">
+            {/* Sidebar - matches order-2 md:order-2 */}
+            <div className="order-2 md:order-2 md:col-span-5 space-y-6">
+              {/* Price and title skeleton */}
+              <div className="space-y-3">
+                <div className="h-9 w-32 bg-gray-800 rounded animate-pulse" />
+                <div className="h-8 w-full bg-gray-800 rounded animate-pulse" />
+                <div className="h-6 w-24 bg-gray-800 rounded-full animate-pulse" />
+              </div>
+
+              {/* Dates skeleton */}
+              <div className="space-y-1">
+                <div className="h-5 w-40 bg-gray-800 rounded animate-pulse" />
+                <div className="h-5 w-40 bg-gray-800 rounded animate-pulse" />
+              </div>
+
+              {/* Seller card skeleton */}
+              <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl p-5 space-y-3">
+                <div className="h-4 w-16 bg-gray-800 rounded animate-pulse" />
+                <div className="flex items-center gap-3 p-2">
+                  <div className="w-12 h-12 bg-gray-800 rounded-full animate-pulse" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-5 w-32 bg-gray-800 rounded animate-pulse" />
+                    <div className="h-4 w-24 bg-gray-800 rounded animate-pulse" />
+                    <div className="h-4 w-28 bg-gray-800 rounded animate-pulse" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact button skeleton */}
+              <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl p-5 space-y-3">
+                <div className="h-6 w-20 bg-gray-800 rounded animate-pulse" />
+                <div className="h-10 w-full bg-gray-800 rounded animate-pulse" />
+              </div>
+            </div>
+
+            {/* Images - matches order-1 md:order-1 */}
+            <div className="order-1 md:order-1 md:col-span-7 flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                {/* Thumbnail strip */}
                 <div className="flex md:flex-col gap-2 w-full md:w-24 overflow-x-auto md:overflow-x-visible order-2 md:order-1">
                   {[1, 2, 3, 4].map((i) => (
                     <div
                       key={i}
-                      className="w-24 h-24 bg-gray-900/50 rounded-lg animate-pulse flex-shrink-0"
+                      className="w-24 h-24 bg-gray-900/50 rounded-lg animate-pulse flex-shrink-0 border border-gray-800/50"
                     />
                   ))}
                 </div>
+                {/* Main image */}
                 <div
-                  className="w-full max-w-3xl bg-gray-900/50 rounded-xl animate-pulse border border-gray-800/50 order-1 md:order-2"
-                  style={{ aspectRatio: "9/10" }}
+                  className="w-full bg-gray-900/50 rounded-xl animate-pulse border border-gray-800/50 order-1 md:order-2"
+                  style={{ aspectRatio: "652/728", maxWidth: "652px" }}
                 />
               </div>
-              <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl p-6 h-36 animate-pulse" />
+              {/* Description/Condition skeleton - desktop only */}
+              <div className="hidden md:block space-y-6">
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-gray-800 rounded animate-pulse" />
+                  <div className="space-y-2">
+                    <div className="h-5 w-full bg-gray-800 rounded animate-pulse" />
+                    <div className="h-5 w-full bg-gray-800 rounded animate-pulse" />
+                    <div className="h-5 w-3/4 bg-gray-800 rounded animate-pulse" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-4 w-20 bg-gray-800 rounded animate-pulse" />
+                  <div className="h-8 w-24 bg-gray-800 rounded-lg animate-pulse" />
+                </div>
+              </div>
             </div>
-            <div className="order-2 md:order-2 md:col-span-5 space-y-4">
-              {[1, 2].map((card) => (
-                <div
-                  key={card}
-                  className="bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl p-6 h-28 animate-pulse"
-                />
-              ))}
+
+            {/* Mobile description/condition - matches order-3 */}
+            <div className="md:hidden order-3 space-y-8">
+              <div className="space-y-3">
+                <div className="h-5 w-24 bg-gray-800 rounded animate-pulse" />
+                <div className="space-y-2">
+                  <div className="h-6 w-full bg-gray-800 rounded animate-pulse" />
+                  <div className="h-6 w-full bg-gray-800 rounded animate-pulse" />
+                  <div className="h-6 w-3/4 bg-gray-800 rounded animate-pulse" />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="h-5 w-20 bg-gray-800 rounded animate-pulse" />
+                <div className="h-9 w-28 bg-gray-800 rounded-lg animate-pulse" />
+              </div>
             </div>
           </div>
         </div>
@@ -203,6 +265,7 @@ export default function ListingDetailPage() {
   const descriptionText = listing.description?.trim().length
     ? listing.description
     : "No description provided.";
+  const isOwnListing = user?.id === listing.seller_id;
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -245,7 +308,9 @@ export default function ListingDetailPage() {
             </div>
 
             <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/60 rounded-xl p-5 space-y-3">
-              <p className="text-sm font-semibold text-gray-500 tracking-widest">Seller</p>
+              <p className="text-sm font-semibold text-gray-500 tracking-widest">
+                {isOwnListing ? "Your Listing" : "Seller"}
+              </p>
               <button
                 onClick={() => router.push(`/profile/${listing.seller_id}`)}
                 className="flex items-center gap-3 w-full rounded-lg p-2 group text-left cursor-pointer"
@@ -286,18 +351,33 @@ export default function ListingDetailPage() {
                   </span>
                 </div>
               </button>
+
+              {isOwnListing && (
+                <Button
+                  size="sm"
+                  onClick={() => router.push(`/listings/${listingId}/edit`)}
+                  variant="outline"
+                  className="w-full border-purple-500/50 hover:border-purple-500 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-purple-200"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Listing
+                </Button>
+              )}
             </div>
 
-            <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/60 rounded-xl p-5 space-y-3">
-              <h3 className="text-lg font-semibold text-white">Contact</h3>
-              <Button
-                size="lg"
-                onClick={() => setShowContactDialog(true)}
-                className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-semibold"
-              >
-                Contact Seller
-              </Button>
-            </div>
+            {!isOwnListing && (
+              <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/60 rounded-xl p-5 space-y-3">
+                <p className="text-sm font-semibold text-gray-500 tracking-widest">Contact</p>
+                <Button
+                  size="lg"
+                  onClick={() => setShowContactDialog(true)}
+                  className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-semibold"
+                >
+                  <Mail className="w-5 h-5 mr-2" />
+                  Contact Seller
+                </Button>
+              </div>
+            )}
           </section>
 
           <div className="order-1 md:order-1 md:col-span-7 flex flex-col gap-4">

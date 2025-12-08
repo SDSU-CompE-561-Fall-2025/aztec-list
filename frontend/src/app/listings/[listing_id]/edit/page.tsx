@@ -267,7 +267,7 @@ function EditForm({
     if (isDirty) {
       setShowDiscardDialog(true);
     } else {
-      router.push("/profile");
+      router.back();
     }
   }, [isDirty, router]);
 
@@ -279,7 +279,7 @@ function EditForm({
         console.error("Failed to delete new images:", error);
       }
     }
-    router.push("/profile");
+    router.back();
   };
 
   return (
@@ -290,8 +290,8 @@ function EditForm({
           onClick={handleNavigateBack}
           className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 group cursor-pointer"
         >
-          <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-          <span className="text-base font-medium">Back to Profile</span>
+          <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm font-medium">Back</span>
         </button>
 
         {/* Header */}
