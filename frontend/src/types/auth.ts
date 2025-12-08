@@ -34,5 +34,4 @@ export interface AuthContextType {
   login: (credentials: LoginCredentials) => Promise<void>;
   signup: (data: SignupData) => Promise<void>;
   logout: () => void;
-  updateUser: (user: User) => void;
 }

@@ -26,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { API_BASE_URL } from "@/lib/constants";
-import { getAuthToken, changePassword } from "@/lib/auth";
+import { getAuthToken, setStoredUser, changePassword } from "@/lib/auth";
 import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOptions";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
 import type { ContactInfo } from "@/types/user";
@@ -38,7 +38,7 @@ interface ProfileUpdatePayload {
 }
 
 export default function SettingsPage() {
-  const { user, logout, updateUser } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -390,8 +390,8 @@ export default function SettingsPage() {
       // Get updated user data from response
       const updatedUser = await response.json();
 
-      // Update AuthContext and localStorage
-      updateUser(updatedUser);
+      // Update localStorage - this will automatically sync AuthContext via custom event
+      setStoredUser(updatedUser);
 
       // Invalidate all queries that might display the username
       queryClient.invalidateQueries({ queryKey: ["user"] });
@@ -913,16 +913,16 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            <Separator className="my-6 sm:my-8 bg-gray-800" />
+            <Separator className="my-4 sm:my-6 bg-gray-800" />
 
             {/* Delete Account Section */}
             <Card className="bg-gray-900 border-red-900/50">
               <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl text-red-500 flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6" />
+                <CardTitle className="text-base sm:text-lg text-red-500 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
                   Danger Zone
                 </CardTitle>
-                <CardDescription className="text-sm sm:text-base text-gray-400">
+                <CardDescription className="text-xs sm:text-sm text-gray-400">
                   Permanently delete your account and all associated data
                 </CardDescription>
               </CardHeader>
@@ -931,19 +931,19 @@ export default function SettingsPage() {
                   <AlertDialogTrigger asChild>
                     <Button
                       variant="destructive"
-                      className="w-full text-sm sm:text-base transition-all hover:scale-[1.02] hover:shadow-lg"
+                      className="w-full text-xs sm:text-sm transition-all hover:scale-[1.02] hover:shadow-lg"
                       disabled={isDeleting}
                     >
-                      <Trash2 className="w-4 h-4 mr-2" />
+                      <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                       Delete Account
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent className="bg-gray-900 border-gray-800 max-w-md mx-4">
                     <AlertDialogHeader>
-                      <AlertDialogTitle className="text-lg sm:text-xl text-white">
+                      <AlertDialogTitle className="text-base sm:text-lg text-white">
                         Are you absolutely sure?
                       </AlertDialogTitle>
-                      <AlertDialogDescription className="text-xs sm:text-sm text-gray-400">
+                      <AlertDialogDescription className="text-xs text-gray-400">
                         This action cannot be undone. This will permanently delete your account, all
                         your listings, and remove all your data from our servers.
                       </AlertDialogDescription>

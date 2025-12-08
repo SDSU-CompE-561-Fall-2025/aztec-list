@@ -6,6 +6,11 @@ import { API_BASE_URL } from "@/lib/constants";
 import { AuthToken, LoginCredentials, SignupData, User } from "@/types/auth";
 
 /**
+ * Custom event name for auth user updates
+ */
+export const AUTH_USER_UPDATED_EVENT = "auth-user-updated" as const;
+
+/**
  * Authenticate user and return access token.
  *
  * @param credentials - User login credentials (username/email and password)
@@ -99,6 +104,8 @@ export const removeAuthToken = (): void => {
 export const setStoredUser = (user: User): void => {
   if (typeof window !== "undefined") {
     localStorage.setItem("user", JSON.stringify(user));
+    // Dispatch custom event to notify AuthContext of user update
+    window.dispatchEvent(new CustomEvent(AUTH_USER_UPDATED_EVENT));
   }
 };
 
