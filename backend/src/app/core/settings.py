@@ -25,7 +25,7 @@ class JWTSettings(BaseModel):
         description="The algorithm used for JWT",
     )
     access_token_expire_minutes: int = Field(
-        default=30,
+        default=10080,
         ge=1,
         description="Access token expiration time in minutes",
     )
