@@ -66,6 +66,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setIsHydrated(true);
+
+    // Listen for custom auth-user-updated events
+    const handleAuthUpdate = () => {
+      notifyAuthListeners();
+    };
+
+    window.addEventListener("auth-user-updated", handleAuthUpdate);
+
+    return () => {
+      window.removeEventListener("auth-user-updated", handleAuthUpdate);
+    };
   }, []);
 
   const login = async (credentials: LoginCredentials): Promise<void> => {

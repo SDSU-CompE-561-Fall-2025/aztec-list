@@ -99,6 +99,8 @@ export const removeAuthToken = (): void => {
 export const setStoredUser = (user: User): void => {
   if (typeof window !== "undefined") {
     localStorage.setItem("user", JSON.stringify(user));
+    // Dispatch custom event to notify AuthContext of user update
+    window.dispatchEvent(new CustomEvent("auth-user-updated"));
   }
 };
 

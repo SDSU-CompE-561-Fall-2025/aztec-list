@@ -386,8 +386,12 @@ export default function SettingsPage() {
       // Get updated user data from response
       const updatedUser = await response.json();
 
-      // Update stored user in localStorage
+      // Update stored user in localStorage - this will automatically sync AuthContext
       setStoredUser(updatedUser);
+
+      // Invalidate all queries that might display the username
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
 
       toast.success("Account updated successfully!", {
         style: {
@@ -396,9 +400,6 @@ export default function SettingsPage() {
           border: "1px solid rgb(34, 197, 94)",
         },
       });
-
-      // Reload the page to refresh all components with new username
-      window.location.reload();
     } catch (error) {
       // Reset username to original value on error
       setUsername(user?.username ?? "");
