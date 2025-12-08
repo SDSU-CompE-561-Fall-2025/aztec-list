@@ -118,6 +118,9 @@ class ProfileService:
             profile_data = profile.model_dump(exclude_unset=True)
             if profile_data.get("profile_picture_url"):
                 profile_data["profile_picture_url"] = str(profile_data["profile_picture_url"])
+            # Ensure required field 'name' has a default value if not provided
+            if "name" not in profile_data:
+                profile_data["name"] = ""
             return ProfileRepository.create(db, user_id, profile_data)
 
         update_data = profile.model_dump(exclude_unset=True)

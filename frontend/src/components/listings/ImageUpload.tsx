@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Trash2, Star, Loader2, Upload, Undo2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -77,6 +77,12 @@ export function ImageUpload({
   const [uploadedThisSession, setUploadedThisSession] = useState<Set<string>>(new Set());
   const isInitializedRef = useRef(false);
 
+  // Ref to track current images state for concurrent operations
+  const imagesRef = useRef<ImagePublic[]>(images);
+  useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
+
   useEffect(() => {
     if (!isInitializedRef.current) {
       isInitializedRef.current = true;
@@ -122,144 +128,210 @@ export function ImageUpload({
     }
   }, [clearNewUploads, newUploads.size]);
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    const maxImages = 10;
-    const remainingSlots = maxImages - images.length;
-
-    if (files.length > remainingSlots) {
-      toast.error(`Maximum ${maxImages} images allowed. You can upload ${remainingSlots} more.`);
-      return;
+  // Notify parent of image changes
+  useEffect(() => {
+    if (isInitializedRef.current) {
+      onImagesChange?.(images);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images]);
 
-    const validFiles: File[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const validation = validateFile(file);
+  const uploadWithProgress = useCallback(
+    async (file: File, fileId: string): Promise<ImagePublic> => {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const formData = new FormData();
+        formData.append("file", file);
 
-      if (!validation.valid) {
-        toast.error(`${file.name}: ${validation.error}`);
-        continue;
-      }
+        const token = getAuthToken();
+        if (!token) {
+          reject(new Error("Not authenticated. Please sign in."));
+          return;
+        }
 
-      validFiles.push(file);
-    }
-
-    if (validFiles.length === 0) {
-      event.target.value = "";
-      return;
-    }
-
-    for (let i = 0; i < validFiles.length; i++) {
-      const file = validFiles[i];
-      const fileId = `${file.name}-${Date.now()}-${i}`;
-
-      setUploadingFiles((prev) => {
-        const next = new Map(prev);
-        next.set(fileId, { id: fileId, name: file.name, progress: 0 });
-        return next;
-      });
-
-      try {
-        await uploadWithProgress(file, fileId);
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Upload failed";
-        toast.error(`${file.name}: ${errorMessage}`);
-      } finally {
-        setUploadingFiles((prev) => {
-          const next = new Map(prev);
-          next.delete(fileId);
-          return next;
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) {
+            const progress = Math.round((e.loaded / e.total) * 100);
+            setUploadingFiles((prev) => {
+              const next = new Map(prev);
+              const current = next.get(fileId);
+              if (current) {
+                next.set(fileId, { ...current, progress });
+              }
+              return next;
+            });
+          }
         });
+
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const newImage = JSON.parse(xhr.responseText) as ImagePublic;
+              resolve(newImage);
+            } catch {
+              reject(new Error("Failed to parse response"));
+            }
+          } else if (xhr.status === 401) {
+            reject(new Error("Session expired. Please sign in again."));
+          } else if (xhr.status === 404) {
+            reject(new Error("Upload endpoint not found. Please check if the listing exists."));
+          } else {
+            try {
+              const errorData = JSON.parse(xhr.responseText);
+              reject(new Error(errorData.detail || `Upload failed with status ${xhr.status}`));
+            } catch {
+              reject(new Error(`Upload failed with status ${xhr.status}`));
+            }
+          }
+        });
+
+        xhr.addEventListener("error", () => {
+          reject(new Error("Network error during upload"));
+        });
+
+        xhr.addEventListener("abort", () => {
+          reject(new Error("Upload cancelled"));
+        });
+
+        const uploadUrl = `${API_BASE_URL}/listings/${listingId}/images/upload`;
+        xhr.open("POST", uploadUrl);
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        xhr.send(formData);
+      });
+    },
+    [listingId]
+  );
+
+  const handleFileSelect = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+
+      const maxImages = 10;
+      const currentImageCount = imagesRef.current.length;
+      const remainingSlots = maxImages - currentImageCount;
+
+      if (files.length > remainingSlots) {
+        toast.error(`Maximum ${maxImages} images allowed. You can upload ${remainingSlots} more.`, {
+          style: {
+            background: "rgb(153, 27, 27)",
+            color: "white",
+            border: "1px solid rgb(220, 38, 38)",
+          },
+        });
+        return;
+      } // Validate all files first
+      const validFiles: File[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const validation = validateFile(file);
+
+        if (!validation.valid) {
+          toast.error(`${file.name}: ${validation.error}`, {
+            style: {
+              background: "rgb(153, 27, 27)",
+              color: "white",
+              border: "1px solid rgb(220, 38, 38)",
+            },
+          });
+          continue;
+        }
+        validFiles.push(file);
       }
-    }
 
-    event.target.value = "";
-  };
-
-  const uploadWithProgress = async (file: File, fileId: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const token = getAuthToken();
-      if (!token) {
-        reject(new Error("Not authenticated. Please sign in."));
+      if (validFiles.length === 0) {
+        event.target.value = "";
         return;
       }
 
-      xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) {
-          const progress = Math.round((e.loaded / e.total) * 100);
-          setUploadingFiles((prev) => {
-            const next = new Map(prev);
-            const current = next.get(fileId);
-            if (current) {
-              next.set(fileId, { ...current, progress });
-            }
-            return next;
-          });
+      // Create upload tracking entries for all files
+      const fileUploads = validFiles.map((file, i) => ({
+        file,
+        fileId: `${file.name}-${Date.now()}-${i}`,
+      }));
+
+      // Initialize all upload progress states
+      setUploadingFiles((prev) => {
+        const next = new Map(prev);
+        fileUploads.forEach(({ file, fileId }) => {
+          next.set(fileId, { id: fileId, name: file.name, progress: 0 });
+        });
+        return next;
+      });
+
+      // Upload all files concurrently using Promise.allSettled for proper error handling
+      const uploadPromises = fileUploads.map(({ file, fileId }) =>
+        uploadWithProgress(file, fileId)
+          .then((newImage) => ({
+            status: "success" as const,
+            image: newImage,
+            fileId,
+            fileName: file.name,
+          }))
+          .catch((error) => ({ status: "error" as const, error, fileId, fileName: file.name }))
+      );
+
+      const results = await Promise.allSettled(uploadPromises);
+
+      // Process results and update state atomically
+      const successfulImages: ImagePublic[] = [];
+      const newUploadIds: string[] = [];
+
+      results.forEach((result) => {
+        if (result.status === "fulfilled") {
+          const uploadResult = result.value;
+          if (uploadResult.status === "success") {
+            successfulImages.push(uploadResult.image);
+            newUploadIds.push(uploadResult.image.id);
+            toast.success(`${uploadResult.fileName}: Uploaded successfully`, {
+              style: {
+                background: "rgb(20, 83, 45)",
+                color: "white",
+                border: "1px solid rgb(34, 197, 94)",
+              },
+            });
+          } else {
+            const errorMessage =
+              uploadResult.error instanceof Error ? uploadResult.error.message : "Upload failed";
+            toast.error(`${uploadResult.fileName}: ${errorMessage}`, {
+              style: {
+                background: "rgb(153, 27, 27)",
+                color: "white",
+                border: "1px solid rgb(220, 38, 38)",
+              },
+            });
+          }
         }
       });
 
-      xhr.addEventListener("load", () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const newImage = JSON.parse(xhr.responseText) as ImagePublic;
-            const updatedImages = [...images, newImage];
-            setImages(updatedImages);
-            onImagesChange?.(updatedImages);
+      // Atomic state update using functional setState to avoid race conditions
+      if (successfulImages.length > 0) {
+        setImages((prevImages) => [...prevImages, ...successfulImages]);
 
-            // uploadedThisSession: permanent record, needed to restore "new" status on undo
-            setUploadedThisSession((prev) => {
-              const next = new Set(prev);
-              next.add(newImage.id);
-              return next;
-            });
+        setUploadedThisSession((prev) => {
+          const next = new Set(prev);
+          newUploadIds.forEach((id) => next.add(id));
+          return next;
+        });
 
-            // newUploads: display state for visual styling
-            setNewUploads((prev) => {
-              const next = new Set(prev);
-              next.add(newImage.id);
-              return next;
-            });
+        setNewUploads((prev) => {
+          const next = new Set(prev);
+          newUploadIds.forEach((id) => next.add(id));
+          return next;
+        });
+      }
 
-            toast.success("Image uploaded successfully");
-            resolve();
-          } catch {
-            reject(new Error("Failed to parse response"));
-          }
-        } else if (xhr.status === 401) {
-          reject(new Error("Session expired. Please sign in again."));
-        } else if (xhr.status === 404) {
-          reject(new Error("Upload endpoint not found. Please check if the listing exists."));
-        } else {
-          try {
-            const errorData = JSON.parse(xhr.responseText);
-            reject(new Error(errorData.detail || `Upload failed with status ${xhr.status}`));
-          } catch {
-            reject(new Error(`Upload failed with status ${xhr.status}`));
-          }
-        }
+      // Clean up all upload progress states
+      setUploadingFiles((prev) => {
+        const next = new Map(prev);
+        fileUploads.forEach(({ fileId }) => next.delete(fileId));
+        return next;
       });
 
-      xhr.addEventListener("error", () => {
-        reject(new Error("Network error during upload"));
-      });
-
-      xhr.addEventListener("abort", () => {
-        reject(new Error("Upload cancelled"));
-      });
-
-      const uploadUrl = `${API_BASE_URL}/listings/${listingId}/images/upload`;
-      xhr.open("POST", uploadUrl);
-      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-      xhr.send(formData);
-    });
-  };
+      event.target.value = "";
+    },
+    [uploadWithProgress]
+  );
 
   const handleMarkForDeletion = (imageId: string) => {
     setPendingDeletions((prev) => {
@@ -301,12 +373,12 @@ export function ImageUpload({
         Images {hasImages && `(${activeImagesCount}/10)`}
         {newUploads.size > 0 && (
           <span className="text-green-400 ml-2 text-sm font-bold">
-            ✨ {newUploads.size} new {newUploads.size === 1 ? "upload" : "uploads"} (unsaved)
+            {newUploads.size} new {newUploads.size === 1 ? "upload" : "uploads"} (unsaved)
           </span>
         )}
         {pendingDeletions.size > 0 && (
           <span className="text-red-400 ml-2 text-sm font-bold">
-            ⚠️ {pendingDeletions.size} pending deletion
+            {pendingDeletions.size} pending deletion
           </span>
         )}
       </Label>

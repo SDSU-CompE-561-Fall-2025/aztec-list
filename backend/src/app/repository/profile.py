@@ -6,6 +6,7 @@ This module provides data access layer for profile operations.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import select
@@ -97,7 +98,10 @@ class ProfileRepository:
     @staticmethod
     def update_profile_picture(db: Session, db_profile: Profile, picture_url: str) -> Profile:
         """
-        Update profile picture URL.
+        Update profile picture URL and timestamp.
+
+        Explicitly updates both profile_picture_url and updated_at to ensure
+        proper cache invalidation on the client side.
 
         Args:
             db: Database session
@@ -105,9 +109,10 @@ class ProfileRepository:
             picture_url: New profile picture URL
 
         Returns:
-            Profile: Updated profile
+            Profile: Updated profile with fresh timestamp
         """
         db_profile.profile_picture_url = picture_url
+        db_profile.updated_at = datetime.now(UTC)
         db.commit()
         db.refresh(db_profile)
         return db_profile

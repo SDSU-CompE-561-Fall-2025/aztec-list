@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
@@ -25,10 +25,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { API_BASE_URL, STATIC_BASE_URL } from "@/lib/constants";
-import { getAuthToken, setStoredUser, changePassword } from "@/lib/auth";
+import { API_BASE_URL } from "@/lib/constants";
+import { getAuthToken, changePassword } from "@/lib/auth";
 import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOptions";
-import type { ProfilePublic, ContactInfo } from "@/types/user";
+import { getProfilePictureUrl } from "@/lib/profile-picture";
+import type { ContactInfo } from "@/types/user";
 
 interface ProfileUpdatePayload {
   name?: string | null;
@@ -36,60 +37,50 @@ interface ProfileUpdatePayload {
   contact_info?: ContactInfo;
 }
 
-// Helper function to build full URL for profile picture
-const getProfilePictureUrl = (path: string | null | undefined): string | null => {
-  if (!path) return null;
-  // Add cache-busting timestamp to force browser to reload the image
-  const timestamp = Date.now();
-  // If already a full URL, return as-is with timestamp
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    return `${path}?t=${timestamp}`;
-  }
-  // Build full URL from relative path with timestamp
-  return `${STATIC_BASE_URL}${path}?t=${timestamp}`;
-};
-
 export default function SettingsPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  // Profile state
-  const [name, setName] = useState("");
-  const [campus, setCampus] = useState("");
-  const [phone, setPhone] = useState("");
+  // Profile form state
+  const [formName, setFormName] = useState("");
+  const [formCampus, setFormCampus] = useState("");
+  const [formPhone, setFormPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
-  const [originalProfile, setOriginalProfile] = useState<ProfilePublic | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [stagedPictureFile, setStagedPictureFile] = useState<File | null>(null);
+  const [isPictureRemovalStaged, setIsPictureRemovalStaged] = useState(false);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
-  const [isPictureLoading, setIsPictureLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const isInitializedRef = useRef(false);
 
   // Fetch existing profile data using React Query
-  const { data: fetchedProfile, isLoading: isProfileFetching } = useQuery(
+  const { data: profile, isLoading: isProfileFetching } = useQuery(
     createProfileQueryOptions(user?.id)
   );
 
-  // Initialize form state from fetched profile
+  // Initialize form state from fetched profile (only once)
   useEffect(() => {
-    if (!isProfileFetching) {
+    if (!isProfileFetching && profile && !isInitializedRef.current) {
+      isInitializedRef.current = true;
       setIsInitialLoading(false);
-      if (fetchedProfile) {
-        setOriginalProfile(fetchedProfile);
-        setName(fetchedProfile.name || "");
-        setCampus(fetchedProfile.campus || "");
-        setPhone(fetchedProfile.contact_info?.phone || "");
-      }
+      setFormName(profile.name || "");
+      setFormCampus(profile.campus || "");
+      setFormPhone(profile.contact_info?.phone || "");
+    } else if (!isProfileFetching && !profile) {
+      setIsInitialLoading(false);
     }
-  }, [fetchedProfile, isProfileFetching]);
+  }, [profile, isProfileFetching]);
 
   // Track if profile has changes (memoized to avoid unnecessary recalculations)
   const hasProfileChanges = useMemo(
     () =>
-      name !== (originalProfile?.name || "") ||
-      campus !== (originalProfile?.campus || "") ||
-      phone !== (originalProfile?.contact_info?.phone || ""),
-    [name, campus, phone, originalProfile]
+      formName !== (profile?.name || "") ||
+      formCampus !== (profile?.campus || "") ||
+      formPhone !== (profile?.contact_info?.phone || "") ||
+      stagedPictureFile !== null ||
+      isPictureRemovalStaged,
+    [formName, formCampus, formPhone, profile, stagedPictureFile, isPictureRemovalStaged]
   );
 
   // Check if form is valid for submission
@@ -107,6 +98,10 @@ export default function SettingsPage() {
 
   // Delete account state
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Cancel confirmation dialogs
+  const [showProfileCancelDialog, setShowProfileCancelDialog] = useState(false);
+  const [showAccountCancelDialog, setShowAccountCancelDialog] = useState(false);
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -152,7 +147,7 @@ export default function SettingsPage() {
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatPhoneNumber(e.target.value);
-    setPhone(formatted);
+    setFormPhone(formatted);
     validatePhoneNumber(formatted);
   };
 
@@ -160,8 +155,14 @@ export default function SettingsPage() {
     e.preventDefault();
 
     // Validate phone before submitting
-    if (!validatePhoneNumber(phone)) {
-      toast.error("Please enter a valid phone number or leave it empty");
+    if (!validatePhoneNumber(formPhone)) {
+      toast.error("Please enter a valid phone number or leave it empty", {
+        style: {
+          background: "rgb(153, 27, 27)",
+          color: "white",
+          border: "1px solid rgb(220, 38, 38)",
+        },
+      });
       return;
     }
 
@@ -171,51 +172,108 @@ export default function SettingsPage() {
       const token = getAuthToken();
       if (!token) throw new Error("Not authenticated");
 
-      // Build update object with only changed fields
+      // Step 1: Handle profile picture upload if staged
+      if (stagedPictureFile) {
+        const formData = new FormData();
+        formData.append("file", stagedPictureFile);
+
+        const pictureResponse = await fetch(`${API_BASE_URL}/users/profile/picture`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (!pictureResponse.ok) {
+          const errorData = await pictureResponse.json().catch(() => ({}));
+          throw new Error(errorData.detail || "Failed to upload profile picture");
+        }
+      }
+
+      // Step 2: Handle profile picture removal if staged
+      if (isPictureRemovalStaged) {
+        const removeResponse = await fetch(`${API_BASE_URL}/users/profile/`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            profile_picture_url: null,
+          }),
+        });
+
+        if (!removeResponse.ok) {
+          const errorData = await removeResponse.json().catch(() => ({}));
+          throw new Error(errorData.detail || "Failed to remove profile picture");
+        }
+      }
+
+      // Step 3: Update other profile fields
       const updates: ProfileUpdatePayload = {};
 
-      if (name !== (originalProfile?.name || "")) {
-        updates.name = name.trim() || null;
+      if (formName !== (profile?.name || "")) {
+        updates.name = formName.trim() || null;
       }
 
-      if (campus !== (originalProfile?.campus || "")) {
-        updates.campus = campus.trim() || null;
+      if (formCampus !== (profile?.campus || "")) {
+        updates.campus = formCampus.trim() || null;
       }
 
-      const originalPhone = originalProfile?.contact_info?.phone || "";
-      if (phone !== originalPhone) {
+      const originalPhone = profile?.contact_info?.phone || "";
+      if (formPhone !== originalPhone) {
         if (!user?.email) {
           throw new Error("User email not available");
         }
         updates.contact_info = {
           email: user.email,
-          phone: phone.trim() || undefined,
+          phone: formPhone.trim() || undefined,
         };
       }
 
-      // If no changes, don't send request
-      if (Object.keys(updates).length === 0) {
-        toast.info("No changes to save");
-        setIsProfileLoading(false);
-        return;
+      // Update profile fields if there are changes
+      if (Object.keys(updates).length > 0) {
+        const response = await fetch(`${API_BASE_URL}/users/profile/`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updates),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.detail || "Failed to save profile");
+        }
       }
 
-      const response = await fetch(`${API_BASE_URL}/users/profile/`, {
-        method: "PATCH",
+      // Fetch updated profile to get latest data with fresh updated_at timestamp
+      const profileResponse = await fetch(`${API_BASE_URL}/users/profile/`, {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(updates),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || "Failed to save profile");
+      if (profileResponse.ok) {
+        const updatedProfile = await profileResponse.json();
+
+        // Update the React Query cache with fresh data from server
+        // This triggers all components using this query to re-render with new updated_at
+        queryClient.setQueryData(["profile", user?.id], updatedProfile);
+
+        // Update form fields to match the saved data
+        setFormName(updatedProfile.name || "");
+        setFormCampus(updatedProfile.campus || "");
+        setFormPhone(updatedProfile.contact_info?.phone || "");
       }
 
-      const updatedProfile = await response.json();
-      setOriginalProfile(updatedProfile);
+      // Clear staged changes
+      setPreviewUrl(null);
+      setStagedPictureFile(null);
+      setIsPictureRemovalStaged(false);
+
       toast.success("Profile saved successfully!", {
         style: {
           background: "rgb(20, 83, 45)",
@@ -225,29 +283,51 @@ export default function SettingsPage() {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to save profile";
-      toast.error(message);
+      toast.error(message, {
+        style: {
+          background: "rgb(153, 27, 27)",
+          color: "white",
+          border: "1px solid rgb(220, 38, 38)",
+        },
+      });
     } finally {
       setIsProfileLoading(false);
     }
   };
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
+      toast.error("Please select an image file", {
+        style: {
+          background: "rgb(153, 27, 27)",
+          color: "white",
+          border: "1px solid rgb(220, 38, 38)",
+        },
+      });
       e.target.value = ""; // Reset input
       return;
     }
 
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be smaller than 5MB");
+      toast.error("Image must be smaller than 5MB", {
+        style: {
+          background: "rgb(153, 27, 27)",
+          color: "white",
+          border: "1px solid rgb(220, 38, 38)",
+        },
+      });
       e.target.value = ""; // Reset input
       return;
     }
+
+    // Stage the file for upload (don't upload yet)
+    setStagedPictureFile(file);
+    setIsPictureRemovalStaged(false);
 
     // Create preview
     const reader = new FileReader();
@@ -256,103 +336,27 @@ export default function SettingsPage() {
     };
     reader.readAsDataURL(file);
 
-    // Automatically upload the file
-    await handlePictureUpload(file);
-
     // Reset input to allow uploading same file again
     e.target.value = "";
   };
 
-  const handlePictureUpload = async (file: File) => {
-    setIsPictureLoading(true);
-
-    try {
-      const token = getAuthToken();
-      if (!token) throw new Error("Not authenticated");
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch(`${API_BASE_URL}/users/profile/picture`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || "Failed to update profile picture");
-      }
-
-      const updatedProfile = await response.json();
-      setOriginalProfile(updatedProfile);
-
-      // Invalidate profile queries to sync across the app
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
-
-      toast.success("Profile picture updated successfully!", {
-        style: {
-          background: "rgb(20, 83, 45)",
-          color: "white",
-          border: "1px solid rgb(34, 197, 94)",
-        },
-      });
-
-      // Keep preview until page refreshes with new profile picture
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to update profile picture";
-      toast.error(message);
-    } finally {
-      setIsPictureLoading(false);
-    }
+  const handleStagePictureRemoval = () => {
+    // Stage removal (don't remove yet, wait for Save)
+    setIsPictureRemovalStaged(true);
+    setStagedPictureFile(null);
+    setPreviewUrl(null);
   };
 
-  const handleRemovePicture = async () => {
-    setIsPictureLoading(true);
-
-    try {
-      const token = getAuthToken();
-      if (!token) throw new Error("Not authenticated");
-
-      // Remove profile picture by updating profile with null picture_url
-      const response = await fetch(`${API_BASE_URL}/users/profile/`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          profile_picture_url: null,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || "Failed to remove profile picture");
-      }
-
-      const updatedProfile = await response.json();
-      setOriginalProfile(updatedProfile);
-      setPreviewUrl(null);
-
-      // Invalidate profile queries to sync across the app
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
-
-      toast.success("Profile picture removed successfully!", {
-        style: {
-          background: "rgb(20, 83, 45)",
-          color: "white",
-          border: "1px solid rgb(34, 197, 94)",
-        },
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to remove profile picture";
-      toast.error(message);
-    } finally {
-      setIsPictureLoading(false);
-    }
+  const handleCancelProfileChanges = () => {
+    // Reset all profile fields to original values
+    setFormName(profile?.name || "");
+    setFormCampus(profile?.campus || "");
+    setFormPhone(profile?.contact_info?.phone || "");
+    setStagedPictureFile(null);
+    setIsPictureRemovalStaged(false);
+    setPreviewUrl(null);
+    setPhoneError("");
+    setShowProfileCancelDialog(false);
   };
 
   const handleAccountUpdate = async (e: React.FormEvent) => {
@@ -386,8 +390,12 @@ export default function SettingsPage() {
       // Get updated user data from response
       const updatedUser = await response.json();
 
-      // Update stored user in localStorage
-      setStoredUser(updatedUser);
+      // Update AuthContext and localStorage
+      updateUser(updatedUser);
+
+      // Invalidate all queries that might display the username
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
 
       toast.success("Account updated successfully!", {
         style: {
@@ -396,9 +404,6 @@ export default function SettingsPage() {
           border: "1px solid rgb(34, 197, 94)",
         },
       });
-
-      // Reload the page to refresh all components with new username
-      window.location.reload();
     } catch (error) {
       // Reset username to original value on error
       setUsername(user?.username ?? "");
@@ -414,6 +419,12 @@ export default function SettingsPage() {
     } finally {
       setIsAccountLoading(false);
     }
+  };
+
+  const handleCancelAccountChanges = () => {
+    // Reset username to original value
+    setUsername(user?.username ?? "");
+    setShowAccountCancelDialog(false);
   };
 
   const handleDeleteAccount = async () => {
@@ -438,11 +449,23 @@ export default function SettingsPage() {
 
       // Log out and redirect to home
       logout();
-      toast.success("Account deleted successfully");
+      toast.success("Account deleted successfully", {
+        style: {
+          background: "rgb(20, 83, 45)",
+          color: "white",
+          border: "1px solid rgb(34, 197, 94)",
+        },
+      });
       router.push("/");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to delete account";
-      toast.error(message);
+      toast.error(message, {
+        style: {
+          background: "rgb(153, 27, 27)",
+          color: "white",
+          border: "1px solid rgb(220, 38, 38)",
+        },
+      });
       setIsDeleting(false);
     }
   };
@@ -452,22 +475,46 @@ export default function SettingsPage() {
 
     // Validation
     if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error("All password fields are required");
+      toast.error("All password fields are required", {
+        style: {
+          background: "rgb(153, 27, 27)",
+          color: "white",
+          border: "1px solid rgb(220, 38, 38)",
+        },
+      });
       return;
     }
 
     if (newPassword.length < 8) {
-      toast.error("New password must be at least 8 characters");
+      toast.error("New password must be at least 8 characters", {
+        style: {
+          background: "rgb(153, 27, 27)",
+          color: "white",
+          border: "1px solid rgb(220, 38, 38)",
+        },
+      });
       return;
     }
 
     if (newPassword === currentPassword) {
-      toast.error("New password must be different from current password");
+      toast.error("New password must be different from current password", {
+        style: {
+          background: "rgb(153, 27, 27)",
+          color: "white",
+          border: "1px solid rgb(220, 38, 38)",
+        },
+      });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      toast.error("New passwords do not match");
+      toast.error("New passwords do not match", {
+        style: {
+          background: "rgb(153, 27, 27)",
+          color: "white",
+          border: "1px solid rgb(220, 38, 38)",
+        },
+      });
       return;
     }
 
@@ -595,12 +642,25 @@ export default function SettingsPage() {
                       <div className="flex items-center gap-4">
                         <div className="relative">
                           <div className="w-16 h-16 bg-gradient-to-br from-purple-500/20 to-purple-600/20 border-2 border-purple-500/30 rounded-full flex items-center justify-center overflow-hidden relative group">
-                            {previewUrl || originalProfile?.profile_picture_url ? (
+                            {isPictureRemovalStaged ? (
+                              <span className="text-xl font-bold text-purple-300">
+                                {user?.username?.substring(0, 2).toUpperCase() || "??"}
+                              </span>
+                            ) : previewUrl ? (
+                              <Image
+                                src={previewUrl}
+                                alt="Profile Preview"
+                                fill
+                                sizes="64px"
+                                className="object-cover"
+                              />
+                            ) : profile?.profile_picture_url ? (
                               <Image
                                 src={
-                                  previewUrl ||
-                                  getProfilePictureUrl(originalProfile?.profile_picture_url) ||
-                                  ""
+                                  getProfilePictureUrl(
+                                    profile.profile_picture_url,
+                                    profile.updated_at
+                                  ) || ""
                                 }
                                 alt="Profile"
                                 fill
@@ -620,36 +680,37 @@ export default function SettingsPage() {
                             type="file"
                             accept="image/*"
                             onChange={handleFileSelect}
-                            disabled={isPictureLoading}
+                            disabled={isProfileLoading}
                             className="hidden"
                           />
                           <label htmlFor="profilePictureFile">
                             <Button
                               type="button"
                               asChild
-                              disabled={isPictureLoading}
+                              disabled={isProfileLoading}
                               size="sm"
-                              className="bg-purple-600 hover:bg-purple-700 cursor-pointer"
+                              className="bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
                             >
                               <span>
                                 <Upload className="w-4 h-4 mr-2" />
-                                {isPictureLoading ? "Uploading..." : "Upload"}
+                                {stagedPictureFile ? "Change" : "Upload"}
                               </span>
                             </Button>
                           </label>
-                          {(previewUrl || originalProfile?.profile_picture_url) && (
-                            <Button
-                              type="button"
-                              onClick={handleRemovePicture}
-                              disabled={isPictureLoading}
-                              size="sm"
-                              variant="outline"
-                              className="border-red-900/50 text-red-400 hover:bg-red-900/20 hover:text-red-300"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Remove
-                            </Button>
-                          )}
+                          {(profile?.profile_picture_url || previewUrl) &&
+                            !isPictureRemovalStaged && (
+                              <Button
+                                type="button"
+                                onClick={handleStagePictureRemoval}
+                                disabled={isProfileLoading}
+                                size="sm"
+                                variant="outline"
+                                className="border-red-900/50 text-red-400 hover:bg-red-900/20 hover:text-red-300"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Remove
+                              </Button>
+                            )}
                         </div>
                       </div>
                     </div>
@@ -663,8 +724,8 @@ export default function SettingsPage() {
                           id="name"
                           type="text"
                           placeholder="John Doe"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
+                          value={formName}
+                          onChange={(e) => setFormName(e.target.value)}
                           disabled={isProfileLoading}
                           className="bg-gray-950 border-gray-700 text-white text-base placeholder:text-gray-600"
                         />
@@ -678,8 +739,8 @@ export default function SettingsPage() {
                           id="campus"
                           type="text"
                           placeholder="San Diego State University"
-                          value={campus}
-                          onChange={(e) => setCampus(e.target.value)}
+                          value={formCampus}
+                          onChange={(e) => setFormCampus(e.target.value)}
                           disabled={isProfileLoading}
                           className="bg-gray-950 border-gray-700 text-white text-base placeholder:text-gray-600"
                         />
@@ -694,7 +755,7 @@ export default function SettingsPage() {
                           id="phone"
                           type="tel"
                           placeholder="(555) 123-4567"
-                          value={phone}
+                          value={formPhone}
                           onChange={handlePhoneChange}
                           disabled={isProfileLoading}
                           className={`bg-gray-950 border-gray-700 text-white text-base placeholder:text-gray-600 ${
@@ -707,14 +768,56 @@ export default function SettingsPage() {
                         </p>
                       </div>
 
-                      <Button
-                        type="submit"
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={isProfileLoading || !hasProfileChanges || !isFormValid}
-                      >
-                        {isProfileLoading ? "Saving..." : "Save Profile"}
-                      </Button>
+                      <div className="flex gap-3">
+                        <Button
+                          type="submit"
+                          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={isProfileLoading || !hasProfileChanges || !isFormValid}
+                        >
+                          {isProfileLoading ? "Saving..." : "Save Profile"}
+                        </Button>
+                        {hasProfileChanges && (
+                          <Button
+                            type="button"
+                            onClick={() => setShowProfileCancelDialog(true)}
+                            disabled={isProfileLoading}
+                            variant="outline"
+                            className="flex-1 border-red-900/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 text-base sm:text-lg"
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                      </div>
                     </form>
+
+                    {/* Profile Cancel Dialog */}
+                    <AlertDialog
+                      open={showProfileCancelDialog}
+                      onOpenChange={setShowProfileCancelDialog}
+                    >
+                      <AlertDialogContent className="bg-gray-900 border-gray-800">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="text-white">
+                            Discard Changes?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription className="text-gray-400">
+                            Are you sure you want to discard your changes? This action cannot be
+                            undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-700">
+                            Keep Editing
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleCancelProfileChanges}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                          >
+                            Discard Changes
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </>
                 )}
               </CardContent>
@@ -762,14 +865,53 @@ export default function SettingsPage() {
                     </p>
                   </div>
 
-                  <Button
-                    type="submit"
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={isAccountLoading || !hasAccountChanges}
-                  >
-                    {isAccountLoading ? "Updating..." : "Update Account"}
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button
+                      type="submit"
+                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isAccountLoading || !hasAccountChanges}
+                    >
+                      {isAccountLoading ? "Updating..." : "Update Account"}
+                    </Button>
+                    {hasAccountChanges && (
+                      <Button
+                        type="button"
+                        onClick={() => setShowAccountCancelDialog(true)}
+                        disabled={isAccountLoading}
+                        variant="outline"
+                        className="flex-1 border-red-900/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 text-base sm:text-lg"
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
                 </form>
+
+                {/* Account Cancel Dialog */}
+                <AlertDialog
+                  open={showAccountCancelDialog}
+                  onOpenChange={setShowAccountCancelDialog}
+                >
+                  <AlertDialogContent className="bg-gray-900 border-gray-800">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-white">Discard Changes?</AlertDialogTitle>
+                      <AlertDialogDescription className="text-gray-400">
+                        Are you sure you want to discard your changes? This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-700">
+                        Keep Editing
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleCancelAccountChanges}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        Discard Changes
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </CardContent>
             </Card>
 
@@ -890,7 +1032,7 @@ export default function SettingsPage() {
 
                   <Button
                     type="submit"
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={
                       isPasswordLoading || !currentPassword || !newPassword || !confirmPassword
                     }

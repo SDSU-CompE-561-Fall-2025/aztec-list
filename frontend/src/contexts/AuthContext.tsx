@@ -106,6 +106,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/");
   };
 
+  const updateUser = (updatedUser: User): void => {
+    setStoredUser(updatedUser);
+    notifyAuthListeners();
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
@@ -113,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     signup,
     logout,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
