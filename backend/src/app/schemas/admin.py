@@ -51,7 +51,7 @@ class AdminActionPublic(BaseModel):
 class AdminActionStrike(BaseModel):
     """Schema for adding a strike (convenience wrapper)."""
 
-    reason: str | None = Field(None, max_length=255, description="Brief explanation for strike")
+    reason: str = Field(..., max_length=255, description="Brief explanation for strike")
 
 
 class AdminActionStrikeResponse(BaseModel):
@@ -67,13 +67,13 @@ class AdminActionStrikeResponse(BaseModel):
 class AdminActionBan(BaseModel):
     """Schema for banning a user (convenience wrapper)."""
 
-    reason: str | None = Field(None, max_length=255, description="Brief explanation for ban")
+    reason: str = Field(..., max_length=255, description="Brief explanation for ban")
 
 
 class AdminListingRemoval(BaseModel):
     """Schema for removing a listing (convenience wrapper)."""
 
-    reason: str | None = Field(None, max_length=255, description="Brief explanation for removal")
+    reason: str = Field(..., max_length=255, description="Brief explanation for removal")
 
 
 class AdminListingRestore(BaseModel):

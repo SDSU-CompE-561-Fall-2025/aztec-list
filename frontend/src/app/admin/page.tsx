@@ -538,7 +538,7 @@ export default function AdminDashboard() {
                       setStrikeErrors((prev) => ({ ...prev, userId: "User ID is required" }));
                     }
                   }}
-                  className={`bg-gray-950 border-gray-700 text-white placeholder:text-gray-500 ${
+                  className={`border-gray-700 text-white placeholder:text-gray-500 ${
                     strikeErrors.userId ? "border-red-500" : ""
                   }`}
                   placeholder="Enter user UUID"
@@ -566,7 +566,7 @@ export default function AdminDashboard() {
                       setStrikeErrors((prev) => ({ ...prev, reason: "Reason is required" }));
                     }
                   }}
-                  className={`bg-gray-950 border-gray-700 text-white placeholder:text-gray-500 resize-none ${
+                  className={`bg-gray-900 border-gray-700 text-white placeholder:text-gray-500 resize-none ${
                     strikeErrors.reason ? "border-red-500" : ""
                   }`}
                   rows={3}
@@ -643,7 +643,7 @@ export default function AdminDashboard() {
                       setBanErrors((prev) => ({ ...prev, userId: "User ID is required" }));
                     }
                   }}
-                  className={`bg-gray-950 border-gray-700 text-white placeholder:text-gray-500 ${
+                  className={`border-gray-700 text-white placeholder:text-gray-500 ${
                     banErrors.userId ? "border-red-500" : ""
                   }`}
                   placeholder="Enter user UUID"
@@ -671,7 +671,7 @@ export default function AdminDashboard() {
                       setBanErrors((prev) => ({ ...prev, reason: "Reason is required" }));
                     }
                   }}
-                  className={`bg-gray-950 border-gray-700 text-white placeholder:text-gray-500 resize-none ${
+                  className={`bg-gray-900 border-gray-700 text-white placeholder:text-gray-500 resize-none ${
                     banErrors.reason ? "border-red-500" : ""
                   }`}
                   rows={3}
@@ -751,7 +751,7 @@ export default function AdminDashboard() {
                       setRemoveErrors((prev) => ({ ...prev, listingId: "Listing ID is required" }));
                     }
                   }}
-                  className={`bg-gray-950 border-gray-700 text-white placeholder:text-gray-500 ${
+                  className={`border-gray-700 text-white placeholder:text-gray-500 ${
                     removeErrors.listingId ? "border-red-500" : ""
                   }`}
                   placeholder="Enter listing UUID"
@@ -779,7 +779,7 @@ export default function AdminDashboard() {
                       setRemoveErrors((prev) => ({ ...prev, reason: "Reason is required" }));
                     }
                   }}
-                  className={`bg-gray-950 border-gray-700 text-white placeholder:text-gray-500 resize-none ${
+                  className={`bg-gray-900 border-gray-700 text-white placeholder:text-gray-500 resize-none ${
                     removeErrors.reason ? "border-red-500" : ""
                   }`}
                   rows={3}

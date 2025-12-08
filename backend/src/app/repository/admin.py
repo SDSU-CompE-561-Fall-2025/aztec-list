@@ -277,7 +277,7 @@ class AdminActionRepository:
     @staticmethod
     def create(db: Session, admin_id: uuid.UUID, action: AdminActionCreate) -> AdminAction:
         """
-        Create a new admin action.
+        Create a new admin action and commit immediately.
 
         Args:
             db: Database session
@@ -301,9 +301,37 @@ class AdminActionRepository:
         return db_action
 
     @staticmethod
+    def create_no_commit(
+        db: Session, admin_id: uuid.UUID, action: AdminActionCreate
+    ) -> AdminAction:
+        """
+        Create a new admin action without committing (for transactional operations).
+
+        Args:
+            db: Database session
+            admin_id: Admin user ID performing the action
+            action: Admin action creation data
+
+        Returns:
+            AdminAction: Created admin action (not yet committed)
+        """
+        db_action = AdminAction(
+            admin_id=admin_id,
+            target_user_id=action.target_user_id,
+            action_type=action.action_type.value,
+            reason=action.reason,
+            target_listing_id=action.target_listing_id,
+            expires_at=action.expires_at,
+        )
+        db.add(db_action)
+        db.flush()  # Assign ID but don't commit
+        db.refresh(db_action)
+        return db_action
+
+    @staticmethod
     def delete(db: Session, db_action: AdminAction) -> None:
         """
-        Delete admin action (revoke).
+        Delete admin action (revoke) and commit immediately.
 
         Args:
             db: Database session
@@ -311,3 +339,15 @@ class AdminActionRepository:
         """
         db.delete(db_action)
         db.commit()
+
+    @staticmethod
+    def delete_no_commit(db: Session, db_action: AdminAction) -> None:
+        """
+        Delete admin action without committing (for transactional operations).
+
+        Args:
+            db: Database session
+            db_action: Admin action instance to delete
+        """
+        db.delete(db_action)
+        db.flush()

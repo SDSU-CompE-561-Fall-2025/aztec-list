@@ -188,6 +188,7 @@ class AdminActionService:
 
         Automatically issues a permanent ban if user reaches strike threshold.
         Prevents admins from striking other admins and already banned users.
+        All operations performed in a single transaction.
 
         Args:
             db: Database session
@@ -212,25 +213,28 @@ class AdminActionService:
             expires_at=None,
         )
 
-        # Note: Repository create() handles db.commit(), so these operations are
-        # already in separate transactions. This is acceptable for this use case
-        # as the strike should be recorded even if auto-ban fails.
-        created_strike = AdminActionRepository.create(db, admin_id, action)
+        try:
+            created_strike = AdminActionRepository.create_no_commit(db, admin_id, action)
 
-        strike_count = AdminActionRepository.count_strikes(db, target_user_id)
-        auto_ban_triggered = False
-        if strike_count >= settings.moderation.strike_auto_ban_threshold:
-            ban_action = AdminActionCreate(
-                target_user_id=target_user_id,
-                action_type=AdminActionType.BAN,
-                reason=f"Automatic permanent ban: {strike_count} strikes accumulated. Latest: {strike.reason or 'Policy violation'}",
-                target_listing_id=None,
-                expires_at=None,
-            )
-            AdminActionRepository.create(db, admin_id, ban_action)
-            auto_ban_triggered = True
+            strike_count = AdminActionRepository.count_strikes(db, target_user_id)
+            auto_ban_triggered = False
+            if strike_count >= settings.moderation.strike_auto_ban_threshold:
+                ban_action = AdminActionCreate(
+                    target_user_id=target_user_id,
+                    action_type=AdminActionType.BAN,
+                    reason=f"Automatic permanent ban: {strike_count} strikes accumulated. Latest: {strike.reason or 'Policy violation'}",
+                    target_listing_id=None,
+                    expires_at=None,
+                )
+                AdminActionRepository.create_no_commit(db, admin_id, ban_action)
+                auto_ban_triggered = True
+            db.commit()
 
-        return created_strike, strike_count, auto_ban_triggered
+        except Exception:
+            db.rollback()
+            raise
+        else:
+            return created_strike, strike_count, auto_ban_triggered
 
     def create_ban(
         self, db: Session, admin_id: uuid.UUID, target_user_id: uuid.UUID, ban: AdminActionBan
@@ -272,7 +276,7 @@ class AdminActionService:
         Prevents self-unbanning and maintains audit integrity.
 
         When revoking an auto-ban (from 3 strikes), also removes the most recent strike
-        to prevent immediate re-banning.
+        to prevent immediate re-banning. All operations performed in a single transaction.
 
         Args:
             db: Database session
@@ -295,24 +299,29 @@ class AdminActionService:
                 detail="Cannot revoke actions targeting yourself. Contact another admin.",
             )
 
-        # If revoking an auto-ban from 3 strikes, remove one strike as well
-        is_auto_ban = (
-            action.action_type == AdminActionType.BAN
-            and action.reason
-            and "Automatic permanent ban" in action.reason
-            and "strikes accumulated" in action.reason
-        )
+        try:
+            is_auto_ban = (
+                action.action_type == AdminActionType.BAN
+                and action.reason
+                and "Automatic permanent ban" in action.reason
+                and "strikes accumulated" in action.reason
+            )
 
-        if is_auto_ban and action.target_user_id:
-            # Get most recent strike for this user
-            user_actions = AdminActionRepository.get_by_target_user_id(db, action.target_user_id)
-            strikes = [a for a in user_actions if a.action_type == AdminActionType.STRIKE]
-            if strikes:
-                # Delete the most recent strike (already sorted by created_at desc)
-                most_recent_strike = strikes[0]
-                AdminActionRepository.delete(db, most_recent_strike)
+            if is_auto_ban and action.target_user_id:
+                user_actions = AdminActionRepository.get_by_target_user_id(
+                    db, action.target_user_id
+                )
+                strikes = [a for a in user_actions if a.action_type == AdminActionType.STRIKE]
+                if strikes:
+                    most_recent_strike = strikes[0]
+                    AdminActionRepository.delete_no_commit(db, most_recent_strike)
 
-        AdminActionRepository.delete(db, action)
+            AdminActionRepository.delete_no_commit(db, action)
+            db.commit()
+
+        except Exception:
+            db.rollback()
+            raise
 
     def remove_listing_with_strike(
         self,
@@ -330,6 +339,7 @@ class AdminActionService:
            - If not banned, strike may trigger auto-ban if threshold reached
            - If already banned, skip strike (cleanup without additional penalty)
         3. Hard delete the listing from database
+        4. All database operations are performed in a single transaction
 
         Args:
             db: Database session
@@ -352,7 +362,6 @@ class AdminActionService:
 
         seller_id = listing.seller_id
 
-        # Check if the listing owner is an admin
         seller = UserRepository.get_by_id(db, seller_id)
         if seller and seller.role == UserRole.ADMIN:
             raise HTTPException(
@@ -360,34 +369,47 @@ class AdminActionService:
                 detail="Cannot remove a listing posted by an admin",
             )
 
-        # Check if user is already banned - issue strike only if not banned
-        is_already_banned = AdminActionRepository.has_active_ban(db, seller_id) is not None
+        try:
+            ListingRepository.delete_no_commit(db, listing)
 
-        # Delete the listing and its images first
-        ListingRepository.delete(db, listing)
-        delete_listing_images(listing_id)
-
-        # Create LISTING_REMOVAL audit record regardless of ban status
-        removal_action = AdminActionCreate(
-            target_user_id=seller_id,
-            action_type=AdminActionType.LISTING_REMOVAL,
-            reason=reason or "Policy violation",
-            target_listing_id=listing_id,
-            expires_at=None,
-        )
-        removal_record = AdminActionRepository.create(db, admin_id, removal_action)
-
-        # Issue strike only if user is not already banned
-        if not is_already_banned:
-            _, _, _ = self.create_strike(
-                db=db,
-                admin_id=admin_id,
+            removal_action = AdminActionCreate(
                 target_user_id=seller_id,
-                strike=AdminActionStrike(reason=f"Listing removed: {reason or 'Policy violation'}"),
+                action_type=AdminActionType.LISTING_REMOVAL,
+                reason=reason or "Policy violation",
+                target_listing_id=listing_id,
+                expires_at=None,
             )
+            removal_record = AdminActionRepository.create_no_commit(db, admin_id, removal_action)
 
-        # Return the LISTING_REMOVAL audit record for API response
-        return removal_record
+            if AdminActionRepository.has_active_ban(db, seller_id) is None:
+                strike_action = AdminActionCreate(
+                    target_user_id=seller_id,
+                    action_type=AdminActionType.STRIKE,
+                    reason=f"Listing removed: {reason or 'Policy violation'}",
+                    target_listing_id=None,
+                    expires_at=None,
+                )
+                AdminActionRepository.create_no_commit(db, admin_id, strike_action)
+
+                strike_count = AdminActionRepository.count_strikes(db, seller_id)
+                if strike_count >= settings.moderation.strike_auto_ban_threshold:
+                    ban_action = AdminActionCreate(
+                        target_user_id=seller_id,
+                        action_type=AdminActionType.BAN,
+                        reason=f"Automatic permanent ban: {strike_count} strikes accumulated. Latest: {reason or 'Policy violation'}",
+                        target_listing_id=None,
+                        expires_at=None,
+                    )
+                    AdminActionRepository.create_no_commit(db, admin_id, ban_action)
+            db.commit()
+
+        except Exception:
+            db.rollback()
+            raise
+        else:
+            delete_listing_images(listing_id)
+
+            return removal_record
 
 
 # Create a singleton instance
