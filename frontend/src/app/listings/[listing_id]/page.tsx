@@ -271,8 +271,17 @@ export default function ListingDetailPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-gray-100 text-base font-medium truncate">
-                    {seller?.username ?? "Loading..."}
+                    {sellerProfile?.name || seller?.username || "Loading..."}
                   </p>
+                  {seller?.created_at && (
+                    <p className="text-gray-400 text-xs">
+                      Joined{" "}
+                      {new Date(seller.created_at).toLocaleDateString("en-US", {
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                  )}
                   <span className="text-purple-300 text-sm group-hover:text-purple-200 transition-colors">
                     View profile →
                   </span>
@@ -404,26 +413,26 @@ export default function ListingDetailPage() {
 
         {/* Contact Dialog */}
         <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
-          <DialogContent className="bg-gray-900 border-gray-800 sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle className="text-white text-2xl">Contact Seller</DialogTitle>
-              <DialogDescription className="text-gray-400 text-base">
+          <DialogContent className="bg-gray-900 border-gray-800 sm:max-w-md max-w-[calc(100vw-2rem)] p-4 sm:p-6">
+            <DialogHeader className="space-y-1.5">
+              <DialogTitle className="text-white text-lg sm:text-xl">Contact Seller</DialogTitle>
+              <DialogDescription className="text-gray-400 text-xs sm:text-sm">
                 Choose how you&apos;d like to contact {seller?.username}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-3 pt-6 pb-2">
+            <div className="space-y-2 pt-3 sm:pt-4 pb-1 sm:pb-2">
               {/* Email Option */}
               <a
                 href={`mailto:${seller?.email}?subject=${encodeURIComponent(`Interested in: ${listing.title}`)}&body=${encodeURIComponent(`Hi ${seller?.username},\n\nI'm interested in your listing "${listing.title}" on AztecList.\n\n`)}`}
-                className="flex items-center gap-4 p-5 rounded-lg bg-gray-800/50 hover:bg-gray-800 border border-gray-700 hover:border-purple-500/50 transition-all group"
+                className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-lg bg-gray-800/50 hover:bg-gray-800 border border-gray-700 hover:border-purple-500/50 transition-all group"
                 onClick={() => setShowContactDialog(false)}
               >
-                <div className="w-14 h-14 bg-purple-500/10 rounded-full flex items-center justify-center border border-purple-500/20">
-                  <Mail className="w-7 h-7 text-purple-400" />
+                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-purple-500/10 rounded-full flex items-center justify-center border border-purple-500/20 shrink-0">
+                  <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-semibold text-lg mb-1">Send Email</p>
-                  <p className="text-gray-400 text-sm truncate">{seller?.email}</p>
+                  <p className="text-white font-semibold text-sm sm:text-base mb-0.5">Send Email</p>
+                  <p className="text-gray-400 text-xs truncate">{seller?.email}</p>
                 </div>
               </a>
 
@@ -431,15 +440,15 @@ export default function ListingDetailPage() {
               {sellerProfile?.contact_info?.phone && (
                 <a
                   href={`tel:${sellerProfile.contact_info.phone.replace(/\D/g, "")}`}
-                  className="flex items-center gap-4 p-5 rounded-lg bg-gray-800/50 hover:bg-gray-800 border border-gray-700 hover:border-green-500/50 transition-all group"
+                  className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-lg bg-gray-800/50 hover:bg-gray-800 border border-gray-700 hover:border-green-500/50 transition-all group"
                   onClick={() => setShowContactDialog(false)}
                 >
-                  <div className="w-14 h-14 bg-green-500/10 rounded-full flex items-center justify-center border border-green-500/20">
-                    <Phone className="w-7 h-7 text-green-400" />
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 bg-green-500/10 rounded-full flex items-center justify-center border border-green-500/20 shrink-0">
+                    <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-semibold text-lg mb-1">Call</p>
-                    <p className="text-gray-400 text-sm">{sellerProfile.contact_info.phone}</p>
+                    <p className="text-white font-semibold text-sm sm:text-base mb-0.5">Call</p>
+                    <p className="text-gray-400 text-xs">{sellerProfile.contact_info.phone}</p>
                   </div>
                 </a>
               )}
