@@ -2,13 +2,32 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, User } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ChevronLeft, User, Mail, Phone } from "lucide-react";
+import { cn, getConditionColor } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import { createListingDetailQueryOptions } from "@/queryOptions/createListingDetailQueryOptions";
-import { STATIC_BASE_URL } from "@/lib/constants";
+import { createUserQueryOptions } from "@/queryOptions/createUserQueryOptions";
+import { STATIC_BASE_URL, API_BASE_URL } from "@/lib/constants";
 import { Category } from "@/types/listing/filters/category";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+// Helper function to build full URL for profile picture
+const getProfilePictureUrl = (path: string | null | undefined): string | null => {
+  if (!path) return null;
+  const timestamp = Date.now();
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return `${path}?t=${timestamp}`;
+  }
+  return `${STATIC_BASE_URL}${path}?t=${timestamp}`;
+};
 
 const CONDITION_LABELS = {
   new: "New",
@@ -54,7 +73,30 @@ export default function ListingDetailPage() {
 
   const { data: listing, isLoading, error } = useQuery(createListingDetailQueryOptions(listingId));
 
+  // Fetch seller information
+  const { data: seller } = useQuery({
+    ...createUserQueryOptions(listing?.seller_id ?? ""),
+    enabled: !!listing?.seller_id,
+  });
+
+  // Fetch seller's profile for contact info
+  const { data: sellerProfile } = useQuery({
+    queryKey: ["profile", listing?.seller_id],
+    queryFn: async () => {
+      if (!listing?.seller_id) return null;
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/${listing.seller_id}/profile`);
+        if (!response.ok) return null;
+        return response.json();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!listing?.seller_id,
+  });
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showContactDialog, setShowContactDialog] = useState(false);
 
   const galleryImages = useMemo<GalleryImage[]>(() => {
     if (!listing) {
@@ -187,23 +229,23 @@ export default function ListingDetailPage() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
           <section className="order-2 md:order-2 md:col-span-5 space-y-6">
             <div className="space-y-3">
-              <p className="text-4xl font-bold text-white tracking-tight">
+              <p className="text-3xl font-bold text-white tracking-tight">
                 {formatPrice(Number(listing.price))}
               </p>
-              <h1 className="text-3xl font-semibold text-white leading-tight">{listing.title}</h1>
+              <h1 className="text-2xl font-semibold text-white leading-tight">{listing.title}</h1>
               <div className="flex flex-wrap gap-3">
-                <span className="inline-flex items-center px-4 py-1.5 bg-purple-500/10 text-purple-200 text-sm font-semibold rounded-full border border-purple-500/30">
+                <span className="inline-flex items-center px-3 py-1 bg-purple-500/10 text-purple-200 text-xs font-semibold rounded-full border border-purple-500/30">
                   {formatCategory(listing.category)}
                 </span>
                 {!listing.is_active && (
-                  <span className="inline-flex items-center px-4 py-1.5 bg-gray-800 text-gray-300 text-sm font-medium rounded-full border border-gray-700">
+                  <span className="inline-flex items-center px-3 py-1 bg-gray-800 text-gray-300 text-xs font-medium rounded-full border border-gray-700">
                     Inactive
                   </span>
                 )}
               </div>
             </div>
 
-            <div className="text-base text-gray-400 space-y-1">
+            <div className="text-sm text-gray-400 space-y-1">
               <p>Posted {formatDate(listing.created_at)}</p>
               {isUpdated && <p>Updated {formatDate(listing.updated_at)}</p>}
             </div>
@@ -212,15 +254,34 @@ export default function ListingDetailPage() {
               <p className="text-sm font-semibold text-gray-500 tracking-widest">Seller</p>
               <button
                 onClick={() => router.push(`/profile/${listing.seller_id}`)}
-                className="flex items-center gap-3 w-full rounded-lg p-2 transition-colors hover:bg-gray-800/40 group text-left"
+                className="flex items-center gap-3 w-full rounded-lg p-2 group text-left cursor-pointer"
               >
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20">
-                  <User className="w-6 h-6 text-purple-300" />
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20 overflow-hidden relative">
+                  {sellerProfile?.profile_picture_url ? (
+                    <Image
+                      src={getProfilePictureUrl(sellerProfile.profile_picture_url) || ""}
+                      alt={seller?.username || "Seller"}
+                      fill
+                      sizes="48px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <User className="w-6 h-6 text-purple-300" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-gray-100 text-base font-medium truncate">
-                    Seller ID: {listing.seller_id}
+                    {sellerProfile?.name || seller?.username || "Loading..."}
                   </p>
+                  {seller?.created_at && (
+                    <p className="text-gray-400 text-xs">
+                      Joined{" "}
+                      {new Date(seller.created_at).toLocaleDateString("en-US", {
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                  )}
                   <span className="text-purple-300 text-sm group-hover:text-purple-200 transition-colors">
                     View profile →
                   </span>
@@ -229,10 +290,11 @@ export default function ListingDetailPage() {
             </div>
 
             <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/60 rounded-xl p-5 space-y-3">
-              <h3 className="text-xl font-semibold text-white">Contact</h3>
+              <h3 className="text-lg font-semibold text-white">Contact</h3>
               <Button
                 size="lg"
-                className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-semibold text-base"
+                onClick={() => setShowContactDialog(true)}
+                className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-semibold"
               >
                 Contact Seller
               </Button>
@@ -248,14 +310,21 @@ export default function ListingDetailPage() {
                       key={image.id}
                       onClick={() => setCurrentImageIndex(index)}
                       className={cn(
-                        "w-24 h-24 bg-gray-900 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0",
+                        "w-24 h-24 bg-gray-900 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer",
                         boundedImageIndex === index
                           ? "border-purple-500 ring-2 ring-purple-500/20"
                           : "border-gray-800 hover:border-gray-700 opacity-60 hover:opacity-100"
                       )}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={image.url} alt={image.alt} className="h-full w-full object-cover" />
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={image.url}
+                          alt={image.alt}
+                          fill
+                          sizes="96px"
+                          className="object-cover"
+                        />
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -271,11 +340,13 @@ export default function ListingDetailPage() {
                 <div className="relative w-full h-full">
                   {activeImage ? (
                     <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                      <Image
                         src={activeImage.url}
                         alt={activeImage.alt}
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 720px"
+                        className="object-cover"
+                        priority
                       />
 
                       {hasMultipleImages && (
@@ -297,20 +368,22 @@ export default function ListingDetailPage() {
             </div>
 
             {/* Desktop: Description/Condition below images */}
-            <div className="hidden md:block space-y-8">
-              <div className="space-y-3">
-                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
+            <div className="hidden md:block space-y-6">
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                   Description
                 </p>
-                <p className="text-gray-200 text-lg leading-relaxed whitespace-pre-wrap">
+                <p className="text-gray-200 text-base leading-relaxed whitespace-pre-wrap">
                   {descriptionText}
                 </p>
               </div>
-              <div className="space-y-3">
-                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                   Condition
                 </p>
-                <span className="inline-flex items-center px-4 py-2 bg-gray-800/50 text-gray-100 rounded-lg text-lg font-medium">
+                <span
+                  className={`inline-flex items-center px-3 py-1.5 bg-gray-800/50 rounded-lg text-sm font-medium ${getConditionColor(listing.condition)}`}
+                >
                   {CONDITION_LABELS[listing.condition]}
                 </span>
               </div>
@@ -329,12 +402,59 @@ export default function ListingDetailPage() {
             </div>
             <div className="space-y-3">
               <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Condition</p>
-              <span className="inline-flex items-center px-4 py-2 bg-gray-800/50 text-gray-100 rounded-lg text-lg font-medium">
+              <span
+                className={`inline-flex items-center px-4 py-2 bg-gray-800/50 rounded-lg text-lg font-medium ${getConditionColor(listing.condition)}`}
+              >
                 {CONDITION_LABELS[listing.condition]}
               </span>
             </div>
           </div>
         </div>
+
+        {/* Contact Dialog */}
+        <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
+          <DialogContent className="bg-gray-900 border-gray-800 sm:max-w-md max-w-[calc(100vw-2rem)] p-4 sm:p-6">
+            <DialogHeader className="space-y-1.5">
+              <DialogTitle className="text-white text-lg sm:text-xl">Contact Seller</DialogTitle>
+              <DialogDescription className="text-gray-400 text-xs sm:text-sm">
+                Choose how you&apos;d like to contact {seller?.username}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2 pt-3 sm:pt-4 pb-1 sm:pb-2">
+              {/* Email Option */}
+              <a
+                href={`mailto:${seller?.email}?subject=${encodeURIComponent(`Interested in: ${listing.title}`)}&body=${encodeURIComponent(`Hi ${seller?.username},\n\nI'm interested in your listing "${listing.title}" on AztecList.\n\n`)}`}
+                className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-lg bg-gray-800/50 hover:bg-gray-800 border border-gray-700 hover:border-purple-500/50 transition-all group"
+                onClick={() => setShowContactDialog(false)}
+              >
+                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-purple-500/10 rounded-full flex items-center justify-center border border-purple-500/20 shrink-0">
+                  <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-semibold text-sm sm:text-base mb-0.5">Send Email</p>
+                  <p className="text-gray-400 text-xs truncate">{seller?.email}</p>
+                </div>
+              </a>
+
+              {/* Phone Option - Only show if available */}
+              {sellerProfile?.contact_info?.phone && (
+                <a
+                  href={`tel:${sellerProfile.contact_info.phone.replace(/\D/g, "")}`}
+                  className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-lg bg-gray-800/50 hover:bg-gray-800 border border-gray-700 hover:border-green-500/50 transition-all group"
+                  onClick={() => setShowContactDialog(false)}
+                >
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 bg-green-500/10 rounded-full flex items-center justify-center border border-green-500/20 shrink-0">
+                    <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-semibold text-sm sm:text-base mb-0.5">Call</p>
+                    <p className="text-gray-400 text-xs">{sellerProfile.contact_info.phone}</p>
+                  </div>
+                </a>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

@@ -8,7 +8,7 @@ import { getAuthToken } from "@/lib/auth";
 export const getListings = async (params: ListingsParams = {}): Promise<ListingSearchResponse> => {
   const { q, category, minPrice, maxPrice, condition, sellerId, limit, offset, sort } = params;
 
-  const url = new URL(`${API_BASE_URL}/listings`);
+  const url = new URL(`${API_BASE_URL}/listings/`);
 
   // Match FastAPI parameter names 1:1
   if (q) url.searchParams.set("search_text", q);

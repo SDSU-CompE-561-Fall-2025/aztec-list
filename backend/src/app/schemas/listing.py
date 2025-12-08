@@ -19,7 +19,13 @@ class ListingBase(BaseModel):
 
     title: str = Field(..., min_length=1, max_length=200, description="Short name of the item")
     description: str = Field(..., min_length=1, description="Detailed description of the item")
-    price: Decimal = Field(..., ge=0, decimal_places=2, description="Price in USD, must be >= 0")
+    price: Decimal = Field(
+        ...,
+        ge=0,
+        le=99999999.99,
+        decimal_places=2,
+        description="Price in USD, must be between $0 and $99,999,999.99",
+    )
     category: Category = Field(..., description="Category of the item")
     condition: Condition = Field(..., description="Item condition")
 
@@ -60,7 +66,9 @@ class ListingSearchResponse(BaseModel):
     next_cursor: str | None = Field(
         None, description="Cursor for next page (null for offset pagination)"
     )
-    count: int = Field(..., description="Number of items in current response")
+    count: int = Field(
+        ..., description="Total number of items matching the query (across all pages)"
+    )
 
     model_config = {"from_attributes": True}
 

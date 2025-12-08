@@ -53,9 +53,9 @@ function ListingsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 p-8">
+    <div className="min-h-screen bg-gray-950 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex gap-8">
+        <div className="lg:flex lg:gap-8">
           {/* Sidebar with filters */}
           <SearchFilters />
 
@@ -64,7 +64,7 @@ function ListingsContent() {
             {/* Search query display */}
             {filters.q && (
               <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-100">
+                <h1 className="text-xl font-bold text-gray-100">
                   Search results for &quot;{filters.q}&quot;
                 </h1>
                 {data && (

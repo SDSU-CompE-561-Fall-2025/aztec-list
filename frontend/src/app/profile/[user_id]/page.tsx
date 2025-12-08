@@ -2,15 +2,26 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { PaginationControls } from "@/components/listings/PaginationControls";
-import { DEFAULT_LIMIT } from "@/lib/constants";
-import { ChevronLeft, User, Mail } from "lucide-react";
+import { API_BASE_URL, DEFAULT_LIMIT, STATIC_BASE_URL } from "@/lib/constants";
+import { ChevronLeft, User, Mail, Phone, Building2, Calendar } from "lucide-react";
 import { createUserQueryOptions } from "@/queryOptions/createUserQueryOptions";
 import { createUserListingsQueryOptions } from "@/queryOptions/createUserListingsQueryOptions";
 import type { ListingSummary } from "@/types/listing/listing";
 import { Suspense } from "react";
 import { UserListingCard } from "@/components/listings/UserListingCard";
+
+// Helper function to build full URL for profile picture
+const getProfilePictureUrl = (path: string | null | undefined): string | null => {
+  if (!path) return null;
+  const timestamp = Date.now();
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return `${path}?t=${timestamp}`;
+  }
+  return `${STATIC_BASE_URL}${path}?t=${timestamp}`;
+};
 
 function UserProfileContent() {
   const params = useParams();
@@ -25,6 +36,21 @@ function UserProfileContent() {
     isLoading: isUserLoading,
     isError: isUserError,
   } = useQuery(createUserQueryOptions(userId));
+
+  // Fetch user's profile data
+  const { data: profileData } = useQuery({
+    queryKey: ["profile", userId],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/${userId}/profile`);
+        if (!response.ok) return null;
+        return response.json();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!userId,
+  });
 
   const { data: listingsData, isLoading: isListingsLoading } = useQuery(
     createUserListingsQueryOptions(userId, {
@@ -47,8 +73,8 @@ function UserProfileContent() {
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="space-y-6">
             <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl p-6 h-32 animate-pulse" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
                   className="bg-gray-900/50 backdrop-blur-sm border border-gray-800/50 rounded-xl h-80 animate-pulse"
@@ -116,15 +142,58 @@ function UserProfileContent() {
         {/* User Profile Header */}
         <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/60 rounded-xl p-8">
           <div className="flex items-start gap-6">
-            <div className="w-24 h-24 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20 flex-shrink-0">
-              <User className="w-12 h-12 text-purple-300" />
+            <div className="w-24 h-24 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20 flex-shrink-0 overflow-hidden relative">
+              {profileData?.profile_picture_url ? (
+                <Image
+                  src={getProfilePictureUrl(profileData.profile_picture_url) || ""}
+                  alt={user.username}
+                  fill
+                  sizes="96px"
+                  className="object-cover"
+                />
+              ) : (
+                <User className="w-12 h-12 text-purple-300" />
+              )}
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-4xl font-bold text-white mb-2">{user.username}</h1>
-              <div className="flex flex-wrap gap-4 text-gray-400">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-5 h-5" />
-                  <span className="text-base">{user.email}</span>
+              <h1 className="text-2xl font-bold text-white mb-2">
+                {profileData?.name ? (
+                  <>
+                    {profileData.name}
+                    <span className="text-lg text-gray-400 font-normal ml-2">
+                      (@{user.username})
+                    </span>
+                  </>
+                ) : (
+                  user.username
+                )}
+              </h1>
+              <div className="space-y-2 text-sm">
+                {profileData?.campus && (
+                  <div className="flex items-center gap-2 text-gray-400">
+                    <Building2 className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{profileData.campus}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-gray-400">
+                  <Mail className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">{user.email}</span>
+                </div>
+                {profileData?.contact_info?.phone && (
+                  <div className="flex items-center gap-2 text-gray-400">
+                    <Phone className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{profileData.contact_info.phone}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-gray-400">
+                  <Calendar className="w-4 h-4 flex-shrink-0" />
+                  <span>
+                    Joined{" "}
+                    {new Date(user.created_at).toLocaleDateString("en-US", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
                 </div>
                 {user.is_verified && (
                   <span className="inline-flex items-center px-3 py-1 bg-green-500/10 text-green-300 text-sm font-semibold rounded-full border border-green-500/30">
@@ -132,13 +201,6 @@ function UserProfileContent() {
                   </span>
                 )}
               </div>
-              <p className="text-base text-gray-500 mt-3">
-                Member since{" "}
-                {new Date(user.created_at).toLocaleDateString("en-US", {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
             </div>
           </div>
         </div>
@@ -146,9 +208,9 @@ function UserProfileContent() {
         {/* Listings Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-bold text-white">
+            <h2 className="text-xl font-bold text-white">
               Listings
-              <span className="ml-3 text-gray-500 font-normal text-xl">({totalCount})</span>
+              <span className="ml-3 text-gray-500 font-normal text-base">({totalCount})</span>
             </h2>
           </div>
 
@@ -162,7 +224,7 @@ function UserProfileContent() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {listings.map((listing: ListingSummary) => (
                   <UserListingCard key={listing.id} listing={listing} />
                 ))}
