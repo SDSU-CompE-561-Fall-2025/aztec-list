@@ -551,42 +551,42 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <div className="max-w-3xl mx-auto w-full">
+    <div className="min-h-screen bg-gray-950 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+      <div className="max-w-2xl mx-auto w-full">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
+        <div className="mb-4 sm:mb-6">
           <Button
             variant="ghost"
-            className="text-gray-400 hover:text-gray-100 hover:bg-gray-800/50 -ml-3 mb-4"
+            className="text-gray-400 hover:text-gray-100 hover:bg-gray-800/50 -ml-3 mb-3"
             onClick={() => router.push("/profile")}
           >
             <ChevronLeft className="w-4 h-4 mr-2" />
             Back to Profile
           </Button>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Account Settings</h1>
-          <p className="text-gray-400 text-base sm:text-lg">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Account Settings</h1>
+          <p className="text-gray-400 text-sm sm:text-base">
             Manage your account preferences and information
           </p>
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="profile" className="space-y-4 sm:space-y-6">
+        <Tabs defaultValue="profile" className="space-y-3 sm:space-y-4">
           <TabsList className="bg-gray-900 border border-gray-800 w-full grid grid-cols-3 h-auto p-1">
             <TabsTrigger
               value="profile"
-              className="text-sm sm:text-base data-[state=active]:bg-gray-800"
+              className="text-xs sm:text-sm data-[state=active]:bg-gray-800"
             >
               Profile
             </TabsTrigger>
             <TabsTrigger
               value="account"
-              className="text-sm sm:text-base data-[state=active]:bg-gray-800"
+              className="text-xs sm:text-sm data-[state=active]:bg-gray-800"
             >
               Account
             </TabsTrigger>
             <TabsTrigger
               value="security"
-              className="text-sm sm:text-base data-[state=active]:bg-gray-800"
+              className="text-xs sm:text-sm data-[state=active]:bg-gray-800"
             >
               Security
             </TabsTrigger>
@@ -596,9 +596,7 @@ export default function SettingsPage() {
           <TabsContent value="profile">
             <Card className="bg-gray-900 border-gray-800">
               <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl text-white">
-                  Profile Information
-                </CardTitle>
+                <CardTitle className="text-lg sm:text-xl text-white">Profile Information</CardTitle>
                 <CardDescription className="text-sm sm:text-base text-gray-400">
                   Add details to help buyers connect with you
                 </CardDescription>
@@ -715,9 +713,9 @@ export default function SettingsPage() {
                       </div>
                     </div>
 
-                    <form onSubmit={handleProfileSave} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name" className="text-base sm:text-lg text-gray-200">
+                    <form onSubmit={handleProfileSave} className="space-y-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="name" className="text-sm sm:text-base text-gray-200">
                           Full Name
                         </Label>
                         <Input
@@ -727,12 +725,12 @@ export default function SettingsPage() {
                           value={formName}
                           onChange={(e) => setFormName(e.target.value)}
                           disabled={isProfileLoading}
-                          className="bg-gray-950 border-gray-700 text-white text-base placeholder:text-gray-600"
+                          className="bg-gray-950 border-gray-700 text-white text-sm placeholder:text-gray-600"
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="campus" className="text-base sm:text-lg text-gray-200">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="campus" className="text-sm sm:text-base text-gray-200">
                           Campus
                         </Label>
                         <Input
@@ -742,13 +740,13 @@ export default function SettingsPage() {
                           value={formCampus}
                           onChange={(e) => setFormCampus(e.target.value)}
                           disabled={isProfileLoading}
-                          className="bg-gray-950 border-gray-700 text-white text-base placeholder:text-gray-600"
+                          className="bg-gray-950 border-gray-700 text-white text-sm placeholder:text-gray-600"
                         />
-                        <p className="text-sm sm:text-base text-gray-500">Optional</p>
+                        <p className="text-xs sm:text-sm text-gray-500">Optional</p>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="phone" className="text-base sm:text-lg text-gray-200">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="phone" className="text-sm sm:text-base text-gray-200">
                           Phone Number
                         </Label>
                         <Input
@@ -758,20 +756,20 @@ export default function SettingsPage() {
                           value={formPhone}
                           onChange={handlePhoneChange}
                           disabled={isProfileLoading}
-                          className={`bg-gray-950 border-gray-700 text-white text-base placeholder:text-gray-600 ${
+                          className={`bg-gray-950 border-gray-700 text-white text-sm placeholder:text-gray-600 ${
                             phoneError ? "border-red-500" : ""
                           }`}
                         />
-                        {phoneError && <p className="text-sm text-red-500">{phoneError}</p>}
-                        <p className="text-sm sm:text-base text-gray-500">
+                        {phoneError && <p className="text-xs text-red-500">{phoneError}</p>}
+                        <p className="text-xs sm:text-sm text-gray-500">
                           Optional - US format: (555) 123-4567
                         </p>
                       </div>
 
-                      <div className="flex gap-3">
+                      <div className="flex gap-3 pt-2">
                         <Button
                           type="submit"
-                          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                           disabled={isProfileLoading || !hasProfileChanges || !isFormValid}
                         >
                           {isProfileLoading ? "Saving..." : "Save Profile"}
@@ -782,7 +780,7 @@ export default function SettingsPage() {
                             onClick={() => setShowProfileCancelDialog(true)}
                             disabled={isProfileLoading}
                             variant="outline"
-                            className="flex-1 border-red-900/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 text-base sm:text-lg"
+                            className="flex-1 border-red-900/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 text-sm sm:text-base"
                           >
                             Cancel
                           </Button>
@@ -828,15 +826,15 @@ export default function SettingsPage() {
           <TabsContent value="account">
             <Card className="bg-gray-900 border-gray-800">
               <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl text-white">Account Details</CardTitle>
-                <CardDescription className="text-sm sm:text-base text-gray-400">
+                <CardTitle className="text-lg sm:text-xl text-white">Account Details</CardTitle>
+                <CardDescription className="text-xs sm:text-sm text-gray-400">
                   Update your username
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleAccountUpdate} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="username" className="text-base sm:text-lg text-gray-200">
+                <form onSubmit={handleAccountUpdate} className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="username" className="text-sm sm:text-base text-gray-200">
                       Username
                     </Label>
                     <Input
@@ -845,12 +843,12 @@ export default function SettingsPage() {
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       disabled={isAccountLoading}
-                      className="bg-gray-950 border-gray-700 text-white text-base placeholder:text-gray-600"
+                      className="bg-gray-950 border-gray-700 text-white text-sm placeholder:text-gray-600"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="email-display" className="text-base sm:text-lg text-gray-200">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email-display" className="text-sm sm:text-base text-gray-200">
                       Email
                     </Label>
                     <Input
@@ -858,17 +856,17 @@ export default function SettingsPage() {
                       type="email"
                       value={user?.email ?? ""}
                       disabled
-                      className="bg-gray-950 border-gray-700 text-gray-500 text-base cursor-not-allowed"
+                      className="bg-gray-950 border-gray-700 text-gray-500 text-sm cursor-not-allowed"
                     />
-                    <p className="text-sm sm:text-base text-gray-500">
+                    <p className="text-xs sm:text-sm text-gray-500">
                       Email cannot be changed at this time
                     </p>
                   </div>
 
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 pt-2">
                     <Button
                       type="submit"
-                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={isAccountLoading || !hasAccountChanges}
                     >
                       {isAccountLoading ? "Updating..." : "Update Account"}
@@ -879,7 +877,7 @@ export default function SettingsPage() {
                         onClick={() => setShowAccountCancelDialog(true)}
                         disabled={isAccountLoading}
                         variant="outline"
-                        className="flex-1 border-red-900/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 text-base sm:text-lg"
+                        className="flex-1 border-red-900/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 text-sm sm:text-base"
                       >
                         Cancel
                       </Button>
@@ -933,28 +931,28 @@ export default function SettingsPage() {
                   <AlertDialogTrigger asChild>
                     <Button
                       variant="destructive"
-                      className="w-full text-base sm:text-lg transition-all hover:scale-[1.02] hover:shadow-lg"
+                      className="w-full text-sm sm:text-base transition-all hover:scale-[1.02] hover:shadow-lg"
                       disabled={isDeleting}
                     >
-                      <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                      <Trash2 className="w-4 h-4 mr-2" />
                       Delete Account
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent className="bg-gray-900 border-gray-800 max-w-md mx-4">
                     <AlertDialogHeader>
-                      <AlertDialogTitle className="text-xl sm:text-2xl text-white">
+                      <AlertDialogTitle className="text-lg sm:text-xl text-white">
                         Are you absolutely sure?
                       </AlertDialogTitle>
-                      <AlertDialogDescription className="text-sm sm:text-base text-gray-400">
+                      <AlertDialogDescription className="text-xs sm:text-sm text-gray-400">
                         This action cannot be undone. This will permanently delete your account, all
                         your listings, and remove all your data from our servers.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel className="text-sm sm:text-base">Cancel</AlertDialogCancel>
+                      <AlertDialogCancel className="text-xs sm:text-sm">Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleDeleteAccount}
-                        className="bg-red-600 hover:bg-red-700 text-sm sm:text-base"
+                        className="bg-red-600 hover:bg-red-700 text-xs sm:text-sm"
                       >
                         {isDeleting ? "Deleting..." : "Delete Account"}
                       </AlertDialogAction>
@@ -969,17 +967,17 @@ export default function SettingsPage() {
           <TabsContent value="security">
             <Card className="bg-gray-900 border-gray-800">
               <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl text-white">Change Password</CardTitle>
-                <CardDescription className="text-sm sm:text-base text-gray-400">
+                <CardTitle className="text-lg sm:text-xl text-white">Change Password</CardTitle>
+                <CardDescription className="text-xs sm:text-sm text-gray-400">
                   Update your password to keep your account secure
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handlePasswordChange} className="space-y-4">
-                  <div className="space-y-2">
+                <form onSubmit={handlePasswordChange} className="space-y-3">
+                  <div className="space-y-1.5">
                     <Label
                       htmlFor="current-password"
-                      className="text-base sm:text-lg text-gray-200"
+                      className="text-sm sm:text-base text-gray-200"
                     >
                       Current Password
                     </Label>
@@ -989,13 +987,13 @@ export default function SettingsPage() {
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       disabled={isPasswordLoading}
-                      className="bg-gray-950 border-gray-700 text-white text-base placeholder:text-gray-600"
+                      className="bg-gray-950 border-gray-700 text-white text-sm placeholder:text-gray-600"
                       placeholder="Enter current password"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="new-password" className="text-base sm:text-lg text-gray-200">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="new-password" className="text-sm sm:text-base text-gray-200">
                       New Password
                     </Label>
                     <Input
@@ -1004,18 +1002,18 @@ export default function SettingsPage() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       disabled={isPasswordLoading}
-                      className="bg-gray-950 border-gray-700 text-white text-base placeholder:text-gray-600"
+                      className="bg-gray-950 border-gray-700 text-white text-sm placeholder:text-gray-600"
                       placeholder="Enter new password"
                     />
-                    <p className="text-sm sm:text-base text-gray-500">
+                    <p className="text-xs sm:text-sm text-gray-500">
                       Must be at least 8 characters
                     </p>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label
                       htmlFor="confirm-password"
-                      className="text-base sm:text-lg text-gray-200"
+                      className="text-sm sm:text-base text-gray-200"
                     >
                       Confirm New Password
                     </Label>
@@ -1025,14 +1023,14 @@ export default function SettingsPage() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       disabled={isPasswordLoading}
-                      className="bg-gray-950 border-gray-700 text-white text-base placeholder:text-gray-600"
+                      className="bg-gray-950 border-gray-700 text-white text-sm placeholder:text-gray-600"
                       placeholder="Confirm new password"
                     />
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed mt-4"
                     disabled={
                       isPasswordLoading || !currentPassword || !newPassword || !confirmPassword
                     }
