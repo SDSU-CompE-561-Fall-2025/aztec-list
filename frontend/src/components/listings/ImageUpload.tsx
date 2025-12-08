@@ -220,7 +220,8 @@ export function ImageUpload({
           },
         });
         return;
-      } // Validate all files first
+      }
+      // Validate all files first
       const validFiles: File[] = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
