@@ -48,6 +48,8 @@ export default function CreateListingPage() {
         if (!value) return "Price is required";
         if (isNaN(priceNum)) return "Price must be a valid number";
         if (priceNum < 0.01) return "Price must be at least $0.01";
+        if (priceNum > 99999999.99) return "Price must be less than $100,000,000";
+        if (!/^\d+(\.\d{1,2})?$/.test(value)) return "Price must have at most 2 decimal places";
         return "";
       case "category":
         if (!value) return "Category is required";

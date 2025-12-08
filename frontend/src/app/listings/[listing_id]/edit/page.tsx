@@ -157,7 +157,7 @@ function EditForm({
         const priceNum = parseFloat(value);
         if (isNaN(priceNum)) return "Price must be a valid number";
         if (priceNum < 0.01) return "Price must be at least $0.01";
-        if (priceNum > 999999.99) return "Price must be less than $1,000,000";
+        if (priceNum > 99999999.99) return "Price must be less than $100,000,000";
         if (!/^\d+(\.\d{1,2})?$/.test(value)) return "Price must have at most 2 decimal places";
         return "";
       case "category":
