@@ -342,7 +342,7 @@ function EditForm({
               onBlur={(e) => handleBlur("description", e.target.value)}
               maxLength={500}
               rows={4}
-              className="mt-1 w-full rounded-md bg-gray-900 border border-gray-700 text-white p-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="mt-1 w-full rounded-md bg-gray-900 border border-gray-700 text-base md:text-sm text-white p-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder="Describe your item..."
             />
             {errors.description && (
@@ -380,7 +380,7 @@ function EditForm({
               value={category}
               onChange={(e) => setCategory(e.target.value as Category)}
               onBlur={(e) => handleBlur("category", e.target.value)}
-              className="mt-1 w-full rounded-md bg-gray-900 border border-gray-700 text-white p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="mt-1 w-full rounded-md bg-gray-900 border border-gray-700 text-base md:text-sm text-white p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="">Select a category</option>
               {CATEGORIES.map((cat) => (
@@ -402,7 +402,7 @@ function EditForm({
               value={condition}
               onChange={(e) => setCondition(e.target.value as Condition)}
               onBlur={(e) => handleBlur("condition", e.target.value)}
-              className="mt-1 w-full rounded-md bg-gray-900 border border-gray-700 text-white p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="mt-1 w-full rounded-md bg-gray-900 border border-gray-700 text-base md:text-sm text-white p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="">Select a condition</option>
               {CONDITIONS.map((cond) => (

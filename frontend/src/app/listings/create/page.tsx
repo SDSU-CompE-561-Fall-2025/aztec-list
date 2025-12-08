@@ -192,7 +192,7 @@ export default function CreateListingPage() {
               placeholder="Describe your item..."
               rows={5}
               disabled={!!createdListingId}
-              className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none ${
+              className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-base md:text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none ${
                 errors.description ? "border-red-500" : ""
               }`}
             />
@@ -236,7 +236,7 @@ export default function CreateListingPage() {
               onChange={(e) => setCategory(e.target.value as Category)}
               onBlur={(e) => handleBlur("category", e.target.value)}
               disabled={!!createdListingId}
-              className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white text-base focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+              className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-base md:text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 ${
                 errors.category ? "border-red-500" : ""
               }`}
             >
@@ -261,7 +261,7 @@ export default function CreateListingPage() {
               onChange={(e) => setCondition(e.target.value as Condition)}
               onBlur={(e) => handleBlur("condition", e.target.value)}
               disabled={!!createdListingId}
-              className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white text-base focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+              className={`w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-base md:text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 ${
                 errors.condition ? "border-red-500" : ""
               }`}
             >
