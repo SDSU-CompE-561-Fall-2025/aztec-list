@@ -39,6 +39,13 @@ class UserUpdate(BaseModel):
     email: EmailStr | None = None
 
 
+class PasswordChange(BaseModel):
+    """Schema for changing user password."""
+
+    current_password: str
+    new_password: str
+
+
 class UserPublic(UserBase):
     """Schema for public user data in API responses."""
 

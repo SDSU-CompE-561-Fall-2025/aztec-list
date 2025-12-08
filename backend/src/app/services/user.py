@@ -209,6 +209,34 @@ class UserService:
 
         return UserRepository.update(db, user)
 
+    def change_password(
+        self, db: Session, user_id: uuid.UUID, current_password: str, new_password: str
+    ) -> None:
+        """
+        Change user's password.
+
+        Args:
+            db: Database session
+            user_id: ID of user changing password
+            current_password: Current password for verification
+            new_password: New password to set
+
+        Raises:
+            HTTPException: 404 if user not found, 401 if current password is incorrect
+        """
+        user = self.get_by_id(db, user_id)
+
+        # Verify current password
+        if not verify_password(current_password, str(user.hashed_password)):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Current password is incorrect",
+            )
+
+        # Hash and update new password
+        user.hashed_password = get_password_hash(new_password)
+        UserRepository.update(db, user)
+
 
 # Create a singleton instance
 user_service = UserService()

@@ -24,7 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { API_BASE_URL } from "@/lib/constants";
-import { getAuthToken, setStoredUser } from "@/lib/auth";
+import { getAuthToken, setStoredUser, changePassword } from "@/lib/auth";
 import type { ProfilePublic, ContactInfo } from "@/types/user";
 
 interface ProfileUpdatePayload {
@@ -103,6 +103,12 @@ export default function SettingsPage() {
 
   // Delete account state
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
   // Initialize username from user data
   useEffect(() => {
@@ -343,8 +349,47 @@ export default function SettingsPage() {
         throw new Error(errorData.detail || "Failed to delete account");
       }
 
-      // Show success message before logout
-      toast.success("Account deleted successfully", {
+      // Log out and redirect to home
+      logout();
+      toast.success("Account deleted successfully");
+      router.push("/");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to delete account";
+      toast.error(message);
+      setIsDeleting(false);
+    }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validation
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error("All password fields are required");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      toast.error("New password must be at least 8 characters");
+      return;
+    }
+
+    if (newPassword === currentPassword) {
+      toast.error("New password must be different from current password");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+
+    setIsPasswordLoading(true);
+
+    try {
+      await changePassword(currentPassword, newPassword);
+
+      toast.success("Password changed successfully!", {
         style: {
           background: "rgb(20, 83, 45)",
           color: "white",
@@ -352,12 +397,22 @@ export default function SettingsPage() {
         },
       });
 
-      // Use logout from AuthContext to properly clear state and redirect
-      logout();
+      // Clear form
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to delete account";
-      toast.error(message);
-      setIsDeleting(false);
+      const message = error instanceof Error ? error.message : "Failed to change password";
+      toast.error(message, {
+        duration: 5000,
+        style: {
+          background: "rgb(153, 27, 27)",
+          color: "white",
+          border: "1px solid rgb(220, 38, 38)",
+        },
+      });
+    } finally {
+      setIsPasswordLoading(false);
     }
   };
 
@@ -647,12 +702,71 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3 sm:p-4">
-                  <p className="text-blue-300 text-sm sm:text-base">
-                    🔧 Password change functionality is coming soon. This feature requires backend
-                    implementation.
-                  </p>
-                </div>
+                <form onSubmit={handlePasswordChange} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="current-password"
+                      className="text-base sm:text-lg text-gray-200"
+                    >
+                      Current Password
+                    </Label>
+                    <Input
+                      id="current-password"
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      disabled={isPasswordLoading}
+                      className="bg-gray-950 border-gray-700 text-white text-base placeholder:text-gray-600"
+                      placeholder="Enter current password"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password" className="text-base sm:text-lg text-gray-200">
+                      New Password
+                    </Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      disabled={isPasswordLoading}
+                      className="bg-gray-950 border-gray-700 text-white text-base placeholder:text-gray-600"
+                      placeholder="Enter new password"
+                    />
+                    <p className="text-sm sm:text-base text-gray-500">
+                      Must be at least 8 characters
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="confirm-password"
+                      className="text-base sm:text-lg text-gray-200"
+                    >
+                      Confirm New Password
+                    </Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      disabled={isPasswordLoading}
+                      className="bg-gray-950 border-gray-700 text-white text-base placeholder:text-gray-600"
+                      placeholder="Confirm new password"
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={
+                      isPasswordLoading || !currentPassword || !newPassword || !confirmPassword
+                    }
+                  >
+                    {isPasswordLoading ? "Changing Password..." : "Change Password"}
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           </TabsContent>
