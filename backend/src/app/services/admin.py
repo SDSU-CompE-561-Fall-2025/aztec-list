@@ -338,7 +338,7 @@ class AdminActionService:
             reason: Reason for removal
 
         Returns:
-            AdminAction: The STRIKE action issued to the listing owner
+            AdminAction: The LISTING_REMOVAL action audit record for the removed listing.
 
         Raises:
             HTTPException: If listing not found or listing is owned by an admin
