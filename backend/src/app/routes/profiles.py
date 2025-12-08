@@ -1,6 +1,7 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from pydantic import HttpUrl
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -114,29 +115,58 @@ async def update_profile(
     response_model=ProfilePictureResponse,
 )
 async def update_profile_picture(
-    data: ProfilePictureUpdate,
     current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
+    file: Annotated[UploadFile | None, File(description="Profile picture file")] = None,
+    picture_url: Annotated[str | None, Form(description="Profile picture URL")] = None,
 ) -> Profile:
     """
     Upload or replace the authenticated user's profile picture.
 
-    This endpoint is for authenticated users to update their own profile picture.
-    Note: This is a simplified version that accepts a URL string.
-    For actual file upload, use multipart/form-data with File upload.
+    Accepts either:
+    - File upload (multipart/form-data with 'file' field) - recommended
+    - URL string (form field 'picture_url') - for external images
+
+    Only one method should be provided. File upload takes precedence if both are provided.
 
     Args:
-        data: Profile picture update data with validated URL
         current_user: Authenticated user from the JWT token
         db: Database session
+        file: Image file to upload (jpg, png, webp, gif - max 5MB)
+        picture_url: URL to an external image (if not uploading file)
 
     Returns:
         ProfilePictureResponse: Updated profile picture information
 
     Raises:
-        HTTPException: 401 if not authenticated, 403 if banned, 404 if profile not found, 422 if invalid URL format
+        HTTPException: 400 if neither file nor URL provided or validation fails
+        HTTPException: 401 if not authenticated
+        HTTPException: 403 if banned
+        HTTPException: 404 if profile not found
+        HTTPException: 413 if file too large
+        HTTPException: 415 if unsupported file type
     """
-    return profile_service.update_profile_picture(db, current_user.id, data)
+    # Prioritize file upload over URL
+    if file:
+        return await profile_service.upload_profile_picture(db, current_user.id, file)
+
+    if picture_url:
+        # Use URL method (existing functionality)
+        try:
+            validated_url = HttpUrl(picture_url)
+            data = ProfilePictureUpdate(picture_url=validated_url)
+            return profile_service.update_profile_picture(db, current_user.id, data)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid URL format: {e!s}",
+            ) from e
+
+    # Neither file nor URL provided
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Either 'file' or 'picture_url' must be provided",
+    )
 
 
 @profile_router.delete(

@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { API_BASE_URL } from "@/lib/constants";
+import { API_BASE_URL, STATIC_BASE_URL } from "@/lib/constants";
 import { getAuthToken, setStoredUser, changePassword } from "@/lib/auth";
 import type { ProfilePublic, ContactInfo } from "@/types/user";
 
@@ -32,6 +32,19 @@ interface ProfileUpdatePayload {
   campus?: string | null;
   contact_info?: ContactInfo;
 }
+
+// Helper function to build full URL for profile picture
+const getProfilePictureUrl = (path: string | null | undefined): string | null => {
+  if (!path) return null;
+  // Add cache-busting timestamp to force browser to reload the image
+  const timestamp = Date.now();
+  // If already a full URL, return as-is with timestamp
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return `${path}?t=${timestamp}`;
+  }
+  // Build full URL from relative path with timestamp
+  return `${STATIC_BASE_URL}${path}?t=${timestamp}`;
+};
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
@@ -43,7 +56,8 @@ export default function SettingsPage() {
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [originalProfile, setOriginalProfile] = useState<ProfilePublic | null>(null);
-  const [profilePictureUrl, setProfilePictureUrl] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [isPictureLoading, setIsPictureLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -180,8 +194,11 @@ export default function SettingsPage() {
 
       const originalPhone = originalProfile?.contact_info?.phone || "";
       if (phone !== originalPhone) {
+        if (!user?.email) {
+          throw new Error("User email not available");
+        }
         updates.contact_info = {
-          email: user?.email,
+          email: user.email,
           phone: phone.trim() || undefined,
         };
       }
@@ -193,6 +210,7 @@ export default function SettingsPage() {
         return;
       }
 
+      console.log("Sending profile update:", updates);
       const response = await fetch(`${API_BASE_URL}/users/profile/`, {
         method: "PATCH",
         headers: {
@@ -204,6 +222,7 @@ export default function SettingsPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error("Profile update error:", errorData);
         throw new Error(errorData.detail || "Failed to save profile");
       }
 
@@ -217,6 +236,7 @@ export default function SettingsPage() {
         },
       });
     } catch (error) {
+      console.error("Profile save error:", error);
       const message = error instanceof Error ? error.message : "Failed to save profile";
       toast.error(message);
     } finally {
@@ -224,33 +244,62 @@ export default function SettingsPage() {
     }
   };
 
-  const handlePictureUpdate = async () => {
-    if (!profilePictureUrl.trim()) {
-      toast.error("Please enter a profile picture URL");
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
       return;
     }
 
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be smaller than 5MB");
+      return;
+    }
+
+    setSelectedFile(file);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Automatically upload the file
+    await handlePictureUpload(file);
+  };
+
+  const handlePictureUpload = async (file: File) => {
     setIsPictureLoading(true);
 
     try {
       const token = getAuthToken();
       if (!token) throw new Error("Not authenticated");
 
-      const response = await fetch(`${API_BASE_URL}/users/profile/picture/`, {
-        method: "PATCH",
+      const formData = new FormData();
+      formData.append("file", file);
+
+      console.log("Uploading profile picture:", file.name, file.size);
+      const response = await fetch(`${API_BASE_URL}/users/profile/picture`, {
+        method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          picture_url: profilePictureUrl.trim(),
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error("Picture upload error:", errorData);
         throw new Error(errorData.detail || "Failed to update profile picture");
       }
+
+      const updatedProfile = await response.json();
+      setOriginalProfile(updatedProfile);
 
       toast.success("Profile picture updated successfully!", {
         style: {
@@ -259,7 +308,10 @@ export default function SettingsPage() {
           border: "1px solid rgb(34, 197, 94)",
         },
       });
-      setProfilePictureUrl("");
+
+      // Clear selected file but keep preview until page refreshes
+      setSelectedFile(null);
+      // Don't clear previewUrl immediately - it will be replaced by the new profile picture
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update profile picture";
       toast.error(message);
@@ -481,45 +533,45 @@ export default function SettingsPage() {
                   <>
                     {/* Profile Picture Section */}
                     <div className="mb-6 pb-6 border-b border-gray-800">
-                      <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
-                        <div className="flex-shrink-0">
-                          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20">
-                            <UserIcon className="w-10 h-10 sm:w-12 sm:h-12 text-purple-300" />
+                      <div className="flex items-center gap-4">
+                        <div className="relative">
+                          <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden relative group">
+                            {previewUrl || originalProfile?.profile_picture_url ? (
+                              <img
+                                src={
+                                  previewUrl ||
+                                  getProfilePictureUrl(originalProfile?.profile_picture_url) ||
+                                  ""
+                                }
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-2xl font-medium text-gray-800">JD</span>
+                            )}
                           </div>
                         </div>
-                        <div className="flex-1 w-full space-y-3">
-                          <div>
-                            <Label
-                              htmlFor="profilePicture"
-                              className="text-base sm:text-lg text-gray-200"
-                            >
-                              Profile Picture URL
-                            </Label>
-                            <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                              Enter a URL to your profile picture (e.g., from Imgur, Gravatar, etc.)
-                            </p>
-                          </div>
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            <Input
-                              id="profilePicture"
-                              type="url"
-                              placeholder="https://example.com/your-image.jpg"
-                              value={profilePictureUrl}
-                              onChange={(e) => setProfilePictureUrl(e.target.value)}
-                              disabled={isPictureLoading}
-                              className="bg-gray-950 border-gray-700 text-white text-base placeholder:text-gray-600"
-                            />
-                            <Button
-                              type="button"
-                              onClick={handlePictureUpdate}
-                              disabled={isPictureLoading || !profilePictureUrl.trim()}
-                              className="bg-purple-600 hover:bg-purple-700 shrink-0 w-full sm:w-auto"
-                            >
+                        <input
+                          id="profilePictureFile"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileSelect}
+                          disabled={isPictureLoading}
+                          className="hidden"
+                        />
+                        <label htmlFor="profilePictureFile">
+                          <Button
+                            type="button"
+                            asChild
+                            disabled={isPictureLoading}
+                            className="bg-purple-600 hover:bg-purple-700 cursor-pointer"
+                          >
+                            <span>
                               <Upload className="w-4 h-4 mr-2" />
-                              {isPictureLoading ? "Uploading..." : "Upload"}
-                            </Button>
-                          </div>
-                        </div>
+                              {isPictureLoading ? "Uploading..." : "Upload Photo"}
+                            </span>
+                          </Button>
+                        </label>
                       </div>
                     </div>
 

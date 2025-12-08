@@ -61,7 +61,9 @@ class ProfileBase(BaseModel):
 class ProfileCreate(ProfileBase):
     """Schema for creating a new profile."""
 
-    profile_picture_url: HttpUrl | None = Field(None, description="Optional profile picture URL")
+    profile_picture_url: str | None = Field(
+        None, description="Optional profile picture URL or path"
+    )
 
 
 class ProfileUpdate(BaseModel):
@@ -70,7 +72,7 @@ class ProfileUpdate(BaseModel):
     name: str | None = Field(None, min_length=1, description="Full name of the user")
     campus: str | None = Field(None, description="University or campus name")
     contact_info: ContactInfo | None = Field(None, description="Contact information (email, phone)")
-    profile_picture_url: HttpUrl | None = Field(None, description="Profile picture URL")
+    profile_picture_url: str | None = Field(None, description="Profile picture URL or path")
 
 
 class ProfilePictureUpdate(BaseModel):
@@ -84,7 +86,7 @@ class ProfilePublic(ProfileBase):
 
     id: uuid.UUID
     user_id: uuid.UUID
-    profile_picture_url: HttpUrl | None = None
+    profile_picture_url: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -95,7 +97,7 @@ class ProfilePictureResponse(BaseModel):
     """Schema for profile picture upload response."""
 
     user_id: uuid.UUID
-    profile_picture_url: HttpUrl
+    profile_picture_url: str
     updated_at: datetime
 
     model_config = {"from_attributes": True}

@@ -2,7 +2,7 @@
 File storage utilities.
 
 This module provides utilities for handling file uploads and storage.
-Images are organized by listing ID in subdirectories for easier management.
+Images are organized by listing ID or user ID in subdirectories for easier management.
 """
 
 from __future__ import annotations
@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 # Constants for path validation
 MIN_PATH_PARTS = 5  # Updated: /, uploads, images, listing_id, filename
+MIN_PROFILE_PATH_PARTS = 4  # /, uploads, profiles, user_id, filename
 
 
 def validate_image_file(file: UploadFile) -> None:
@@ -118,6 +119,92 @@ async def save_upload_file(file: UploadFile, listing_id: uuid.UUID) -> str:
         ) from e
 
     return f"/uploads/images/{listing_id}/{unique_filename}"
+
+
+async def save_profile_picture(file: UploadFile, user_id: uuid.UUID) -> str:
+    """
+    Save uploaded profile picture to disk with optimization.
+
+    Profile pictures are stored in a user-specific directory:
+    uploads/profiles/{user_id}/profile.jpg
+
+    The old profile picture (if any) is automatically deleted before saving the new one.
+
+    Args:
+        file: Uploaded file to save
+        user_id: UUID of the user
+
+    Returns:
+        str: URL path to the saved file (e.g., "/uploads/profiles/{user_id}/profile.jpg")
+
+    Raises:
+        HTTPException: 400 if file validation fails
+        HTTPException: 413 if file is too large
+        HTTPException: 500 if file save fails
+    """
+    validate_image_file(file)
+
+    file.file.seek(0, 2)
+    file_size = file.file.tell()
+    file.file.seek(0)
+
+    max_size_bytes = settings.storage.max_file_size_mb * 1024 * 1024
+    if file_size > max_size_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File too large. Maximum size: {settings.storage.max_file_size_mb}MB",
+        )
+
+    # Use fixed filename to overwrite existing profile picture
+    filename = "profile.jpg"
+    upload_path = Path(settings.storage.profile_upload_dir) / str(user_id)
+    upload_path.mkdir(parents=True, exist_ok=True)
+
+    file_path = upload_path / filename
+
+    # Delete old profile picture if it exists
+    if file_path.exists():
+        try:
+            file_path.unlink()
+            logger.info("Deleted old profile picture for user %s", user_id)
+        except OSError as e:
+            logger.warning("Failed to delete old profile picture: %s", e)
+
+    try:
+        contents = await file.read()
+        optimized_contents = strip_exif_and_optimize(contents)
+
+        with file_path.open("wb") as f:
+            f.write(optimized_contents)
+
+        logger.info("Saved and optimized profile picture for user %s", user_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save file: {e!s}",
+        ) from e
+
+    return f"/uploads/profiles/{user_id}/{filename}"
+
+
+def delete_profile_picture(user_id: uuid.UUID) -> None:
+    """
+    Delete profile picture for a user.
+
+    Args:
+        user_id: UUID of the user whose profile picture should be deleted
+
+    Note:
+        Does not raise an error if file doesn't exist (idempotent operation)
+    """
+    try:
+        profile_path = Path(settings.storage.profile_upload_dir) / str(user_id) / "profile.jpg"
+
+        if profile_path.exists() and profile_path.is_file():
+            profile_path.unlink()
+            logger.info("Deleted profile picture for user %s", user_id)
+    except OSError as exc:
+        logger.warning("Failed to delete profile picture for user %s: %s", user_id, exc)
 
 
 def delete_file(url_path: str) -> None:

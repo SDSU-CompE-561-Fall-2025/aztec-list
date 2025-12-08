@@ -8,8 +8,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, UploadFile, status
 
+from app.core.storage import save_profile_picture
 from app.repository.profile import ProfileRepository
 
 if TYPE_CHECKING:
@@ -98,7 +99,7 @@ class ProfileService:
 
     def update(self, db: Session, user_id: uuid.UUID, profile: ProfileUpdate) -> Profile:
         """
-        Update profile fields for a user.
+        Update profile fields for a user. Creates profile if it doesn't exist.
 
         Args:
             db: Database session
@@ -109,14 +110,15 @@ class ProfileService:
             Profile: Updated profile
 
         Raises:
-            HTTPException: If profile not found
+            HTTPException: If update fails
         """
         db_profile = ProfileRepository.get_by_user_id(db, user_id)
         if not db_profile:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Profile for user ID {user_id} not found",
-            )
+            # Create profile if it doesn't exist (upsert pattern)
+            profile_data = profile.model_dump(exclude_unset=True)
+            if profile_data.get("profile_picture_url"):
+                profile_data["profile_picture_url"] = str(profile_data["profile_picture_url"])
+            return ProfileRepository.create(db, user_id, profile_data)
 
         update_data = profile.model_dump(exclude_unset=True)
         if update_data.get("profile_picture_url"):
@@ -148,6 +150,36 @@ class ProfileService:
                 detail=f"Profile for user ID {user_id} not found",
             )
         return ProfileRepository.update_profile_picture(db, db_profile, str(data.picture_url))
+
+    async def upload_profile_picture(
+        self, db: Session, user_id: uuid.UUID, file: UploadFile
+    ) -> Profile:
+        """
+        Upload and set a profile picture from a file.
+
+        Args:
+            db: Database session
+            user_id: User ID whose profile picture to upload
+            file: Uploaded image file
+
+        Returns:
+            Profile: Updated profile with new picture URL
+
+        Raises:
+            HTTPException: If profile not found or file validation fails
+        """
+        db_profile = ProfileRepository.get_by_user_id(db, user_id)
+        if not db_profile:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Profile for user ID {user_id} not found",
+            )
+
+        # Save file and get URL path
+        url_path = await save_profile_picture(file, user_id)
+
+        # Update profile with new picture URL
+        return ProfileRepository.update_profile_picture(db, db_profile, url_path)
 
     def delete(self, db: Session, user_id: uuid.UUID) -> None:
         """

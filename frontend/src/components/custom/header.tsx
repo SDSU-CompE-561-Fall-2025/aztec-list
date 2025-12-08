@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -14,15 +14,71 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LISTINGS_BASE_URL, DEFAULT_SORT } from "@/lib/constants";
+import { LISTINGS_BASE_URL, DEFAULT_SORT, API_BASE_URL, STATIC_BASE_URL } from "@/lib/constants";
 import { useAuth } from "@/contexts/AuthContext";
+import { getAuthToken } from "@/lib/auth";
 import { LogOut, Settings, User } from "lucide-react";
+
+// Helper function to build full URL for profile picture
+const getProfilePictureUrl = (path: string | null | undefined): string | null => {
+  if (!path) return null;
+  const timestamp = Date.now();
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return `${path}?t=${timestamp}`;
+  }
+  return `${STATIC_BASE_URL}${path}?t=${timestamp}`;
+};
 
 export function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+
+  // Fetch profile picture when user is authenticated
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!isAuthenticated) {
+        setProfilePicture(null);
+        return;
+      }
+
+      try {
+        const token = getAuthToken();
+        if (!token) return;
+
+        const response = await fetch(`${API_BASE_URL}/users/profile/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const profile = await response.json();
+          setProfilePicture(profile.profile_picture_url);
+        } else if (response.status === 404) {
+          // User doesn't have a profile yet, that's okay - silently skip
+          setProfilePicture(null);
+        } else if (response.status === 422) {
+          // Validation error - should not happen now with correct URL
+          setProfilePicture(null);
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          console.error("Profile fetch error:", response.status, errorData);
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      }
+    };
+
+    fetchProfile();
+
+    // Refresh profile picture every 10 seconds to detect updates
+    const intervalId = setInterval(fetchProfile, 10000);
+
+    return () => clearInterval(intervalId);
+  }, [isAuthenticated]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +153,10 @@ export function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Avatar className="cursor-pointer">
-                  <AvatarImage src="" alt={user?.username || "User"} />
+                  <AvatarImage
+                    src={getProfilePictureUrl(profilePicture) || undefined}
+                    alt={user?.username || "User"}
+                  />
                   <AvatarFallback className="bg-purple-600 text-white">
                     {user?.username ? user.username.charAt(0).toUpperCase() : "U"}
                   </AvatarFallback>

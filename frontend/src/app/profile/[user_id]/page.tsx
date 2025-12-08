@@ -4,13 +4,23 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { PaginationControls } from "@/components/listings/PaginationControls";
-import { API_BASE_URL, DEFAULT_LIMIT } from "@/lib/constants";
+import { API_BASE_URL, DEFAULT_LIMIT, STATIC_BASE_URL } from "@/lib/constants";
 import { ChevronLeft, User, Mail, Phone, Building2, Calendar } from "lucide-react";
 import { createUserQueryOptions } from "@/queryOptions/createUserQueryOptions";
 import { createUserListingsQueryOptions } from "@/queryOptions/createUserListingsQueryOptions";
 import type { ListingSummary } from "@/types/listing/listing";
 import { Suspense } from "react";
 import { UserListingCard } from "@/components/listings/UserListingCard";
+
+// Helper function to build full URL for profile picture
+const getProfilePictureUrl = (path: string | null | undefined): string | null => {
+  if (!path) return null;
+  const timestamp = Date.now();
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return `${path}?t=${timestamp}`;
+  }
+  return `${STATIC_BASE_URL}${path}?t=${timestamp}`;
+};
 
 function UserProfileContent() {
   const params = useParams();
@@ -131,8 +141,16 @@ function UserProfileContent() {
         {/* User Profile Header */}
         <div className="bg-gray-900/60 backdrop-blur-sm border border-gray-800/60 rounded-xl p-8">
           <div className="flex items-start gap-6">
-            <div className="w-24 h-24 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20 flex-shrink-0">
-              <User className="w-12 h-12 text-purple-300" />
+            <div className="w-24 h-24 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20 flex-shrink-0 overflow-hidden">
+              {profileData?.profile_picture_url ? (
+                <img
+                  src={getProfilePictureUrl(profileData.profile_picture_url) || ""}
+                  alt={user.username}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="w-12 h-12 text-purple-300" />
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-4xl font-bold text-white mb-2">

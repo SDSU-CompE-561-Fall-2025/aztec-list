@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProfileListingCard } from "@/components/listings/ProfileListingCard";
 import { PaginationControls } from "@/components/listings/PaginationControls";
-import { DEFAULT_LIMIT, API_BASE_URL } from "@/lib/constants";
+import { DEFAULT_LIMIT, API_BASE_URL, STATIC_BASE_URL } from "@/lib/constants";
 import { Plus } from "lucide-react";
 import { deleteListing, toggleListingActive } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +17,16 @@ import { toast } from "sonner";
 import { ProtectedRoute } from "@/components/custom/ProtectedRoute";
 import type { ListingSummary, ListingSearchResponse } from "@/types/listing/listing";
 import { getAuthToken } from "@/lib/auth";
+
+// Helper function to build full URL for profile picture
+const getProfilePictureUrl = (path: string | null | undefined): string | null => {
+  if (!path) return null;
+  const timestamp = Date.now();
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return `${path}?t=${timestamp}`;
+  }
+  return `${STATIC_BASE_URL}${path}?t=${timestamp}`;
+};
 
 function ProfileContent() {
   const { user, logout } = useAuth();
@@ -194,10 +204,18 @@ function ProfileContent() {
             <div className="p-4 sm:p-6 lg:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
               {/* Profile Picture */}
               <div className="flex-shrink-0">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/20 border-2 border-purple-500/30 flex items-center justify-center">
-                  <span className="text-2xl sm:text-3xl font-bold text-purple-300">
-                    {user?.username?.substring(0, 2).toUpperCase() || "??"}
-                  </span>
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/20 border-2 border-purple-500/30 flex items-center justify-center overflow-hidden">
+                  {profileData?.profile_picture_url ? (
+                    <img
+                      src={getProfilePictureUrl(profileData.profile_picture_url) || ""}
+                      alt={user?.username || "Profile"}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-2xl sm:text-3xl font-bold text-purple-300">
+                      {user?.username?.substring(0, 2).toUpperCase() || "??"}
+                    </span>
+                  )}
                 </div>
               </div>
 

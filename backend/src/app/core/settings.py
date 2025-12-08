@@ -65,6 +65,10 @@ class StorageSettings(BaseModel):
         default="uploads/images",
         description="Directory for storing uploaded images (relative to backend root)",
     )
+    profile_upload_dir: str = Field(
+        default="uploads/profiles",
+        description="Directory for storing profile pictures (relative to backend root)",
+    )
     max_file_size_mb: int = Field(
         default=5,
         ge=1,

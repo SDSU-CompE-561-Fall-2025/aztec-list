@@ -18,6 +18,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// Helper function to build full URL for profile picture
+const getProfilePictureUrl = (path: string | null | undefined): string | null => {
+  if (!path) return null;
+  const timestamp = Date.now();
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return `${path}?t=${timestamp}`;
+  }
+  return `${STATIC_BASE_URL}${path}?t=${timestamp}`;
+};
+
 const CONDITION_LABELS = {
   new: "New",
   like_new: "Like New",
@@ -245,8 +255,16 @@ export default function ListingDetailPage() {
                 onClick={() => router.push(`/profile/${listing.seller_id}`)}
                 className="flex items-center gap-3 w-full rounded-lg p-2 group text-left cursor-pointer"
               >
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20">
-                  <User className="w-6 h-6 text-purple-300" />
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20 overflow-hidden">
+                  {sellerProfile?.profile_picture_url ? (
+                    <img
+                      src={getProfilePictureUrl(sellerProfile.profile_picture_url) || ""}
+                      alt={seller?.username || "Seller"}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-6 h-6 text-purple-300" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-gray-100 text-base font-medium truncate">
