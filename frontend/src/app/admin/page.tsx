@@ -7,6 +7,78 @@ import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/constants";
 import { getAuthToken } from "@/lib/auth";
 import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { AlertCircle } from "lucide-react";
+
+// Constants - moved outside component for performance
+const ACTION_TYPE_CONFIG = {
+  strike: {
+    label: "Strike",
+    bgColor: "bg-yellow-500/10",
+    textColor: "text-yellow-400",
+    borderColor: "border-yellow-500/20",
+  },
+  ban: {
+    label: "Ban",
+    bgColor: "bg-red-500/10",
+    textColor: "text-red-400",
+    borderColor: "border-red-500/20",
+  },
+  listing_removal: {
+    label: "Listing Removed",
+    bgColor: "bg-purple-500/10",
+    textColor: "text-purple-400",
+    borderColor: "border-purple-500/20",
+  },
+} as const;
+
+const GUID_REGEX = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
+
+const TOAST_STYLES = {
+  success: {
+    background: "rgb(20, 83, 45)",
+    color: "white",
+    border: "1px solid rgb(34, 197, 94)",
+  },
+  error: {
+    background: "rgb(153, 27, 27)",
+    color: "white",
+    border: "1px solid rgb(220, 38, 38)",
+  },
+  warning: {
+    background: "rgb(113, 63, 18)",
+    color: "white",
+    border: "1px solid rgb(251, 191, 36)",
+  },
+} as const;
+
+// Utility functions - extracted for reusability and testing
+const validateGuid = (value: string): string => {
+  if (!value.trim()) return "";
+  if (!GUID_REGEX.test(value)) {
+    return "Invalid UUID format";
+  }
+  return "";
+};
+
+const formatGuid = (value: string): string => {
+  const cleaned = value.replace(/[^0-9a-fA-F-]/g, "");
+  const hex = cleaned.replace(/-/g, "");
+  const limited = hex.slice(0, 32);
+
+  if (limited.length === 0) return "";
+  if (limited.length <= 8) return limited;
+  if (limited.length <= 12) return `${limited.slice(0, 8)}-${limited.slice(8)}`;
+  if (limited.length <= 16)
+    return `${limited.slice(0, 8)}-${limited.slice(8, 12)}-${limited.slice(12)}`;
+  if (limited.length <= 20)
+    return `${limited.slice(0, 8)}-${limited.slice(8, 12)}-${limited.slice(12, 16)}-${limited.slice(16)}`;
+  return `${limited.slice(0, 8)}-${limited.slice(8, 12)}-${limited.slice(12, 16)}-${limited.slice(16, 20)}-${limited.slice(20)}`;
+};
 
 interface AdminAction {
   id: string;
@@ -36,35 +108,6 @@ export default function AdminDashboard() {
   const [banErrors, setBanErrors] = useState({ userId: "", reason: "" });
   const [removeErrors, setRemoveErrors] = useState({ listingId: "", reason: "" });
 
-  // Validate GUID format
-  const validateGuid = (value: string): string => {
-    if (!value.trim()) return "";
-    const guidRegex = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
-    if (!guidRegex.test(value)) {
-      return "Invalid UUID format";
-    }
-    return "";
-  };
-
-  // Format GUID (add hyphens if needed)
-  const formatGuid = (value: string): string => {
-    // Remove all non-hex characters except hyphens
-    const cleaned = value.replace(/[^0-9a-fA-F-]/g, "");
-    // Remove existing hyphens to reformat
-    const hex = cleaned.replace(/-/g, "");
-    // Limit to 32 hex characters
-    const limited = hex.slice(0, 32);
-
-    if (limited.length === 0) return "";
-    if (limited.length <= 8) return limited;
-    if (limited.length <= 12) return `${limited.slice(0, 8)}-${limited.slice(8)}`;
-    if (limited.length <= 16)
-      return `${limited.slice(0, 8)}-${limited.slice(8, 12)}-${limited.slice(12)}`;
-    if (limited.length <= 20)
-      return `${limited.slice(0, 8)}-${limited.slice(8, 12)}-${limited.slice(12, 16)}-${limited.slice(16)}`;
-    return `${limited.slice(0, 8)}-${limited.slice(8, 12)}-${limited.slice(12, 16)}-${limited.slice(16, 20)}-${limited.slice(20)}`;
-  };
-
   // Fetch admin actions
   const { data: actionsData, isLoading: actionsLoading } = useQuery({
     queryKey: ["adminActions"],
@@ -82,12 +125,6 @@ export default function AdminDashboard() {
   // Strike mutation
   const strikeMutation = useMutation({
     mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
-      // Validate GUID format
-      const guidRegex = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
-      if (!guidRegex.test(userId)) {
-        throw new Error("Invalid user ID format. Please enter a valid UUID.");
-      }
-
       const token = getAuthToken();
       const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/strike`, {
         method: "POST",
@@ -111,18 +148,27 @@ export default function AdminDashboard() {
       if (data.auto_ban_triggered) {
         toast.error(
           `Strike issued! User has been automatically BANNED after reaching ${data.strike_count} strikes.`,
-          { duration: 6000 }
+          {
+            duration: 6000,
+            style: TOAST_STYLES.error,
+          }
         );
       } else {
-        toast.success(`Strike issued successfully! User now has ${data.strike_count} strike(s).`);
+        toast.success(`Strike issued successfully! User now has ${data.strike_count} strike(s).`, {
+          style: TOAST_STYLES.success,
+        });
       }
     },
     onError: (error) => {
       // Check if it's an "already banned" error
       if (error.message.includes("already banned")) {
-        toast.warning("User is already banned. Cannot issue additional strikes.");
+        toast.warning("User is already banned. Cannot issue additional strikes.", {
+          style: TOAST_STYLES.warning,
+        });
       } else {
-        toast.error(`Failed to issue strike: ${error.message}`);
+        toast.error(`Failed to issue strike: ${error.message}`, {
+          style: TOAST_STYLES.error,
+        });
       }
     },
   });
@@ -130,12 +176,6 @@ export default function AdminDashboard() {
   // Ban mutation
   const banMutation = useMutation({
     mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
-      // Validate GUID format
-      const guidRegex = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
-      if (!guidRegex.test(userId)) {
-        throw new Error("Invalid user ID format. Please enter a valid UUID.");
-      }
-
       const token = getAuthToken();
       const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/ban`, {
         method: "POST",
@@ -155,14 +195,19 @@ export default function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: ["adminActions"] });
       setTargetUserId("");
       setReason("");
-      toast.success("User banned successfully!");
+      toast.success("User banned successfully!", {
+        style: TOAST_STYLES.success,
+      });
     },
     onError: (error) => {
-      // Check if it's an "already banned" error
       if (error.message.includes("already banned")) {
-        toast.warning("User is already banned. Revoke existing ban first if needed.");
+        toast.warning("User is already banned. Revoke existing ban first if needed.", {
+          style: TOAST_STYLES.warning,
+        });
       } else {
-        toast.error(`Failed to ban user: ${error.message}`);
+        toast.error(`Failed to ban user: ${error.message}`, {
+          style: TOAST_STYLES.error,
+        });
       }
     },
   });
@@ -170,12 +215,6 @@ export default function AdminDashboard() {
   // Remove listing mutation
   const removeMutation = useMutation({
     mutationFn: async ({ listingId, reason }: { listingId: string; reason: string }) => {
-      // Validate GUID format
-      const guidRegex = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
-      if (!guidRegex.test(listingId)) {
-        throw new Error("Invalid listing ID format. Please enter a valid UUID.");
-      }
-
       const token = getAuthToken();
       const response = await fetch(`${API_BASE_URL}/admin/listings/${listingId}/remove`, {
         method: "POST",
@@ -201,10 +240,14 @@ export default function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: ["adminActions"] });
       setListingId("");
       setReason("");
-      toast.success("Listing removed successfully!");
+      toast.success("Listing removed successfully!", {
+        style: TOAST_STYLES.success,
+      });
     },
     onError: (error) => {
-      toast.error(`Failed to remove listing: ${error.message}`);
+      toast.error(`Failed to remove listing: ${error.message}`, {
+        style: TOAST_STYLES.error,
+      });
     },
   });
 
@@ -220,10 +263,14 @@ export default function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminActions"] });
-      toast.warning("Action revoked successfully!");
+      toast.warning("Action revoked successfully!", {
+        style: TOAST_STYLES.warning,
+      });
     },
     onError: (error) => {
-      toast.error(`Failed to revoke action: ${error.message}`);
+      toast.error(`Failed to revoke action: ${error.message}`, {
+        style: TOAST_STYLES.error,
+      });
     },
   });
 
@@ -235,7 +282,16 @@ export default function AdminDashboard() {
   }, [authLoading, user, router]);
 
   if (authLoading) {
-    return <div className="p-8">Loading...</div>;
+    return (
+      <div className="container mx-auto p-8 max-w-6xl">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading admin dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!user || user.role !== "admin") {
@@ -245,47 +301,50 @@ export default function AdminDashboard() {
   const actions = actionsData?.items || [];
 
   return (
-    <div className="container mx-auto p-8 max-w-6xl">
-      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+    <div className="container mx-auto px-4 py-6 sm:px-6 sm:py-8 max-w-6xl">
+      <div className="mb-6 max-w-4xl mx-auto">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white">Admin Dashboard</h1>
+        <p className="text-sm text-gray-400 mt-1">Manage users, listings, and moderation actions</p>
+      </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b">
+      <div className="flex gap-2 mb-6 border-b border-gray-800 max-w-4xl mx-auto">
         <button
           onClick={() => setActiveTab("actions")}
-          className={`px-4 py-2 font-medium ${
+          className={`px-4 py-2 font-medium text-sm transition-colors ${
             activeTab === "actions"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-600 hover:text-gray-800"
+              ? "border-b-2 border-purple-500 text-purple-400"
+              : "text-gray-400 hover:text-gray-200"
           }`}
         >
           Actions History
         </button>
         <button
           onClick={() => setActiveTab("strike")}
-          className={`px-4 py-2 font-medium ${
+          className={`px-4 py-2 font-medium text-sm transition-colors ${
             activeTab === "strike"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-600 hover:text-gray-800"
+              ? "border-b-2 border-purple-500 text-purple-400"
+              : "text-gray-400 hover:text-gray-200"
           }`}
         >
           Issue Strike
         </button>
         <button
           onClick={() => setActiveTab("ban")}
-          className={`px-4 py-2 font-medium ${
+          className={`px-4 py-2 font-medium text-sm transition-colors ${
             activeTab === "ban"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-600 hover:text-gray-800"
+              ? "border-b-2 border-purple-500 text-purple-400"
+              : "text-gray-400 hover:text-gray-200"
           }`}
         >
           Ban User
         </button>
         <button
           onClick={() => setActiveTab("remove")}
-          className={`px-4 py-2 font-medium ${
+          className={`px-4 py-2 font-medium text-sm transition-colors ${
             activeTab === "remove"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-600 hover:text-gray-800"
+              ? "border-b-2 border-purple-500 text-purple-400"
+              : "text-gray-400 hover:text-gray-200"
           }`}
         >
           Remove Listing
@@ -294,71 +353,131 @@ export default function AdminDashboard() {
 
       {/* Actions History Tab */}
       {activeTab === "actions" && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Recent Admin Actions</h2>
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-white">Recent Admin Actions</h2>
           {actionsLoading ? (
-            <p>Loading actions...</p>
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600 mx-auto mb-3"></div>
+                <p className="text-gray-400 text-sm">Loading actions...</p>
+              </div>
+            </div>
           ) : actions.length === 0 ? (
-            <p className="text-gray-500">No actions recorded yet.</p>
+            <Card className="bg-gray-900 border-gray-800">
+              <CardContent className="py-12 text-center">
+                <AlertCircle className="h-12 w-12 text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-400">No actions recorded yet.</p>
+              </CardContent>
+            </Card>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-2.5">
               {actions.map((action: AdminAction) => (
-                <div
-                  key={action.id}
-                  className="border border-gray-700 rounded-lg p-4 bg-gray-800 shadow-sm"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-semibold text-lg capitalize text-gray-100">
-                          {action.action_type.replace("_", " ")}
-                        </span>
-                        <span className="text-sm text-gray-400">
-                          {new Date(action.created_at).toLocaleString()}
-                        </span>
+                <Card key={action.id} className="bg-gray-900 border-gray-800">
+                  <CardContent className="p-3.5">
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex-1 min-w-0 space-y-2">
+                        {/* Action Type Badge and Timestamp */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border ${
+                              ACTION_TYPE_CONFIG[
+                                action.action_type as keyof typeof ACTION_TYPE_CONFIG
+                              ]?.bgColor || "bg-gray-500/10"
+                            } ${
+                              ACTION_TYPE_CONFIG[
+                                action.action_type as keyof typeof ACTION_TYPE_CONFIG
+                              ]?.textColor || "text-gray-400"
+                            } ${
+                              ACTION_TYPE_CONFIG[
+                                action.action_type as keyof typeof ACTION_TYPE_CONFIG
+                              ]?.borderColor || "border-gray-500/20"
+                            }`}
+                          >
+                            {ACTION_TYPE_CONFIG[
+                              action.action_type as keyof typeof ACTION_TYPE_CONFIG
+                            ]?.label || action.action_type.replace("_", " ")}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(action.created_at).toLocaleString()}
+                          </span>
+                        </div>
+
+                        {/* Target User */}
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            Target:
+                          </span>
+                          {action.target_username ? (
+                            <span className="text-sm font-medium text-white">
+                              {action.target_username}
+                              <span className="text-xs text-gray-600 ml-1.5 font-mono">
+                                {action.target_user_id}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-500 font-mono">
+                              {action.target_user_id}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Admin User */}
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            Admin:
+                          </span>
+                          {action.admin_username ? (
+                            <span className="text-sm text-gray-300">
+                              {action.admin_username}
+                              <span className="text-xs text-gray-600 ml-1.5 font-mono">
+                                {action.admin_id}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-500 font-mono">
+                              {action.admin_id}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Listing ID if present */}
+                        {action.target_listing_id && (
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                              Listing:
+                            </span>
+                            <span className="text-xs text-gray-500 font-mono">
+                              {action.target_listing_id}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Reason - Most prominent */}
+                        {action.reason && (
+                          <div className="pt-1.5 mt-1.5 border-t border-gray-800">
+                            <p className="text-sm text-gray-200 leading-relaxed">
+                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide mr-2">
+                                Reason:
+                              </span>
+                              {action.reason}
+                            </p>
+                          </div>
+                        )}
                       </div>
-                      <p className="text-sm text-gray-300">
-                        <strong>Target User:</strong>{" "}
-                        {action.target_username ? (
-                          <>
-                            {action.target_username}{" "}
-                            <span className="text-gray-500">({action.target_user_id})</span>
-                          </>
-                        ) : (
-                          action.target_user_id
-                        )}
-                      </p>
-                      <p className="text-sm text-gray-300">
-                        <strong>Admin:</strong>{" "}
-                        {action.admin_username ? (
-                          <>
-                            {action.admin_username}{" "}
-                            <span className="text-gray-500">({action.admin_id})</span>
-                          </>
-                        ) : (
-                          action.admin_id
-                        )}
-                      </p>
-                      {action.target_listing_id && (
-                        <p className="text-sm text-gray-300">
-                          <strong>Listing:</strong> {action.target_listing_id}
-                        </p>
-                      )}
-                      {action.reason && (
-                        <p className="text-sm text-gray-200 mt-2">
-                          <strong>Reason:</strong> {action.reason}
-                        </p>
-                      )}
+
+                      {/* Revoke Button */}
+                      <Button
+                        onClick={() => revokeMutation.mutate(action.id)}
+                        disabled={revokeMutation.isPending}
+                        variant="destructive"
+                        size="sm"
+                        className="shrink-0 text-xs"
+                      >
+                        {revokeMutation.isPending ? "Revoking..." : "Revoke"}
+                      </Button>
                     </div>
-                    <button
-                      onClick={() => revokeMutation.mutate(action.id)}
-                      disabled={revokeMutation.isPending}
-                      className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 disabled:opacity-50"
-                    >
-                      Revoke
-                    </button>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}
@@ -367,268 +486,322 @@ export default function AdminDashboard() {
 
       {/* Issue Strike Tab */}
       {activeTab === "strike" && (
-        <div className="max-w-md">
-          <h2 className="text-xl font-semibold mb-4">Issue Strike to User</h2>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const errors = { userId: "", reason: "" };
+        <Card className="max-w-xl mx-auto bg-gray-900 border-gray-800">
+          <CardHeader>
+            <CardTitle className="text-lg sm:text-xl text-white">Issue Strike to User</CardTitle>
+            <p className="text-xs text-gray-400 mt-1">
+              Warn a user for policy violations. 3 strikes result in automatic ban.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const errors = { userId: "", reason: "" };
 
-              if (!targetUserId.trim()) {
-                errors.userId = "User ID is required";
-              }
-              if (!reason.trim()) {
-                errors.reason = "Reason is required";
-              }
+                if (!targetUserId.trim()) {
+                  errors.userId = "User ID is required";
+                }
+                if (!reason.trim()) {
+                  errors.reason = "Reason is required";
+                }
 
-              setStrikeErrors(errors);
+                setStrikeErrors(errors);
 
-              if (errors.userId || errors.reason) {
-                toast.error("Please fill in all required fields");
-                return;
-              }
+                if (errors.userId || errors.reason) {
+                  toast.error("Please fill in all required fields", {
+                    style: TOAST_STYLES.error,
+                  });
+                  return;
+                }
 
-              strikeMutation.mutate({ userId: targetUserId, reason });
-            }}
-            className="space-y-4"
-          >
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                User ID <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={targetUserId}
-                onChange={(e) => {
-                  const formatted = formatGuid(e.target.value);
-                  setTargetUserId(formatted);
-                  const error = validateGuid(formatted);
-                  setStrikeErrors((prev) => ({ ...prev, userId: error }));
-                }}
-                onBlur={(e) => {
-                  if (!e.target.value.trim()) {
-                    setStrikeErrors((prev) => ({ ...prev, userId: "User ID is required" }));
-                  }
-                }}
-                className={`w-full px-3 py-2 bg-gray-900 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  strikeErrors.userId ? "border-red-500" : "border-gray-700"
-                }`}
-                placeholder="Enter user UUID"
-              />
-              {strikeErrors.userId && (
-                <p className="text-red-500 text-sm mt-1">{strikeErrors.userId}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Reason <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={reason}
-                onChange={(e) => {
-                  setReason(e.target.value);
-                  if (strikeErrors.reason) setStrikeErrors((prev) => ({ ...prev, reason: "" }));
-                }}
-                onBlur={(e) => {
-                  if (!e.target.value.trim()) {
-                    setStrikeErrors((prev) => ({ ...prev, reason: "Reason is required" }));
-                  }
-                }}
-                className={`w-full px-3 py-2 bg-gray-900 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
-                  strikeErrors.reason ? "border-red-500" : "border-gray-700"
-                }`}
-                rows={3}
-                placeholder="Reason for strike..."
-              />
-              {strikeErrors.reason && (
-                <p className="text-red-500 text-sm mt-1">{strikeErrors.reason}</p>
-              )}
-            </div>
-            <button
-              type="submit"
-              disabled={strikeMutation.isPending}
-              className="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50"
+                strikeMutation.mutate({ userId: targetUserId, reason });
+              }}
+              className="space-y-4"
             >
-              {strikeMutation.isPending ? "Issuing Strike..." : "Issue Strike"}
-            </button>
-          </form>
-        </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="strike-user-id" className="text-sm font-medium text-white">
+                  User ID <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="strike-user-id"
+                  type="text"
+                  value={targetUserId}
+                  onChange={(e) => {
+                    const formatted = formatGuid(e.target.value);
+                    setTargetUserId(formatted);
+                    const error = validateGuid(formatted);
+                    setStrikeErrors((prev) => ({ ...prev, userId: error }));
+                  }}
+                  onBlur={(e) => {
+                    if (!e.target.value.trim()) {
+                      setStrikeErrors((prev) => ({ ...prev, userId: "User ID is required" }));
+                    }
+                  }}
+                  className={`bg-gray-950 border-gray-700 text-white placeholder:text-gray-500 ${
+                    strikeErrors.userId ? "border-red-500" : ""
+                  }`}
+                  placeholder="Enter user UUID"
+                />
+                {strikeErrors.userId && (
+                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {strikeErrors.userId}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="strike-reason" className="text-sm font-medium text-white">
+                  Reason <span className="text-red-500">*</span>
+                </Label>
+                <Textarea
+                  id="strike-reason"
+                  value={reason}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                    setReason(e.target.value);
+                    if (strikeErrors.reason) setStrikeErrors((prev) => ({ ...prev, reason: "" }));
+                  }}
+                  onBlur={(e: React.FocusEvent<HTMLTextAreaElement>) => {
+                    if (!e.target.value.trim()) {
+                      setStrikeErrors((prev) => ({ ...prev, reason: "Reason is required" }));
+                    }
+                  }}
+                  className={`bg-gray-950 border-gray-700 text-white placeholder:text-gray-500 resize-none ${
+                    strikeErrors.reason ? "border-red-500" : ""
+                  }`}
+                  rows={3}
+                  placeholder="Reason for strike..."
+                />
+                {strikeErrors.reason && (
+                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {strikeErrors.reason}
+                  </p>
+                )}
+              </div>
+              <Button
+                type="submit"
+                disabled={strikeMutation.isPending}
+                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
+              >
+                {strikeMutation.isPending ? "Issuing Strike..." : "Issue Strike"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
       {/* Ban User Tab */}
       {activeTab === "ban" && (
-        <div className="max-w-md">
-          <h2 className="text-xl font-semibold mb-4">Ban User</h2>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const errors = { userId: "", reason: "" };
+        <Card className="max-w-xl mx-auto bg-gray-900 border-gray-800">
+          <CardHeader>
+            <CardTitle className="text-lg sm:text-xl text-white">Ban User</CardTitle>
+            <p className="text-xs text-gray-400 mt-1">Permanently ban a user from the platform.</p>
+          </CardHeader>
+          <CardContent>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const errors = { userId: "", reason: "" };
 
-              if (!targetUserId.trim()) {
-                errors.userId = "User ID is required";
-              }
-              if (!reason.trim()) {
-                errors.reason = "Reason is required";
-              }
+                if (!targetUserId.trim()) {
+                  errors.userId = "User ID is required";
+                }
+                if (!reason.trim()) {
+                  errors.reason = "Reason is required";
+                }
 
-              setBanErrors(errors);
+                setBanErrors(errors);
 
-              if (errors.userId || errors.reason) {
-                toast.error("Please fill in all required fields");
-                return;
-              }
+                if (errors.userId || errors.reason) {
+                  toast.error("Please fill in all required fields", {
+                    style: TOAST_STYLES.error,
+                  });
+                  return;
+                }
 
-              banMutation.mutate({ userId: targetUserId, reason });
-            }}
-            className="space-y-4"
-          >
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                User ID <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={targetUserId}
-                onChange={(e) => {
-                  const formatted = formatGuid(e.target.value);
-                  setTargetUserId(formatted);
-                  const error = validateGuid(formatted);
-                  setBanErrors((prev) => ({ ...prev, userId: error }));
-                }}
-                onBlur={(e) => {
-                  if (!e.target.value.trim()) {
-                    setBanErrors((prev) => ({ ...prev, userId: "User ID is required" }));
-                  }
-                }}
-                className={`w-full px-3 py-2 bg-gray-900 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  banErrors.userId ? "border-red-500" : "border-gray-700"
-                }`}
-                placeholder="Enter user UUID"
-              />
-              {banErrors.userId && <p className="text-red-500 text-sm mt-1">{banErrors.userId}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Reason <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={reason}
-                onChange={(e) => {
-                  setReason(e.target.value);
-                  if (banErrors.reason) setBanErrors((prev) => ({ ...prev, reason: "" }));
-                }}
-                onBlur={(e) => {
-                  if (!e.target.value.trim()) {
-                    setBanErrors((prev) => ({ ...prev, reason: "Reason is required" }));
-                  }
-                }}
-                className={`w-full px-3 py-2 bg-gray-900 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
-                  banErrors.reason ? "border-red-500" : "border-gray-700"
-                }`}
-                rows={3}
-                placeholder="Reason for ban..."
-              />
-              {banErrors.reason && <p className="text-red-500 text-sm mt-1">{banErrors.reason}</p>}
-            </div>
-            <button
-              type="submit"
-              disabled={banMutation.isPending}
-              className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                banMutation.mutate({ userId: targetUserId, reason });
+              }}
+              className="space-y-4"
             >
-              {banMutation.isPending ? "Banning User..." : "Ban User (Permanent)"}
-            </button>
-          </form>
-        </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ban-user-id" className="text-sm font-medium text-white">
+                  User ID <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="ban-user-id"
+                  type="text"
+                  value={targetUserId}
+                  onChange={(e) => {
+                    const formatted = formatGuid(e.target.value);
+                    setTargetUserId(formatted);
+                    const error = validateGuid(formatted);
+                    setBanErrors((prev) => ({ ...prev, userId: error }));
+                  }}
+                  onBlur={(e) => {
+                    if (!e.target.value.trim()) {
+                      setBanErrors((prev) => ({ ...prev, userId: "User ID is required" }));
+                    }
+                  }}
+                  className={`bg-gray-950 border-gray-700 text-white placeholder:text-gray-500 ${
+                    banErrors.userId ? "border-red-500" : ""
+                  }`}
+                  placeholder="Enter user UUID"
+                />
+                {banErrors.userId && (
+                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {banErrors.userId}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ban-reason" className="text-sm font-medium text-white">
+                  Reason <span className="text-red-500">*</span>
+                </Label>
+                <Textarea
+                  id="ban-reason"
+                  value={reason}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                    setReason(e.target.value);
+                    if (banErrors.reason) setBanErrors((prev) => ({ ...prev, reason: "" }));
+                  }}
+                  onBlur={(e: React.FocusEvent<HTMLTextAreaElement>) => {
+                    if (!e.target.value.trim()) {
+                      setBanErrors((prev) => ({ ...prev, reason: "Reason is required" }));
+                    }
+                  }}
+                  className={`bg-gray-950 border-gray-700 text-white placeholder:text-gray-500 resize-none ${
+                    banErrors.reason ? "border-red-500" : ""
+                  }`}
+                  rows={3}
+                  placeholder="Reason for ban..."
+                />
+                {banErrors.reason && (
+                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {banErrors.reason}
+                  </p>
+                )}
+              </div>
+              <Button
+                type="submit"
+                disabled={banMutation.isPending}
+                variant="destructive"
+                className="w-full"
+              >
+                {banMutation.isPending ? "Banning User..." : "Ban User (Permanent)"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
       {/* Remove Listing Tab */}
       {activeTab === "remove" && (
-        <div className="max-w-md">
-          <h2 className="text-xl font-semibold mb-4">Remove Listing</h2>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const errors = { listingId: "", reason: "" };
+        <Card className="max-w-xl mx-auto bg-gray-900 border-gray-800">
+          <CardHeader>
+            <CardTitle className="text-lg sm:text-xl text-white">Remove Listing</CardTitle>
+            <p className="text-xs text-gray-400 mt-1">
+              Delete a listing and issue a strike to its owner.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const errors = { listingId: "", reason: "" };
 
-              if (!listingId.trim()) {
-                errors.listingId = "Listing ID is required";
-              }
-              if (!reason.trim()) {
-                errors.reason = "Reason is required";
-              }
+                if (!listingId.trim()) {
+                  errors.listingId = "Listing ID is required";
+                }
+                if (!reason.trim()) {
+                  errors.reason = "Reason is required";
+                }
 
-              setRemoveErrors(errors);
+                setRemoveErrors(errors);
 
-              if (errors.listingId || errors.reason) {
-                toast.error("Please fill in all required fields");
-                return;
-              }
+                if (errors.listingId || errors.reason) {
+                  toast.error("Please fill in all required fields", {
+                    style: TOAST_STYLES.error,
+                  });
+                  return;
+                }
 
-              removeMutation.mutate({ listingId, reason });
-            }}
-            className="space-y-4"
-          >
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Listing ID <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={listingId}
-                onChange={(e) => {
-                  const formatted = formatGuid(e.target.value);
-                  setListingId(formatted);
-                  const error = validateGuid(formatted);
-                  setRemoveErrors((prev) => ({ ...prev, listingId: error }));
-                }}
-                onBlur={(e) => {
-                  if (!e.target.value.trim()) {
-                    setRemoveErrors((prev) => ({ ...prev, listingId: "Listing ID is required" }));
-                  }
-                }}
-                className={`w-full px-3 py-2 bg-gray-900 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  removeErrors.listingId ? "border-red-500" : "border-gray-700"
-                }`}
-                placeholder="Enter listing UUID"
-              />
-              {removeErrors.listingId && (
-                <p className="text-red-500 text-sm mt-1">{removeErrors.listingId}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Reason <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={reason}
-                onChange={(e) => {
-                  setReason(e.target.value);
-                  if (removeErrors.reason) setRemoveErrors((prev) => ({ ...prev, reason: "" }));
-                }}
-                onBlur={(e) => {
-                  if (!e.target.value.trim()) {
-                    setRemoveErrors((prev) => ({ ...prev, reason: "Reason is required" }));
-                  }
-                }}
-                className={`w-full px-3 py-2 bg-gray-900 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
-                  removeErrors.reason ? "border-red-500" : "border-gray-700"
-                }`}
-                rows={3}
-                placeholder="Reason for removal..."
-              />
-              {removeErrors.reason && (
-                <p className="text-red-500 text-sm mt-1">{removeErrors.reason}</p>
-              )}
-            </div>
-            <button
-              type="submit"
-              disabled={removeMutation.isPending}
-              className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                removeMutation.mutate({ listingId, reason });
+              }}
+              className="space-y-4"
             >
-              {removeMutation.isPending ? "Removing Listing..." : "Remove Listing"}
-            </button>
-          </form>
-        </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="remove-listing-id" className="text-sm font-medium text-white">
+                  Listing ID <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="remove-listing-id"
+                  type="text"
+                  value={listingId}
+                  onChange={(e) => {
+                    const formatted = formatGuid(e.target.value);
+                    setListingId(formatted);
+                    const error = validateGuid(formatted);
+                    setRemoveErrors((prev) => ({ ...prev, listingId: error }));
+                  }}
+                  onBlur={(e) => {
+                    if (!e.target.value.trim()) {
+                      setRemoveErrors((prev) => ({ ...prev, listingId: "Listing ID is required" }));
+                    }
+                  }}
+                  className={`bg-gray-950 border-gray-700 text-white placeholder:text-gray-500 ${
+                    removeErrors.listingId ? "border-red-500" : ""
+                  }`}
+                  placeholder="Enter listing UUID"
+                />
+                {removeErrors.listingId && (
+                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {removeErrors.listingId}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="remove-reason" className="text-sm font-medium text-white">
+                  Reason <span className="text-red-500">*</span>
+                </Label>
+                <Textarea
+                  id="remove-reason"
+                  value={reason}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                    setReason(e.target.value);
+                    if (removeErrors.reason) setRemoveErrors((prev) => ({ ...prev, reason: "" }));
+                  }}
+                  onBlur={(e: React.FocusEvent<HTMLTextAreaElement>) => {
+                    if (!e.target.value.trim()) {
+                      setRemoveErrors((prev) => ({ ...prev, reason: "Reason is required" }));
+                    }
+                  }}
+                  className={`bg-gray-950 border-gray-700 text-white placeholder:text-gray-500 resize-none ${
+                    removeErrors.reason ? "border-red-500" : ""
+                  }`}
+                  rows={3}
+                  placeholder="Reason for removal..."
+                />
+                {removeErrors.reason && (
+                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {removeErrors.reason}
+                  </p>
+                )}
+              </div>
+              <Button
+                type="submit"
+                disabled={removeMutation.isPending}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                {removeMutation.isPending ? "Removing Listing..." : "Remove Listing"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

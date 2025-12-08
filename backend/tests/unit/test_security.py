@@ -24,7 +24,7 @@ class TestEnsureAdmin:
         """Test that admin users pass the check."""
         user = User(
             id=uuid4(),
-            email="admin@example.com",
+            email="admin@example.edu",
             username="admin",
             hashed_password="hashed",
             role=UserRole.ADMIN,
@@ -36,7 +36,7 @@ class TestEnsureAdmin:
         """Test that non-admin users are rejected."""
         user = User(
             id=uuid4(),
-            email="user@example.com",
+            email="user@example.edu",
             username="user",
             hashed_password="hashed",
             role=UserRole.USER,
@@ -54,7 +54,7 @@ class TestEnsureVerified:
         """Test that verified users pass the check."""
         user = User(
             id=uuid4(),
-            email="verified@example.com",
+            email="verified@example.edu",
             username="verified",
             hashed_password="hashed",
             is_verified=True,
@@ -66,7 +66,7 @@ class TestEnsureVerified:
         """Test that unverified users are rejected."""
         user = User(
             id=uuid4(),
-            email="unverified@example.com",
+            email="unverified@example.edu",
             username="unverified",
             hashed_password="hashed",
             is_verified=False,
@@ -84,14 +84,14 @@ class TestEnsureCanModerateUser:
         """Test that regular users can be moderated."""
         target = User(
             id=uuid4(),
-            email="target@example.com",
+            email="target@example.edu",
             username="target",
             hashed_password="hashed",
             role=UserRole.USER,
         )
         moderator = User(
             id=uuid4(),
-            email="admin@example.com",
+            email="admin@example.edu",
             username="admin",
             hashed_password="hashed",
             role=UserRole.ADMIN,
@@ -104,7 +104,7 @@ class TestEnsureCanModerateUser:
         user_id = uuid4()
         user = User(
             id=user_id,
-            email="admin@example.com",
+            email="admin@example.edu",
             username="admin",
             hashed_password="hashed",
             role=UserRole.ADMIN,
@@ -118,14 +118,14 @@ class TestEnsureCanModerateUser:
         """Test that admins cannot moderate other admins."""
         target_admin = User(
             id=uuid4(),
-            email="admin1@example.com",
+            email="admin1@example.edu",
             username="admin1",
             hashed_password="hashed",
             role=UserRole.ADMIN,
         )
         moderator_admin = User(
             id=uuid4(),
-            email="admin2@example.com",
+            email="admin2@example.edu",
             username="admin2",
             hashed_password="hashed",
             role=UserRole.ADMIN,

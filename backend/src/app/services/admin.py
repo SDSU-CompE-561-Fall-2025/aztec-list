@@ -6,16 +6,14 @@ This module contains business logic for admin action operations.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
 
-from app.core.enums import AdminActionType
+from app.core.enums import AdminActionType, UserRole
 from app.core.security import ensure_can_moderate_user
 from app.core.settings import settings
 from app.core.storage import delete_listing_images
-from app.models.admin import AdminAction
 from app.repository.admin import AdminActionRepository
 from app.repository.listing import ListingRepository
 from app.repository.user import UserRepository
@@ -26,6 +24,7 @@ if TYPE_CHECKING:
 
     from sqlalchemy.orm import Session
 
+    from app.models.admin import AdminAction
     from app.models.user import User
     from app.schemas.admin import AdminActionBan, AdminActionFilters
 
@@ -141,20 +140,41 @@ class AdminActionService:
         self,
         db: Session,
         filters: AdminActionFilters,
-    ) -> tuple[list[AdminAction], int]:
+    ) -> tuple[list[dict], int]:
         """
         Get admin actions with optional filters and pagination.
+
+        Returns actions as dictionaries with username fields for API serialization.
 
         Args:
             db: Database session
             filters: Filter criteria and pagination parameters
 
         Returns:
-            tuple[list[AdminAction], int]: Filtered admin actions and total count
+            tuple[list[dict], int]: Filtered admin actions as dicts and total count
         """
-        actions = AdminActionRepository.get_filtered(db=db, filters=filters)
+        results = AdminActionRepository.get_filtered(db=db, filters=filters)
         count = AdminActionRepository.count_filtered(db=db, filters=filters)
-        return actions, count
+
+        # Convert to dictionaries with username fields for API response
+        actions_with_usernames = []
+        for action, admin_username, target_username in results:
+            # Create a dict representation that includes usernames
+            action_dict = {
+                "id": action.id,
+                "admin_id": action.admin_id,
+                "admin_username": admin_username,
+                "target_user_id": action.target_user_id,
+                "target_username": target_username,
+                "action_type": action.action_type,
+                "reason": action.reason,
+                "target_listing_id": action.target_listing_id,
+                "created_at": action.created_at,
+                "expires_at": action.expires_at,
+            }
+            actions_with_usernames.append(action_dict)
+
+        return actions_with_usernames, count
 
     def create_strike(
         self,
@@ -191,6 +211,10 @@ class AdminActionService:
             target_listing_id=None,
             expires_at=None,
         )
+
+        # Note: Repository create() handles db.commit(), so these operations are
+        # already in separate transactions. This is acceptable for this use case
+        # as the strike should be recorded even if auto-ban fails.
         created_strike = AdminActionRepository.create(db, admin_id, action)
 
         strike_count = AdminActionRepository.count_strikes(db, target_user_id)
@@ -330,46 +354,40 @@ class AdminActionService:
 
         # Check if the listing owner is an admin
         seller = UserRepository.get_by_id(db, seller_id)
-        if seller and seller.role == "admin":
+        if seller and seller.role == UserRole.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Cannot remove a listing posted by an admin",
             )
 
-        strike_action = None
+        # Check if user is already banned - issue strike only if not banned
+        is_already_banned = AdminActionRepository.has_active_ban(db, seller_id) is not None
 
-        try:
-            self._check_user_not_banned(db, seller_id)
-            # Create strike for listing removal
-            strike_action, _, _ = self.create_strike(
+        # Delete the listing and its images first
+        ListingRepository.delete(db, listing)
+        delete_listing_images(listing_id)
+
+        # Create LISTING_REMOVAL audit record regardless of ban status
+        removal_action = AdminActionCreate(
+            target_user_id=seller_id,
+            action_type=AdminActionType.LISTING_REMOVAL,
+            reason=reason or "Policy violation",
+            target_listing_id=listing_id,
+            expires_at=None,
+        )
+        removal_record = AdminActionRepository.create(db, admin_id, removal_action)
+
+        # Issue strike only if user is not already banned
+        if not is_already_banned:
+            _, _, _ = self.create_strike(
                 db=db,
                 admin_id=admin_id,
                 target_user_id=seller_id,
                 strike=AdminActionStrike(reason=f"Listing removed: {reason or 'Policy violation'}"),
             )
-        except HTTPException as e:
-            if e.status_code != status.HTTP_400_BAD_REQUEST:
-                raise
-            # User is banned, just clean up the listing without additional penalty
 
-        # Delete the listing and its images
-        ListingRepository.delete(db, listing)
-        delete_listing_images(listing_id)
-
-        # If no strike was created (user already banned), create a minimal action for audit
-        if strike_action is None:
-            # Return a placeholder strike action for response (won't be saved)
-            strike_action = AdminAction(
-                id=listing_id,  # Use listing_id as placeholder
-                admin_id=admin_id,
-                target_user_id=seller_id,
-                action_type=AdminActionType.STRIKE.value,
-                reason=f"Listing removed (user already banned): {reason or 'Policy violation'}",
-                target_listing_id=listing_id,
-                created_at=datetime.now(UTC),
-            )
-
-        return strike_action
+        # Return the LISTING_REMOVAL audit record for API response
+        return removal_record
 
 
 # Create a singleton instance

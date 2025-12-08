@@ -53,7 +53,7 @@ async def list_admin_actions(
     actions, count = admin_action_service.get_filtered(db=db, filters=filters)
 
     return AdminActionListResponse(
-        items=[AdminActionPublic.model_validate(action) for action in actions],
+        items=[AdminActionPublic(**action) for action in actions],
         next_cursor=None,  # TODO: Implement cursor pagination in the future
         count=count,
     )

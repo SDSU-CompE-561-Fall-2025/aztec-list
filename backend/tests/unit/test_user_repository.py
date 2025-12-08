@@ -27,7 +27,7 @@ class TestUserRepositoryGet:
 
     def test_get_by_email_not_found(self, db_session: Session):
         """Test getting user by email when doesn't exist."""
-        result = UserRepository.get_by_email(db_session, "nonexistent@example.com")
+        result = UserRepository.get_by_email(db_session, "nonexistent@example.edu")
 
         assert result is None
 
@@ -86,7 +86,7 @@ class TestUserRepositoryCreate:
     def test_create_user_success(self, db_session: Session):
         """Test creating a new user."""
         user_data = UserCreate(
-            username="newuser", email="newuser@example.com", password="password123"
+            username="newuser", email="newuser@example.edu", password="password123"
         )
         hashed_password = "hashed_password_123"
 
@@ -94,7 +94,7 @@ class TestUserRepositoryCreate:
 
         assert result.id is not None
         assert result.username == "newuser"
-        assert result.email == "newuser@example.com"
+        assert result.email == "newuser@example.edu"
         assert result.hashed_password == hashed_password
         assert result.created_at is not None
 
@@ -106,7 +106,7 @@ class TestUserRepositoryCreate:
     def test_create_user_with_defaults(self, db_session: Session):
         """Test that new users get default values."""
         user_data = UserCreate(
-            username="defaultuser", email="default@example.com", password="password123"
+            username="defaultuser", email="default@example.edu", password="password123"
         )
 
         result = UserRepository.create(db_session, user_data, "hashed")
@@ -122,12 +122,12 @@ class TestUserRepositoryUpdate:
         """Test updating user attributes."""
         original_username = test_user.username
         test_user.username = "updated_username"
-        test_user.email = "updated@example.com"
+        test_user.email = "updated@example.edu"
 
         result = UserRepository.update(db_session, test_user)
 
         assert result.username == "updated_username"
-        assert result.email == "updated@example.com"
+        assert result.email == "updated@example.edu"
 
         # Verify changes persisted
         db_user = UserRepository.get_by_id(db_session, test_user.id)

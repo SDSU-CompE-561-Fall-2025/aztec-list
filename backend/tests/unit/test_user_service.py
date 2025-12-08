@@ -30,7 +30,7 @@ def mock_user():
     return User(
         id=uuid.uuid4(),
         username="testuser",
-        email="test@example.com",
+        email="test@example.edu",
         hashed_password="$2b$12$hashedpassword",
         is_verified=True,
         role=UserRole.USER,
@@ -46,10 +46,10 @@ class TestUserServiceGet:
             mock_get.return_value = mock_user
             db = MagicMock(spec=Session)
 
-            result = user_service.get_by_email(db, "test@example.com")
+            result = user_service.get_by_email(db, "test@example.edu")
 
             assert result == mock_user
-            mock_get.assert_called_once_with(db, "test@example.com")
+            mock_get.assert_called_once_with(db, "test@example.edu")
 
     def test_get_by_email_not_found_raises_404(self, user_service: UserService):
         """Test getting user by email when doesn't exist raises 404."""
@@ -58,7 +58,7 @@ class TestUserServiceGet:
             db = MagicMock(spec=Session)
 
             with pytest.raises(HTTPException) as exc_info:
-                user_service.get_by_email(db, "nonexistent@example.com")
+                user_service.get_by_email(db, "nonexistent@example.edu")
 
             assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
             assert "not found" in exc_info.value.detail.lower()
@@ -142,7 +142,7 @@ class TestUserServiceCreate:
         """Test creating a new user successfully."""
         user_data = UserCreate(
             username="newuser",
-            email="new@example.com",
+            email="new@example.edu",
             password="password123",
         )
 
@@ -161,7 +161,7 @@ class TestUserServiceCreate:
             result = user_service.create(db, user_data)
 
             assert result == mock_user
-            mock_get_email.assert_called_once_with(db, "new@example.com")
+            mock_get_email.assert_called_once_with(db, "new@example.edu")
             mock_get_username.assert_called_once_with(db, "newuser")
             mock_hash.assert_called_once_with("password123")
             mock_create.assert_called_once_with(db, user_data, "hashed_password")
@@ -172,7 +172,7 @@ class TestUserServiceCreate:
         """Test creating user with duplicate email raises 400."""
         user_data = UserCreate(
             username="newuser",
-            email="existing@example.com",
+            email="existing@example.edu",
             password="password123",
         )
 
@@ -192,7 +192,7 @@ class TestUserServiceCreate:
         """Test creating user with duplicate username raises 400."""
         user_data = UserCreate(
             username="existinguser",
-            email="new@example.com",
+            email="new@example.edu",
             password="password123",
         )
 
@@ -333,9 +333,9 @@ class TestUserServiceUpdate:
         self, user_service: UserService, mock_user: User
     ):
         """Test updating email resets is_verified to False."""
-        update_data = UserUpdate(email="newemail@example.com")
+        update_data = UserUpdate(email="newemail@example.edu")
         mock_user.is_verified = True
-        mock_user.email = "oldemail@example.com"
+        mock_user.email = "oldemail@example.edu"
 
         with (
             patch("app.services.user.UserRepository.get_by_id") as mock_get,

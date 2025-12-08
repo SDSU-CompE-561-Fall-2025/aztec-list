@@ -187,9 +187,14 @@ class AdminActionRepository:
         return list(db.scalars(query).all())
 
     @staticmethod
-    def get_filtered(db: Session, filters: AdminActionFilters) -> list[AdminAction]:
+    def get_filtered(
+        db: Session, filters: AdminActionFilters
+    ) -> list[tuple[AdminAction, str | None, str | None]]:
         """
         Get admin actions with optional filters and pagination.
+
+        Returns actions with associated usernames as separate tuple elements
+        rather than dynamically attaching attributes to model instances.
 
         Args:
             db: Database session
@@ -197,7 +202,8 @@ class AdminActionRepository:
                     target_listing_id, date ranges, and pagination
 
         Returns:
-            list[AdminAction]: List of filtered admin actions with usernames attached
+            list[tuple[AdminAction, str | None, str | None]]: List of tuples containing
+                (action, admin_username, target_username)
         """
         # Create aliases for admin and target users
         admin_user = aliased(User, name="admin_user")
@@ -234,15 +240,8 @@ class AdminActionRepository:
 
         results = db.execute(query).all()
 
-        # Attach usernames to AdminAction objects
-        actions = []
-        for row in results:
-            action = row[0]  # AdminAction
-            action.admin_username = row[1]  # admin_username
-            action.target_username = row[2]  # target_username
-            actions.append(action)
-
-        return actions
+        # Return list of tuples (action, admin_username, target_username)
+        return [(row[0], row[1], row[2]) for row in results]
 
     @staticmethod
     def count_filtered(db: Session, filters: AdminActionFilters) -> int:
@@ -272,7 +271,8 @@ class AdminActionRepository:
         if filters.to_date:
             query = query.where(AdminAction.created_at <= filters.to_date)
 
-        return db.scalar(select(func.count()).select_from(query.subquery())) or 0
+        count = db.scalar(select(func.count()).select_from(query.subquery()))
+        return count if count is not None else 0
 
     @staticmethod
     def create(db: Session, admin_id: uuid.UUID, action: AdminActionCreate) -> AdminAction:

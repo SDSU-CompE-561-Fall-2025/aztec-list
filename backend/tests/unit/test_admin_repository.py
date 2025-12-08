@@ -282,7 +282,7 @@ class TestAdminActionRepositoryFilters:
         filters = AdminActionFilters(action_type=AdminActionType.STRIKE)
         results = AdminActionRepository.get_filtered(db_session, filters)
 
-        assert all(action.action_type == AdminActionType.STRIKE for action in results)
+        assert all(action.action_type == AdminActionType.STRIKE for action, _, _ in results)
 
     def test_get_filtered_by_admin_id(
         self, db_session: Session, admin_user: User, test_admin_action: AdminAction
@@ -291,7 +291,7 @@ class TestAdminActionRepositoryFilters:
         filters = AdminActionFilters(admin_id=admin_user.id)
         results = AdminActionRepository.get_filtered(db_session, filters)
 
-        assert all(action.admin_id == admin_user.id for action in results)
+        assert all(action.admin_id == admin_user.id for action, _, _ in results)
 
     def test_get_filtered_by_target_user_id(
         self, db_session: Session, test_user: User, test_admin_action: AdminAction
@@ -300,7 +300,7 @@ class TestAdminActionRepositoryFilters:
         filters = AdminActionFilters(target_user_id=test_user.id)
         results = AdminActionRepository.get_filtered(db_session, filters)
 
-        assert all(action.target_user_id == test_user.id for action in results)
+        assert all(action.target_user_id == test_user.id for action, _, _ in results)
 
     def test_get_filtered_by_target_listing_id(
         self, db_session: Session, target_listing: Listing, test_admin_action: AdminAction
@@ -309,7 +309,7 @@ class TestAdminActionRepositoryFilters:
         filters = AdminActionFilters(target_listing_id=target_listing.id)
         results = AdminActionRepository.get_filtered(db_session, filters)
 
-        assert all(action.target_listing_id == target_listing.id for action in results)
+        assert all(action.target_listing_id == target_listing.id for action, _, _ in results)
 
     def test_get_filtered_multiple_criteria(
         self,
@@ -326,9 +326,9 @@ class TestAdminActionRepositoryFilters:
         )
         results = AdminActionRepository.get_filtered(db_session, filters)
 
-        assert all(action.action_type == AdminActionType.STRIKE for action in results)
-        assert all(action.admin_id == admin_user.id for action in results)
-        assert all(action.target_user_id == test_user.id for action in results)
+        assert all(action.action_type == AdminActionType.STRIKE for action, _, _ in results)
+        assert all(action.admin_id == admin_user.id for action, _, _ in results)
+        assert all(action.target_user_id == test_user.id for action, _, _ in results)
 
     def test_count_filtered(self, db_session: Session, test_admin_action: AdminAction):
         """Test counting filtered results."""
