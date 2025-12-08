@@ -210,12 +210,12 @@ export default function CreateListingPage() {
                 }`}
               />
             </div>
-            {errors.price && <p className="text-red-500 text-lg">{errors.price}</p>}
+            {errors.price && <p className="text-red-500 text-sm">{errors.price}</p>}
           </div>
 
           {/* Category */}
           <div className="space-y-2">
-            <Label htmlFor="category" className="text-gray-200 text-lg">
+            <Label htmlFor="category" className="text-gray-200">
               Category <span className="text-red-500">*</span>
             </Label>
             <select
@@ -235,12 +235,12 @@ export default function CreateListingPage() {
                 </option>
               ))}
             </select>
-            {errors.category && <p className="text-red-500 text-lg">{errors.category}</p>}
+            {errors.category && <p className="text-red-500 text-sm">{errors.category}</p>}
           </div>
 
           {/* Condition */}
           <div className="space-y-2">
-            <Label htmlFor="condition" className="text-gray-200 text-lg">
+            <Label htmlFor="condition" className="text-gray-200">
               Condition <span className="text-red-500">*</span>
             </Label>
             <select
@@ -260,15 +260,15 @@ export default function CreateListingPage() {
                 </option>
               ))}
             </select>
-            {errors.condition && <p className="text-red-500 text-lg">{errors.condition}</p>}
+            {errors.condition && <p className="text-red-500 text-sm">{errors.condition}</p>}
           </div>
 
           {/* Active Status */}
-          <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
+          <div className="bg-gray-900 rounded-lg p-3 border border-gray-800">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-gray-200 font-medium text-lg">Listing Status</Label>
-                <p className="text-gray-500 text-lg mt-1">
+                <Label className="text-gray-200 font-medium text-sm">Listing Status</Label>
+                <p className="text-gray-500 text-sm mt-0.5">
                   {isActive ? "Visible to buyers" : "Hidden from buyers"}
                 </p>
               </div>
@@ -280,7 +280,7 @@ export default function CreateListingPage() {
                   disabled={!!createdListingId}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                <div className="w-9 h-5 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
               </label>
             </div>
           </div>

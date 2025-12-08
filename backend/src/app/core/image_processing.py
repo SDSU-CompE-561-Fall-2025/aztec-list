@@ -2,6 +2,21 @@
 Image processing utilities.
 
 This module provides utilities for optimizing, resizing, and processing images.
+
+Key features:
+- Intelligent optimization: Only processes images that need it (based on format, size, dimensions)
+- Format preservation: Returns original bytes for GIF (animations) and suitable WEBPs
+- EXIF stripping: Removes metadata for privacy (JPEG/TIFF only, to avoid breaking other formats)
+- Auto-rotation: Respects EXIF orientation before removing metadata (JPEG/TIFF only)
+- Dimension limits: Resizes images exceeding MAX_IMAGE_WIDTH x MAX_IMAGE_HEIGHT
+- Quality balance: Uses high-quality JPEG compression (85) for good size/quality ratio
+
+Processing flow:
+1. Analyze format and dimensions to determine if optimization is needed
+2. If not needed (GIF, small WEBP, small JPEG): return original bytes unchanged
+3. If needed: apply EXIF operations (JPEG/TIFF only), resize, convert to RGB, compress as JPEG
+
+Used by storage module for all image uploads (listings and profile pictures).
 """
 
 from __future__ import annotations
@@ -75,7 +90,7 @@ def strip_exif_and_optimize(
     max_width: int = MAX_IMAGE_WIDTH,
     max_height: int = MAX_IMAGE_HEIGHT,
     quality: int = JPEG_QUALITY,
-) -> bytes:
+) -> tuple[bytes, str]:
     """
     Strip EXIF metadata and optimize image for web.
 
@@ -94,7 +109,7 @@ def strip_exif_and_optimize(
         quality: JPEG quality (1-100, higher = better quality)
 
     Returns:
-        bytes: Optimized image as JPEG bytes
+        tuple[bytes, str]: Tuple of (optimized image bytes, file extension with dot)
 
     Raises:
         Exception: If image processing fails
@@ -103,28 +118,35 @@ def strip_exif_and_optimize(
         img = Image.open(io.BytesIO(file_content))
         original_format = img.format
 
-        img = ImageOps.exif_transpose(img)
-
         needs_optimization = should_optimize_image(img, len(file_content), original_format)
 
+        # For formats we want to preserve (GIF, small WEBPs), return original bytes
         if not needs_optimization:
             logger.info(
-                "Image doesn't need optimization, keeping original format: %s", original_format
+                "Image doesn't need optimization, preserving original format: %s (%d KB)",
+                original_format,
+                len(file_content) // 1024,
             )
-            output = io.BytesIO()
 
-            if original_format == "GIF":
-                img.save(output, format="GIF", save_all=True)  # Preserves animation
-            elif original_format == "WEBP":
-                img.save(output, format="WEBP", quality=95)
-            else:
-                img.save(output, format="JPEG", quality=95, optimize=False)
+            # Map format to extension
+            format_to_ext = {
+                "GIF": ".gif",
+                "WEBP": ".webp",
+                "PNG": ".png",
+                "JPEG": ".jpg",
+            }
+            extension = format_to_ext.get(original_format or "JPEG", ".jpg")
 
-            output.seek(0)
-            return output.getvalue()
+            # Return original bytes unchanged to preserve animations, metadata, etc.
+            return file_content, extension
 
         logger.info("Performing full image optimization")
 
+        # Only apply EXIF transpose to formats that support EXIF (JPEG, some TIFFs)
+        if original_format in ("JPEG", "TIFF"):
+            img = ImageOps.exif_transpose(img)
+
+        # Convert to RGB for optimization (all optimized images become JPEG)
         if img.mode in ("RGBA", "P", "LA"):
             background = Image.new("RGB", img.size, (255, 255, 255))
             if img.mode == "P":
@@ -134,6 +156,7 @@ def strip_exif_and_optimize(
         elif img.mode != "RGB":
             img = img.convert("RGB")
 
+        # Resize if dimensions exceed limits
         if img.width > max_width or img.height > max_height:
             original_size = (img.width, img.height)
             img.thumbnail((max_width, max_height), RESAMPLING_FILTER)
@@ -145,6 +168,7 @@ def strip_exif_and_optimize(
                 img.height,
             )
 
+        # Save as optimized JPEG
         output = io.BytesIO()
         img.save(output, format="JPEG", quality=quality, optimize=True)
         output.seek(0)
@@ -159,7 +183,7 @@ def strip_exif_and_optimize(
             savings_percent,
         )
 
-        return output.getvalue()
+        return output.getvalue(), ".jpg"
 
     except Exception:
         logger.exception("Image processing failed")
