@@ -129,3 +129,37 @@ export const removeStoredUser = (): void => {
     localStorage.removeItem("user");
   }
 };
+
+/**
+ * Change the current user's password.
+ *
+ * @param currentPassword - Current password for verification
+ * @param newPassword - New password to set
+ * @throws Error if password change fails
+ */
+export const changePassword = async (
+  currentPassword: string,
+  newPassword: string
+): Promise<void> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/users/me/password`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ detail: "Password change failed" }));
+    throw new Error(errorData.detail || "Could not change password");
+  }
+};

@@ -14,7 +14,7 @@ from app.schemas.listing import (
     UserListingsParams,
 )
 from app.schemas.profile import ProfilePublic
-from app.schemas.user import UserPublic, UserUpdate
+from app.schemas.user import PasswordChange, UserPublic, UserUpdate
 from app.services.listing import listing_service
 from app.services.profile import profile_service
 from app.services.user import user_service
@@ -164,6 +164,39 @@ async def update_current_user(
         HTTPException: 400 if username/email already taken
     """
     return user_service.update(db, current_user.id, update_data)
+
+
+@user_router.patch(
+    "/me/password",
+    summary="Change current user password",
+    status_code=status.HTTP_200_OK,
+)
+async def change_password(
+    password_data: PasswordChange,
+    current_user: Annotated[User, Depends(require_not_banned)],
+    db: Annotated[Session, Depends(get_db)],
+) -> dict[str, str]:
+    """
+    Change the current user's password.
+
+    Args:
+        password_data: Current and new password
+        current_user: The authenticated user
+        db: Database session
+
+    Returns:
+        dict: Success message
+
+    Raises:
+        HTTPException: 401 if current password is incorrect, 403 if banned
+    """
+    user_service.change_password(
+        db,
+        current_user.id,
+        password_data.current_password,
+        password_data.new_password,
+    )
+    return {"message": "Password changed successfully"}
 
 
 @user_router.delete(
