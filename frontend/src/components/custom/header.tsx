@@ -19,16 +19,7 @@ import { LISTINGS_BASE_URL, DEFAULT_SORT, STATIC_BASE_URL } from "@/lib/constant
 import { useAuth } from "@/contexts/AuthContext";
 import { LogOut, Settings, User, Search, Shield } from "lucide-react";
 import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOptions";
-
-// Helper function to build full URL for profile picture
-const getProfilePictureUrl = (path: string | null | undefined): string | null => {
-  if (!path) return null;
-  const timestamp = Date.now();
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    return `${path}?t=${timestamp}`;
-  }
-  return `${STATIC_BASE_URL}${path}?t=${timestamp}`;
-};
+import { getProfilePictureUrl } from "@/lib/profile-picture";
 
 export function Header() {
   const router = useRouter();
@@ -116,7 +107,12 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Avatar className="cursor-pointer">
                   <AvatarImage
-                    src={getProfilePictureUrl(profileData?.profile_picture_url) || undefined}
+                    src={
+                      getProfilePictureUrl(
+                        profileData?.profile_picture_url,
+                        profileData?.updated_at
+                      ) || undefined
+                    }
                     alt={user?.username || "User"}
                   />
                   <AvatarFallback className="bg-purple-600 text-white">

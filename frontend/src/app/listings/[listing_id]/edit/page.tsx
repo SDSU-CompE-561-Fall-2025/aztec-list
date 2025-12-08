@@ -236,11 +236,23 @@ function EditForm({
       // Reset clear flag after state propagates
       setClearImageStates(false);
 
-      toast.success("Changes saved successfully");
+      toast.success("Changes saved successfully", {
+        style: {
+          background: "rgb(20, 83, 45)",
+          color: "white",
+          border: "1px solid rgb(34, 197, 94)",
+        },
+      });
       setShowSavedIndicator(true);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update listing");
+      toast.error(error.message || "Failed to update listing", {
+        style: {
+          background: "rgb(153, 27, 27)",
+          color: "white",
+          border: "1px solid rgb(220, 38, 38)",
+        },
+      });
     },
   });
 
@@ -442,7 +454,7 @@ function EditForm({
               <Button
                 type="submit"
                 disabled={!isDirty || updateMutation.isPending}
-                className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed"
+                className="bg-purple-600 hover:bg-purple-700 text-white disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed"
               >
                 {updateMutation.isPending ? (
                   <>
@@ -454,8 +466,8 @@ function EditForm({
                 )}
               </Button>
               {isDirty && !updateMutation.isPending && (
-                <span className="flex items-center text-sm text-yellow-500">
-                  <span className="inline-block w-2 h-2 bg-yellow-500 rounded-full mr-2 animate-pulse" />
+                <span className="flex items-center text-sm text-blue-300">
+                  <span className="inline-block w-2 h-2 bg-blue-300 rounded-full mr-2 animate-pulse" />
                   Unsaved changes
                 </span>
               )}

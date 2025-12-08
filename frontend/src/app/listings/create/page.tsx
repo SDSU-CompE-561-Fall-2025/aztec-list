@@ -109,10 +109,22 @@ export default function CreateListingPage() {
       }),
     onSuccess: (data) => {
       setCreatedListingId(data.id);
-      toast.success("Listing created successfully! You can now add images.");
+      toast.success("Listing created successfully! You can now add images.", {
+        style: {
+          background: "rgb(20, 83, 45)",
+          color: "white",
+          border: "1px solid rgb(34, 197, 94)",
+        },
+      });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create listing");
+      toast.error(error.message || "Failed to create listing", {
+        style: {
+          background: "rgb(153, 27, 27)",
+          color: "white",
+          border: "1px solid rgb(220, 38, 38)",
+        },
+      });
     },
   });
 
@@ -304,7 +316,7 @@ export default function CreateListingPage() {
                 <Button
                   type="submit"
                   disabled={createMutation.isPending}
-                  className="bg-purple-600 hover:bg-purple-700"
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
                 >
                   {createMutation.isPending ? (
                     <>
@@ -323,7 +335,7 @@ export default function CreateListingPage() {
               <Button
                 type="button"
                 onClick={handleDone}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-purple-600 hover:bg-purple-700 text-white"
               >
                 Done
               </Button>

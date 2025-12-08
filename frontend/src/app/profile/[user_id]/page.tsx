@@ -9,19 +9,10 @@ import { API_BASE_URL, DEFAULT_LIMIT, STATIC_BASE_URL } from "@/lib/constants";
 import { ChevronLeft, User, Mail, Phone, Building2, Calendar } from "lucide-react";
 import { createUserQueryOptions } from "@/queryOptions/createUserQueryOptions";
 import { createUserListingsQueryOptions } from "@/queryOptions/createUserListingsQueryOptions";
+import { getProfilePictureUrl } from "@/lib/profile-picture";
 import type { ListingSummary } from "@/types/listing/listing";
 import { Suspense } from "react";
 import { UserListingCard } from "@/components/listings/UserListingCard";
-
-// Helper function to build full URL for profile picture
-const getProfilePictureUrl = (path: string | null | undefined): string | null => {
-  if (!path) return null;
-  const timestamp = Date.now();
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    return `${path}?t=${timestamp}`;
-  }
-  return `${STATIC_BASE_URL}${path}?t=${timestamp}`;
-};
 
 function UserProfileContent() {
   const params = useParams();
@@ -111,7 +102,10 @@ function UserProfileContent() {
             <p className="text-gray-400 mb-8 leading-relaxed">
               This user could not be found or may have been removed.
             </p>
-            <Button onClick={() => router.push("/")} className="bg-purple-600 hover:bg-purple-700">
+            <Button
+              onClick={() => router.push("/")}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
               Browse All Listings
             </Button>
           </div>
@@ -145,7 +139,10 @@ function UserProfileContent() {
             <div className="w-24 h-24 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20 flex-shrink-0 overflow-hidden relative">
               {profileData?.profile_picture_url ? (
                 <Image
-                  src={getProfilePictureUrl(profileData.profile_picture_url) || ""}
+                  src={
+                    getProfilePictureUrl(profileData.profile_picture_url, profileData.updated_at) ||
+                    ""
+                  }
                   alt={user.username}
                   fill
                   sizes="96px"

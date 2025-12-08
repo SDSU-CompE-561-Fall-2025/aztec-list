@@ -10,6 +10,7 @@ import { useMemo, useState } from "react";
 import { createListingDetailQueryOptions } from "@/queryOptions/createListingDetailQueryOptions";
 import { createUserQueryOptions } from "@/queryOptions/createUserQueryOptions";
 import { STATIC_BASE_URL, API_BASE_URL } from "@/lib/constants";
+import { getProfilePictureUrl } from "@/lib/profile-picture";
 import { Category } from "@/types/listing/filters/category";
 import {
   Dialog,
@@ -18,16 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-// Helper function to build full URL for profile picture
-const getProfilePictureUrl = (path: string | null | undefined): string | null => {
-  if (!path) return null;
-  const timestamp = Date.now();
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    return `${path}?t=${timestamp}`;
-  }
-  return `${STATIC_BASE_URL}${path}?t=${timestamp}`;
-};
 
 const CONDITION_LABELS = {
   new: "New",
@@ -196,7 +187,10 @@ export default function ListingDetailPage() {
                 ? error.message
                 : "This listing could not be found or may have been removed."}
             </p>
-            <Button onClick={() => router.push("/")} className="bg-purple-600 hover:bg-purple-700">
+            <Button
+              onClick={() => router.push("/")}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
               Browse All Listings
             </Button>
           </div>
@@ -259,7 +253,12 @@ export default function ListingDetailPage() {
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20 overflow-hidden relative">
                   {sellerProfile?.profile_picture_url ? (
                     <Image
-                      src={getProfilePictureUrl(sellerProfile.profile_picture_url) || ""}
+                      src={
+                        getProfilePictureUrl(
+                          sellerProfile.profile_picture_url,
+                          sellerProfile.updated_at
+                        ) || ""
+                      }
                       alt={seller?.username || "Seller"}
                       fill
                       sizes="48px"
