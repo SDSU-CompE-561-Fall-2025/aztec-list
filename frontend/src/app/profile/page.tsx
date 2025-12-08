@@ -295,13 +295,20 @@ function ProfileContent() {
                     </div>
                   </div>
 
-                  {/* Edit Profile Button */}
-                  <Button
-                    asChild
-                    className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white w-full sm:w-auto shrink-0"
-                  >
-                    <Link href="/settings">Edit Profile</Link>
-                  </Button>
+                  {/* Action Buttons */}
+                  <div className="flex flex-col gap-2 sm:gap-5 w-full sm:w-30 shrink-0">
+                    <Button
+                      asChild
+                      className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white"
+                    >
+                      <Link href="/settings">Edit Profile</Link>
+                    </Button>
+                    {totalCount > 0 && (
+                      <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white">
+                        <Link href="/listings/create">Add Listing</Link>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
