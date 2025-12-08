@@ -9,15 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProfileListingCard } from "@/components/listings/ProfileListingCard";
 import { PaginationControls } from "@/components/listings/PaginationControls";
-import { DEFAULT_LIMIT, API_BASE_URL, STATIC_BASE_URL } from "@/lib/constants";
+import { DEFAULT_LIMIT, STATIC_BASE_URL } from "@/lib/constants";
 import { Plus } from "lucide-react";
 import { deleteListing, toggleListingActive } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { createOwnListingsQueryOptions } from "@/queryOptions/createOwnListingsQueryOptions";
+import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOptions";
 import { toast } from "sonner";
 import { ProtectedRoute } from "@/components/custom/ProtectedRoute";
 import type { ListingSummary, ListingSearchResponse } from "@/types/listing/listing";
-import { getAuthToken } from "@/lib/auth";
 
 // Helper function to build full URL for profile picture
 const getProfilePictureUrl = (path: string | null | undefined): string | null => {
@@ -30,7 +30,7 @@ const getProfilePictureUrl = (path: string | null | undefined): string | null =>
 };
 
 function ProfileContent() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -39,40 +39,14 @@ function ProfileContent() {
   const status = (searchParams.get("status") ?? "all") as "all" | "active" | "inactive";
 
   // Fetch profile data
-  const { data: profileData } = useQuery({
-    queryKey: ["profile", user?.id],
-    queryFn: async () => {
-      const token = getAuthToken();
-      if (!token) return null;
+  const { data: profileData, isLoading: isProfileLoading } = useQuery(
+    createProfileQueryOptions(user?.id)
+  );
 
-      try {
-        const response = await fetch(`${API_BASE_URL}/users/profile/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        // Handle 401 Unauthorized - invalid/expired token
-        if (response.status === 401) {
-          logout();
-          return null;
-        }
-
-        if (!response.ok) {
-          // Profile doesn't exist yet
-          if (response.status === 404) return null;
-          throw new Error("Failed to fetch profile");
-        }
-
-        return response.json();
-      } catch {
-        return null;
-      }
-    },
-    enabled: !!user?.id,
-  });
-
-  // Check if profile is incomplete
+  // Check if profile is incomplete - only after data has loaded
   const [showIncompleteBanner, setShowIncompleteBanner] = useState(true);
-  const isProfileIncomplete = !profileData || !profileData.name || !profileData.campus;
+  const isProfileIncomplete =
+    !isProfileLoading && (!profileData || !profileData.name || !profileData.campus);
 
   const { data, isLoading, isError, error } = useQuery(
     createOwnListingsQueryOptions(user?.id ?? "", {

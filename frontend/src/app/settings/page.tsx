@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 import { toast } from "sonner";
-import { ChevronLeft, Trash2, AlertTriangle, Upload, User as UserIcon } from "lucide-react";
+import { ChevronLeft, Trash2, AlertTriangle, Upload } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -25,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { API_BASE_URL, STATIC_BASE_URL } from "@/lib/constants";
 import { getAuthToken, setStoredUser, changePassword } from "@/lib/auth";
+import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOptions";
 import type { ProfilePublic, ContactInfo } from "@/types/user";
 
 interface ProfileUpdatePayload {
@@ -49,6 +52,7 @@ const getProfilePictureUrl = (path: string | null | undefined): string | null =>
 export default function SettingsPage() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // Profile state
   const [name, setName] = useState("");
@@ -56,42 +60,28 @@ export default function SettingsPage() {
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [originalProfile, setOriginalProfile] = useState<ProfilePublic | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [isPictureLoading, setIsPictureLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-  // Fetch existing profile data
+  // Fetch existing profile data using React Query
+  const { data: fetchedProfile, isLoading: isProfileFetching } = useQuery(
+    createProfileQueryOptions(user?.id)
+  );
+
+  // Initialize form state from fetched profile
   useEffect(() => {
-    const fetchProfile = async () => {
-      const token = getAuthToken();
-      if (!token) {
-        setIsInitialLoading(false);
-        return;
+    if (!isProfileFetching) {
+      setIsInitialLoading(false);
+      if (fetchedProfile) {
+        setOriginalProfile(fetchedProfile);
+        setName(fetchedProfile.name || "");
+        setCampus(fetchedProfile.campus || "");
+        setPhone(fetchedProfile.contact_info?.phone || "");
       }
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/users/profile/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (response.ok) {
-          const data: ProfilePublic = await response.json();
-          setOriginalProfile(data);
-          setName(data.name || "");
-          setCampus(data.campus || "");
-          setPhone(data.contact_info?.phone || "");
-        }
-      } catch {
-        // Profile doesn't exist yet, that's okay
-      } finally {
-        setIsInitialLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, []);
+    }
+  }, [fetchedProfile, isProfileFetching]);
 
   // Track if profile has changes (memoized to avoid unnecessary recalculations)
   const hasProfileChanges = useMemo(
@@ -210,7 +200,6 @@ export default function SettingsPage() {
         return;
       }
 
-      console.log("Sending profile update:", updates);
       const response = await fetch(`${API_BASE_URL}/users/profile/`, {
         method: "PATCH",
         headers: {
@@ -222,7 +211,6 @@ export default function SettingsPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error("Profile update error:", errorData);
         throw new Error(errorData.detail || "Failed to save profile");
       }
 
@@ -236,7 +224,6 @@ export default function SettingsPage() {
         },
       });
     } catch (error) {
-      console.error("Profile save error:", error);
       const message = error instanceof Error ? error.message : "Failed to save profile";
       toast.error(message);
     } finally {
@@ -251,16 +238,16 @@ export default function SettingsPage() {
     // Validate file type
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
+      e.target.value = ""; // Reset input
       return;
     }
 
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image must be smaller than 5MB");
+      e.target.value = ""; // Reset input
       return;
     }
-
-    setSelectedFile(file);
 
     // Create preview
     const reader = new FileReader();
@@ -271,6 +258,9 @@ export default function SettingsPage() {
 
     // Automatically upload the file
     await handlePictureUpload(file);
+
+    // Reset input to allow uploading same file again
+    e.target.value = "";
   };
 
   const handlePictureUpload = async (file: File) => {
@@ -283,7 +273,6 @@ export default function SettingsPage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      console.log("Uploading profile picture:", file.name, file.size);
       const response = await fetch(`${API_BASE_URL}/users/profile/picture`, {
         method: "POST",
         headers: {
@@ -294,12 +283,14 @@ export default function SettingsPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error("Picture upload error:", errorData);
         throw new Error(errorData.detail || "Failed to update profile picture");
       }
 
       const updatedProfile = await response.json();
       setOriginalProfile(updatedProfile);
+
+      // Invalidate profile queries to sync across the app
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
 
       toast.success("Profile picture updated successfully!", {
         style: {
@@ -309,11 +300,55 @@ export default function SettingsPage() {
         },
       });
 
-      // Clear selected file but keep preview until page refreshes
-      setSelectedFile(null);
-      // Don't clear previewUrl immediately - it will be replaced by the new profile picture
+      // Keep preview until page refreshes with new profile picture
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update profile picture";
+      toast.error(message);
+    } finally {
+      setIsPictureLoading(false);
+    }
+  };
+
+  const handleRemovePicture = async () => {
+    setIsPictureLoading(true);
+
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error("Not authenticated");
+
+      // Remove profile picture by updating profile with null picture_url
+      const response = await fetch(`${API_BASE_URL}/users/profile/`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          profile_picture_url: null,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to remove profile picture");
+      }
+
+      const updatedProfile = await response.json();
+      setOriginalProfile(updatedProfile);
+      setPreviewUrl(null);
+
+      // Invalidate profile queries to sync across the app
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+
+      toast.success("Profile picture removed successfully!", {
+        style: {
+          background: "rgb(20, 83, 45)",
+          color: "white",
+          border: "1px solid rgb(34, 197, 94)",
+        },
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to remove profile picture";
       toast.error(message);
     } finally {
       setIsPictureLoading(false);
@@ -470,7 +505,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto w-full">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
           <Button
@@ -523,11 +558,35 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent>
                 {isInitialLoading ? (
-                  <div className="space-y-4 animate-pulse">
-                    <div className="h-24 bg-gray-800 rounded-lg"></div>
-                    <div className="h-12 bg-gray-800 rounded"></div>
-                    <div className="h-12 bg-gray-800 rounded"></div>
-                    <div className="h-12 bg-gray-800 rounded"></div>
+                  <div className="animate-pulse">
+                    {/* Profile Picture Skeleton */}
+                    <div className="mb-6 pb-6 border-b border-gray-800">
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 bg-gray-800 rounded-full"></div>
+                        <div className="flex gap-2">
+                          <div className="h-8 w-24 bg-gray-800 rounded"></div>
+                          <div className="h-8 w-24 bg-gray-800 rounded"></div>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Form Fields Skeleton - wrapped in space-y-4 to match form */}
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <div className="h-6 w-24 bg-gray-800 rounded"></div>
+                        <div className="h-9 bg-gray-800 rounded"></div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="h-6 w-16 bg-gray-800 rounded"></div>
+                        <div className="h-9 bg-gray-800 rounded"></div>
+                        <div className="h-5 w-20 bg-gray-800 rounded"></div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="h-6 w-28 bg-gray-800 rounded"></div>
+                        <div className="h-9 bg-gray-800 rounded"></div>
+                        <div className="h-5 w-52 bg-gray-800 rounded"></div>
+                      </div>
+                      <div className="h-9 w-full bg-gray-800 rounded"></div>
+                    </div>
                   </div>
                 ) : (
                   <>
@@ -535,43 +594,63 @@ export default function SettingsPage() {
                     <div className="mb-6 pb-6 border-b border-gray-800">
                       <div className="flex items-center gap-4">
                         <div className="relative">
-                          <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden relative group">
+                          <div className="w-16 h-16 bg-gradient-to-br from-purple-500/20 to-purple-600/20 border-2 border-purple-500/30 rounded-full flex items-center justify-center overflow-hidden relative group">
                             {previewUrl || originalProfile?.profile_picture_url ? (
-                              <img
+                              <Image
                                 src={
                                   previewUrl ||
                                   getProfilePictureUrl(originalProfile?.profile_picture_url) ||
                                   ""
                                 }
                                 alt="Profile"
-                                className="w-full h-full object-cover"
+                                fill
+                                sizes="64px"
+                                className="object-cover"
                               />
                             ) : (
-                              <span className="text-2xl font-medium text-gray-800">JD</span>
+                              <span className="text-xl font-bold text-purple-300">
+                                {user?.username?.substring(0, 2).toUpperCase() || "??"}
+                              </span>
                             )}
                           </div>
                         </div>
-                        <input
-                          id="profilePictureFile"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileSelect}
-                          disabled={isPictureLoading}
-                          className="hidden"
-                        />
-                        <label htmlFor="profilePictureFile">
-                          <Button
-                            type="button"
-                            asChild
+                        <div className="flex gap-2">
+                          <input
+                            id="profilePictureFile"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileSelect}
                             disabled={isPictureLoading}
-                            className="bg-purple-600 hover:bg-purple-700 cursor-pointer"
-                          >
-                            <span>
-                              <Upload className="w-4 h-4 mr-2" />
-                              {isPictureLoading ? "Uploading..." : "Upload Photo"}
-                            </span>
-                          </Button>
-                        </label>
+                            className="hidden"
+                          />
+                          <label htmlFor="profilePictureFile">
+                            <Button
+                              type="button"
+                              asChild
+                              disabled={isPictureLoading}
+                              size="sm"
+                              className="bg-purple-600 hover:bg-purple-700 cursor-pointer"
+                            >
+                              <span>
+                                <Upload className="w-4 h-4 mr-2" />
+                                {isPictureLoading ? "Uploading..." : "Upload"}
+                              </span>
+                            </Button>
+                          </label>
+                          {(previewUrl || originalProfile?.profile_picture_url) && (
+                            <Button
+                              type="button"
+                              onClick={handleRemovePicture}
+                              disabled={isPictureLoading}
+                              size="sm"
+                              variant="outline"
+                              className="border-red-900/50 text-red-400 hover:bg-red-900/20 hover:text-red-300"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Remove
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
 

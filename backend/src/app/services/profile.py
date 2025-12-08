@@ -157,6 +157,8 @@ class ProfileService:
         """
         Upload and set a profile picture from a file.
 
+        Creates an empty profile if one doesn't exist.
+
         Args:
             db: Database session
             user_id: User ID whose profile picture to upload
@@ -166,14 +168,12 @@ class ProfileService:
             Profile: Updated profile with new picture URL
 
         Raises:
-            HTTPException: If profile not found or file validation fails
+            HTTPException: If file validation fails
         """
         db_profile = ProfileRepository.get_by_user_id(db, user_id)
         if not db_profile:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Profile for user ID {user_id} not found",
-            )
+            # Create empty profile if it doesn't exist
+            db_profile = ProfileRepository.create(db, user_id, {})
 
         # Save file and get URL path
         url_path = await save_profile_picture(file, user_id)
