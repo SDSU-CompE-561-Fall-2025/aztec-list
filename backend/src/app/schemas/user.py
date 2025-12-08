@@ -9,6 +9,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, field_validator
 
+from app.core.enums import UserRole
+
 
 class UserBase(BaseModel):
     """Base user schema."""
@@ -51,6 +53,7 @@ class UserPublic(UserBase):
 
     id: uuid.UUID
     is_verified: bool
+    role: UserRole
     created_at: datetime
 
     model_config = {"from_attributes": True}

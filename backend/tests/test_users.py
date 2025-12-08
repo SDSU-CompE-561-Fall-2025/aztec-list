@@ -105,14 +105,14 @@ class TestUpdateCurrentUser:
         """Test updating current user's information."""
         update_data = {
             "username": "updated_username",
-            "email": "updated@example.com",
+            "email": "updated@example.edu",
         }
         response = authenticated_client.patch("/api/v1/users/me", json=update_data)
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["username"] == "updated_username"
-        assert data["email"] == "updated@example.com"
+        assert data["email"] == "updated@example.edu"
         assert data["id"] == str(test_user.id)
 
     def test_update_current_user_partial(self, authenticated_client: TestClient, test_user: User):
@@ -142,7 +142,7 @@ class TestUpdateCurrentUser:
 
         existing_user = UserModel(
             username="existing_user",
-            email="existing@example.com",
+            email="existing@example.edu",
             hashed_password=get_password_hash("password123"),
         )
         db_session.add(existing_user)
@@ -164,14 +164,14 @@ class TestUpdateCurrentUser:
 
         existing_user = UserModel(
             username="another_user",
-            email="taken@example.com",
+            email="taken@example.edu",
             hashed_password=get_password_hash("password123"),
         )
         db_session.add(existing_user)
         db_session.commit()
 
         # Try to update to existing email
-        update_data = {"email": "taken@example.com"}
+        update_data = {"email": "taken@example.edu"}
         response = authenticated_client.patch("/api/v1/users/me", json=update_data)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -204,7 +204,7 @@ class TestUpdateCurrentUser:
 
         existing_user = UserModel(
             username="ExistingUser",
-            email="existing@example.com",
+            email="existing@example.edu",
             hashed_password=get_password_hash("password123"),
         )
         db_session.add(existing_user)

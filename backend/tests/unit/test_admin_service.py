@@ -36,7 +36,7 @@ def mock_admin():
     return User(
         id=uuid.uuid4(),
         username="adminuser",
-        email="admin@example.com",
+        email="admin@example.edu",
         hashed_password="hashed",
         is_verified=True,
         role=UserRole.ADMIN,
@@ -49,7 +49,7 @@ def mock_user():
     return User(
         id=uuid.uuid4(),
         username="testuser",
-        email="test@example.com",
+        email="test@example.edu",
         hashed_password="hashed",
         is_verified=True,
         role=UserRole.USER,
@@ -128,7 +128,7 @@ class TestAdminServiceValidation:
         another_admin = User(
             id=uuid.uuid4(),
             username="anotheradmin",
-            email="admin2@example.com",
+            email="admin2@example.edu",
             hashed_password="hashed",
             role=UserRole.ADMIN,
         )
@@ -266,27 +266,41 @@ class TestAdminServiceGet:
             skip=0,
             limit=10,
         )
-        actions = [
-            AdminAction(
-                id=uuid.uuid4(),
-                admin_id=uuid.uuid4(),
-                target_user_id=uuid.uuid4(),
-                action_type=AdminActionType.STRIKE,
-                reason="Test",
-            ),
+        action_id = uuid.uuid4()
+        admin_id = uuid.uuid4()
+        target_id = uuid.uuid4()
+
+        # Repository now returns tuples
+        repo_results = [
+            (
+                AdminAction(
+                    id=action_id,
+                    admin_id=admin_id,
+                    target_user_id=target_id,
+                    action_type=AdminActionType.STRIKE,
+                    reason="Test",
+                ),
+                "admin_user",  # admin_username
+                "target_user",  # target_username
+            )
         ]
 
         with (
             patch("app.services.admin.AdminActionRepository.get_filtered") as mock_get_filtered,
             patch("app.services.admin.AdminActionRepository.count_filtered") as mock_count,
         ):
-            mock_get_filtered.return_value = actions
+            mock_get_filtered.return_value = repo_results
             mock_count.return_value = 1
             db = MagicMock(spec=Session)
 
             result_actions, result_count = admin_service.get_filtered(db, filters)
 
-            assert result_actions == actions
+            # Service now returns list of dicts
+            assert isinstance(result_actions, list)
+            assert len(result_actions) == 1
+            assert result_actions[0]["id"] == action_id
+            assert result_actions[0]["admin_username"] == "admin_user"
+            assert result_actions[0]["target_username"] == "target_user"
             assert result_count == 1
             mock_get_filtered.assert_called_once_with(db=db, filters=filters)
             mock_count.assert_called_once_with(db=db, filters=filters)
@@ -313,7 +327,7 @@ class TestAdminServiceStrike:
             patch("app.services.admin.ensure_can_moderate_user"),
             patch("app.services.admin.AdminActionRepository.has_active_ban") as mock_has_ban,
             patch("app.services.admin.AdminActionRepository.count_strikes") as mock_count,
-            patch("app.services.admin.AdminActionRepository.create") as mock_create,
+            patch("app.services.admin.AdminActionRepository.create_no_commit") as mock_create,
         ):
             mock_get_user.side_effect = [mock_user, mock_admin]
             mock_has_ban.return_value = None  # No existing ban
@@ -321,10 +335,16 @@ class TestAdminServiceStrike:
             mock_create.return_value = created_strike
             db = MagicMock(spec=Session)
 
-            result = admin_service.create_strike(db, mock_admin.id, mock_user.id, strike_data)
+            # create_strike now returns (strike_action, strike_count, auto_ban_triggered)
+            result_strike, strike_count, auto_ban = admin_service.create_strike(
+                db, mock_admin.id, mock_user.id, strike_data
+            )
 
-            assert result == created_strike
+            assert result_strike == created_strike
+            assert strike_count == 0
+            assert auto_ban is False
             mock_create.assert_called_once()
+            db.commit.assert_called_once()
 
     @patch("app.services.admin.settings")
     def test_create_strike_auto_bans_at_threshold(
@@ -348,7 +368,7 @@ class TestAdminServiceStrike:
             patch("app.services.admin.ensure_can_moderate_user"),
             patch("app.services.admin.AdminActionRepository.has_active_ban") as mock_has_ban,
             patch("app.services.admin.AdminActionRepository.count_strikes") as mock_count,
-            patch("app.services.admin.AdminActionRepository.create") as mock_create,
+            patch("app.services.admin.AdminActionRepository.create_no_commit") as mock_create,
         ):
             mock_get_user.side_effect = [mock_user, mock_admin]
             mock_has_ban.return_value = None  # No existing ban
@@ -364,6 +384,7 @@ class TestAdminServiceStrike:
 
             # Should create 2 actions: strike + auto-ban
             assert mock_create.call_count == 2
+            db.commit.assert_called_once()
 
     def test_create_strike_on_banned_user_raises_400(
         self, admin_service: AdminActionService, mock_admin: User, mock_user: User
@@ -468,7 +489,7 @@ class TestAdminServiceDelete:
         """Test deleting an admin action."""
         with (
             patch("app.services.admin.AdminActionRepository.get_by_id") as mock_get,
-            patch("app.services.admin.AdminActionRepository.delete") as mock_delete,
+            patch("app.services.admin.AdminActionRepository.delete_no_commit") as mock_delete,
         ):
             mock_get.return_value = mock_action
             db = MagicMock(spec=Session)
@@ -477,6 +498,7 @@ class TestAdminServiceDelete:
 
             mock_get.assert_called_once_with(db, mock_action.id)
             mock_delete.assert_called_once_with(db, mock_action)
+            db.commit.assert_called_once()
 
     def test_delete_action_not_found_raises_404(self, admin_service: AdminActionService):
         """Test deleting non-existent action raises 404."""
@@ -512,7 +534,7 @@ class TestAdminServiceListingRemoval:
             admin_id=mock_admin.id,
             target_user_id=mock_user.id,
             action_type=AdminActionType.STRIKE,
-            reason="Prohibited item",
+            reason="Listing removed: Prohibited item",
         )
 
         listing_removal_action = AdminAction(
@@ -527,17 +549,17 @@ class TestAdminServiceListingRemoval:
         with (
             patch("app.services.admin.ListingRepository.get_by_id") as mock_get_listing,
             patch("app.services.admin.UserRepository.get_by_id") as mock_get_user,
-            patch("app.services.admin.ensure_can_moderate_user"),
-            patch(
-                "app.services.admin.AdminActionRepository.get_by_target_user_id"
-            ) as mock_get_actions,
-            patch("app.services.admin.AdminActionRepository.create") as mock_create,
-            patch("app.services.admin.ListingRepository.delete") as mock_delete,
+            patch("app.services.admin.AdminActionRepository.has_active_ban") as mock_has_ban,
+            patch("app.services.admin.AdminActionRepository.count_strikes") as mock_count_strikes,
+            patch("app.services.admin.AdminActionRepository.create_no_commit") as mock_create,
+            patch("app.services.admin.ListingRepository.delete_no_commit") as mock_delete,
+            patch("app.services.admin.delete_listing_images") as mock_delete_images,
         ):
             mock_get_listing.return_value = mock_listing
-            mock_get_user.side_effect = [mock_user, mock_admin]
-            mock_get_actions.return_value = []  # Not banned
-            # First call creates listing_removal, second creates strike
+            mock_get_user.return_value = mock_user
+            mock_has_ban.return_value = None  # Not banned
+            mock_count_strikes.return_value = 1  # Below threshold
+            # First call creates removal_action, second creates strike
             mock_create.side_effect = [listing_removal_action, strike_action]
             db = MagicMock(spec=Session)
 
@@ -547,7 +569,11 @@ class TestAdminServiceListingRemoval:
 
             assert result.action_type == AdminActionType.LISTING_REMOVAL
             # Verify listing was deleted
-            mock_delete.assert_called_once()
+            mock_delete.assert_called_once_with(db, mock_listing)
+            # Verify commit was called
+            db.commit.assert_called_once()
+            # Verify images deleted after commit
+            mock_delete_images.assert_called_once_with(listing_id)
 
     def test_remove_listing_not_found_raises_404(
         self, admin_service: AdminActionService, mock_admin: User
@@ -593,10 +619,10 @@ class TestAdminServiceDeleteValidation:
 class TestAdminServiceListingRemovalExceptionHandling:
     """Test AdminActionService listing removal exception handling."""
 
-    def test_remove_listing_reraises_non_ban_exceptions(
+    def test_remove_listing_with_already_banned_user(
         self, admin_service: AdminActionService, mock_admin: User, mock_user: User
     ):
-        """Test that remove_listing_with_strike re-raises exceptions other than 'already banned'."""
+        """Test that remove_listing_with_strike skips strike creation for already banned users."""
         listing = Listing(
             id=uuid.uuid4(),
             seller_id=mock_user.id,
@@ -606,32 +632,44 @@ class TestAdminServiceListingRemovalExceptionHandling:
             is_active=True,
         )
 
-        # Simulate the strike creation raising a different error (e.g., user not found - 404)
-        not_found_exception = HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        removal_action = AdminAction(
+            id=uuid.uuid4(),
+            admin_id=mock_admin.id,
+            target_user_id=mock_user.id,
+            action_type=AdminActionType.LISTING_REMOVAL,
+            reason="Test",
+            target_listing_id=listing.id,
         )
 
         with (
             patch("app.services.admin.ListingRepository.get_by_id") as mock_get_listing,
-            patch("app.services.admin.AdminActionRepository.create") as mock_create_action,
-            patch("app.services.admin.AdminActionService._check_user_not_banned") as mock_check,
-            patch("app.services.admin.AdminActionService.create_strike") as mock_strike,
+            patch("app.services.admin.UserRepository.get_by_id") as mock_get_user,
+            patch("app.services.admin.AdminActionRepository.has_active_ban") as mock_has_ban,
+            patch("app.services.admin.ListingRepository.delete_no_commit") as mock_delete,
+            patch("app.services.admin.delete_listing_images") as mock_delete_images,
+            patch("app.services.admin.AdminActionRepository.create_no_commit") as mock_create,
         ):
             mock_get_listing.return_value = listing
-            mock_create_action.return_value = AdminAction(
+            mock_get_user.return_value = mock_user
+            mock_has_ban.return_value = AdminAction(  # User is already banned
                 id=uuid.uuid4(),
                 admin_id=mock_admin.id,
                 target_user_id=mock_user.id,
-                action_type=AdminActionType.LISTING_REMOVAL,
-                reason="Test",
+                action_type=AdminActionType.BAN,
+                reason="Banned",
             )
-            mock_check.return_value = None  # User is not banned
-            mock_strike.side_effect = not_found_exception  # Raise 404
+            mock_create.return_value = removal_action
             db = MagicMock(spec=Session)
 
-            # Should re-raise the 404 exception (not a "already banned" 400)
-            with pytest.raises(HTTPException) as exc_info:
-                admin_service.remove_listing_with_strike(db, mock_admin.id, listing.id, "Test")
+            result = admin_service.remove_listing_with_strike(db, mock_admin.id, listing.id, "Test")
 
-            assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
-            assert "User not found" in exc_info.value.detail
+            # Should create removal action but NOT create strike
+            assert result.action_type == AdminActionType.LISTING_REMOVAL
+            # Verify listing was deleted
+            mock_delete.assert_called_once_with(db, listing)
+            # Verify only ONE create call (removal action, no strike)
+            assert mock_create.call_count == 1
+            # Verify commit was called
+            db.commit.assert_called_once()
+            # Verify images deleted
+            mock_delete_images.assert_called_once_with(listing.id)

@@ -99,7 +99,7 @@ def test_user(db_session: Session) -> User:
     user = User(
         id=uuid.uuid4(),
         username="testuser",
-        email="test@example.com",
+        email="test@example.edu",
         hashed_password=get_password_hash("testpassword123"),
         is_verified=True,
         role=UserRole.USER,
@@ -121,7 +121,7 @@ def test_user_unverified(db_session: Session) -> User:
     user = User(
         id=uuid.uuid4(),
         username="unverifieduser",
-        email="unverified@example.com",
+        email="unverified@example.edu",
         hashed_password=get_password_hash("testpassword123"),
         is_verified=False,
         role=UserRole.USER,
@@ -143,7 +143,7 @@ def test_admin(db_session: Session) -> User:
     admin = User(
         id=uuid.uuid4(),
         username="adminuser",
-        email="admin@example.com",
+        email="admin@example.edu",
         hashed_password=get_password_hash("adminpassword123"),
         is_verified=True,
         role=UserRole.ADMIN,
@@ -235,7 +235,7 @@ def test_profile(db_session: Session, test_user: User) -> Profile:
         user_id=test_user.id,
         name="Test User",
         campus="Test University",
-        contact_info={"email": "test@example.com", "phone": "+1234567890"},
+        contact_info={"email": "test@example.edu", "phone": "+1234567890"},
     )
     db_session.add(profile)
     db_session.commit()
@@ -318,7 +318,7 @@ def other_user_listing(db_session: Session) -> Listing:
     other_user = User(
         id=uuid.uuid4(),
         username="otheruser",
-        email="other@example.com",
+        email="other@example.edu",
         hashed_password=get_password_hash("password123"),
         is_verified=True,
         role=UserRole.USER,
@@ -413,7 +413,7 @@ def valid_user_data() -> dict:
     """Valid user registration data."""
     return {
         "username": "newuser",
-        "email": "newuser@example.com",
+        "email": "newuser@example.edu",
         "password": "securepassword123",
     }
 
@@ -437,7 +437,7 @@ def valid_profile_data() -> dict:
         "name": "John Doe",
         "campus": "UC San Diego",
         "contact_info": {
-            "email": "john.doe@example.com",
+            "email": "john.doe@example.edu",
             "phone": "+1234567890",
         },
     }

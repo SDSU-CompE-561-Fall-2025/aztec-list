@@ -9,9 +9,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select
+from sqlalchemy.orm import aliased
 
 from app.core.enums import AdminActionType
 from app.models.admin import AdminAction
+from app.models.user import User
 
 if TYPE_CHECKING:
     import uuid
@@ -185,9 +187,14 @@ class AdminActionRepository:
         return list(db.scalars(query).all())
 
     @staticmethod
-    def get_filtered(db: Session, filters: AdminActionFilters) -> list[AdminAction]:
+    def get_filtered(
+        db: Session, filters: AdminActionFilters
+    ) -> list[tuple[AdminAction, str | None, str | None]]:
         """
         Get admin actions with optional filters and pagination.
+
+        Returns actions with associated usernames as separate tuple elements
+        rather than dynamically attaching attributes to model instances.
 
         Args:
             db: Database session
@@ -195,9 +202,22 @@ class AdminActionRepository:
                     target_listing_id, date ranges, and pagination
 
         Returns:
-            list[AdminAction]: List of filtered admin actions
+            list[tuple[AdminAction, str | None, str | None]]: List of tuples containing
+                (action, admin_username, target_username)
         """
-        query = select(AdminAction)
+        # Create aliases for admin and target users
+        admin_user = aliased(User, name="admin_user")
+        target_user = aliased(User, name="target_user")
+
+        query = (
+            select(
+                AdminAction,
+                admin_user.username.label("admin_username"),
+                target_user.username.label("target_username"),
+            )
+            .outerjoin(admin_user, AdminAction.admin_id == admin_user.id)
+            .outerjoin(target_user, AdminAction.target_user_id == target_user.id)
+        )
 
         if filters.target_user_id:
             query = query.where(AdminAction.target_user_id == filters.target_user_id)
@@ -217,7 +237,11 @@ class AdminActionRepository:
             .limit(filters.limit)
             .offset(filters.offset)
         )
-        return list(db.scalars(query).all())
+
+        results = db.execute(query).all()
+
+        # Return list of tuples (action, admin_username, target_username)
+        return [(row[0], row[1], row[2]) for row in results]
 
     @staticmethod
     def count_filtered(db: Session, filters: AdminActionFilters) -> int:
@@ -247,12 +271,13 @@ class AdminActionRepository:
         if filters.to_date:
             query = query.where(AdminAction.created_at <= filters.to_date)
 
-        return db.scalar(select(func.count()).select_from(query.subquery())) or 0
+        count = db.scalar(select(func.count()).select_from(query.subquery()))
+        return count if count is not None else 0
 
     @staticmethod
     def create(db: Session, admin_id: uuid.UUID, action: AdminActionCreate) -> AdminAction:
         """
-        Create a new admin action.
+        Create a new admin action and commit immediately.
 
         Args:
             db: Database session
@@ -276,9 +301,37 @@ class AdminActionRepository:
         return db_action
 
     @staticmethod
+    def create_no_commit(
+        db: Session, admin_id: uuid.UUID, action: AdminActionCreate
+    ) -> AdminAction:
+        """
+        Create a new admin action without committing (for transactional operations).
+
+        Args:
+            db: Database session
+            admin_id: Admin user ID performing the action
+            action: Admin action creation data
+
+        Returns:
+            AdminAction: Created admin action (not yet committed)
+        """
+        db_action = AdminAction(
+            admin_id=admin_id,
+            target_user_id=action.target_user_id,
+            action_type=action.action_type.value,
+            reason=action.reason,
+            target_listing_id=action.target_listing_id,
+            expires_at=action.expires_at,
+        )
+        db.add(db_action)
+        db.flush()  # Assign ID but don't commit
+        db.refresh(db_action)
+        return db_action
+
+    @staticmethod
     def delete(db: Session, db_action: AdminAction) -> None:
         """
-        Delete admin action (revoke).
+        Delete admin action (revoke) and commit immediately.
 
         Args:
             db: Database session
@@ -286,3 +339,15 @@ class AdminActionRepository:
         """
         db.delete(db_action)
         db.commit()
+
+    @staticmethod
+    def delete_no_commit(db: Session, db_action: AdminAction) -> None:
+        """
+        Delete admin action without committing (for transactional operations).
+
+        Args:
+            db: Database session
+            db_action: Admin action instance to delete
+        """
+        db.delete(db_action)
+        db.flush()

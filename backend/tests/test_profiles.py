@@ -89,7 +89,7 @@ class TestCreateProfile:
         full_profile = {
             "name": "Complete User",
             "campus": "SDSU",
-            "contact_info": {"email": "complete@example.com", "phone": "555-1234"},
+            "contact_info": {"email": "complete@example.edu", "phone": "555-1234"},
             "profile_picture_url": "https://example.com/complete.jpg",
         }
         response = authenticated_client.post("/api/v1/users/profile/", json=full_profile)
@@ -98,7 +98,7 @@ class TestCreateProfile:
         data = response.json()
         assert data["name"] == "Complete User"
         assert data["campus"] == "SDSU"
-        assert data["contact_info"]["email"] == "complete@example.com"
+        assert data["contact_info"]["email"] == "complete@example.edu"
         assert data["contact_info"]["phone"] == "555-1234"
         assert data["profile_picture_url"] == "https://example.com/complete.jpg"
 
@@ -192,7 +192,7 @@ class TestUpdateProfile:
         update_data = {
             "name": "Updated Name",
             "campus": "Updated Campus",
-            "contact_info": {"email": "updated@example.com", "phone": "+9876543210"},
+            "contact_info": {"email": "updated@example.edu", "phone": "+9876543210"},
         }
         response = authenticated_client.patch("/api/v1/users/profile/", json=update_data)
 
@@ -200,7 +200,7 @@ class TestUpdateProfile:
         data = response.json()
         assert data["name"] == "Updated Name"
         assert data["campus"] == "Updated Campus"
-        assert data["contact_info"]["email"] == "updated@example.com"
+        assert data["contact_info"]["email"] == "updated@example.edu"
 
     def test_update_profile_partial(self, authenticated_client: TestClient, test_profile: Profile):
         """Test partially updating profile (only some fields)."""
@@ -314,7 +314,7 @@ class TestUpdateProfile:
         """Test updating only part of contact info."""
         update_data = {
             "contact_info": {
-                "email": "newemail@example.com"
+                "email": "newemail@example.edu"
                 # phone not provided - should be handled correctly
             }
         }
@@ -322,7 +322,7 @@ class TestUpdateProfile:
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        assert data["contact_info"]["email"] == "newemail@example.com"
+        assert data["contact_info"]["email"] == "newemail@example.edu"
 
     def test_update_contact_info_invalid_email(
         self, authenticated_client: TestClient, test_profile: Profile

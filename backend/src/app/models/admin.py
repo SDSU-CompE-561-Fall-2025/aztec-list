@@ -43,7 +43,7 @@ class AdminAction(Base):
     action_type: Mapped[AdminActionType] = mapped_column(Enum(AdminActionType), index=True)
     reason: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True
     )
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 

@@ -56,7 +56,7 @@ class TestProfileRepositoryCreate:
         profile_data = {
             "name": "Test User",
             "campus": "Main Campus",
-            "contact_info": {"email": "test@example.com"},
+            "contact_info": {"email": "test@example.edu"},
         }
 
         result = ProfileRepository.create(db_session, test_user.id, profile_data)
@@ -65,7 +65,7 @@ class TestProfileRepositoryCreate:
         assert result.user_id == test_user.id
         assert result.name == "Test User"
         assert result.campus == "Main Campus"
-        assert result.contact_info == {"email": "test@example.com"}
+        assert result.contact_info == {"email": "test@example.edu"}
         assert result.created_at is not None
 
     def test_create_profile_minimal(self, db_session: Session, test_user: User):

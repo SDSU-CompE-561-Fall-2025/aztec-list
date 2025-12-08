@@ -30,7 +30,7 @@ def mock_profile():
         user_id=uuid.uuid4(),
         name="John Doe",
         campus="UC San Diego",
-        contact_info={"email": "john@example.com"},
+        contact_info={"email": "john@example.edu"},
     )
 
 
@@ -91,7 +91,7 @@ class TestProfileServiceCreate:
         profile_data = ProfileCreate(
             name="John Doe",
             campus="UC San Diego",
-            contact_info={"email": "john@example.com"},
+            contact_info={"email": "john@example.edu"},
         )
 
         with (

@@ -26,7 +26,7 @@ def mock_user():
     return User(
         id=uuid.uuid4(),
         username="seller",
-        email="seller@example.com",
+        email="seller@example.edu",
         hashed_password="hashed",
         role=UserRole.USER,
     )
@@ -128,7 +128,7 @@ class TestListingImageServiceGet:
         different_user = User(
             id=different_user_id,
             username="other",
-            email="other@example.com",
+            email="other@example.edu",
             hashed_password="hashed",
             role=UserRole.USER,
         )
@@ -232,7 +232,7 @@ class TestListingImageServiceCreate:
         different_user = User(
             id=different_user_id,
             username="other",
-            email="other@example.com",
+            email="other@example.edu",
             hashed_password="hashed",
             role=UserRole.USER,
         )
@@ -401,7 +401,7 @@ class TestListingImageServiceUpdate:
         different_user = User(
             id=different_user_id,
             username="other",
-            email="other@example.com",
+            email="other@example.edu",
             hashed_password="hashed",
             role=UserRole.USER,
         )
@@ -565,7 +565,7 @@ class TestListingImageServiceDelete:
         different_user = User(
             id=different_user_id,
             username="other",
-            email="other@example.com",
+            email="other@example.edu",
             hashed_password="hashed",
             role=UserRole.USER,
         )

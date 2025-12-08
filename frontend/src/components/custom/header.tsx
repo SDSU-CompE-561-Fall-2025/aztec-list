@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LISTINGS_BASE_URL, DEFAULT_SORT, STATIC_BASE_URL } from "@/lib/constants";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, Settings, User, Search } from "lucide-react";
+import { LogOut, Settings, User, Search, Shield } from "lucide-react";
 import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOptions";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
 
@@ -140,6 +140,17 @@ export function Header() {
                     <span className="text-sm">Settings</span>
                   </Link>
                 </DropdownMenuItem>
+                {user?.role === "admin" && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin" className="cursor-pointer py-2 text-purple-400">
+                        <Shield className="mr-2 h-4 w-4" />
+                        <span className="text-sm font-semibold">Admin Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout} className="cursor-pointer py-2">
                   <LogOut className="mr-2 h-4 w-4" />

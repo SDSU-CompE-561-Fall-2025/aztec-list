@@ -230,7 +230,7 @@ class ListingRepository:
     @staticmethod
     def delete(db: Session, db_listing: Listing) -> None:
         """
-        Permanently delete listing from database.
+        Permanently delete listing from database and commit immediately.
 
         Args:
             db: Database session
@@ -238,3 +238,15 @@ class ListingRepository:
         """
         db.delete(db_listing)
         db.commit()
+
+    @staticmethod
+    def delete_no_commit(db: Session, db_listing: Listing) -> None:
+        """
+        Permanently delete listing without committing (for transactional operations).
+
+        Args:
+            db: Database session
+            db_listing: Listing instance to delete
+        """
+        db.delete(db_listing)
+        db.flush()
