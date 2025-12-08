@@ -9,9 +9,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select
+from sqlalchemy.orm import aliased
 
 from app.core.enums import AdminActionType
 from app.models.admin import AdminAction
+from app.models.user import User
 
 if TYPE_CHECKING:
     import uuid
@@ -195,9 +197,21 @@ class AdminActionRepository:
                     target_listing_id, date ranges, and pagination
 
         Returns:
-            list[AdminAction]: List of filtered admin actions
+            list[AdminAction]: List of filtered admin actions with usernames attached
         """
-        query = select(AdminAction)
+        # Create aliases for admin and target users
+        admin_user = aliased(User, name="admin_user")
+        target_user = aliased(User, name="target_user")
+
+        query = (
+            select(
+                AdminAction,
+                admin_user.username.label("admin_username"),
+                target_user.username.label("target_username"),
+            )
+            .outerjoin(admin_user, AdminAction.admin_id == admin_user.id)
+            .outerjoin(target_user, AdminAction.target_user_id == target_user.id)
+        )
 
         if filters.target_user_id:
             query = query.where(AdminAction.target_user_id == filters.target_user_id)
@@ -217,7 +231,18 @@ class AdminActionRepository:
             .limit(filters.limit)
             .offset(filters.offset)
         )
-        return list(db.scalars(query).all())
+
+        results = db.execute(query).all()
+
+        # Attach usernames to AdminAction objects
+        actions = []
+        for row in results:
+            action = row[0]  # AdminAction
+            action.admin_username = row[1]  # admin_username
+            action.target_username = row[2]  # target_username
+            actions.append(action)
+
+        return actions
 
     @staticmethod
     def count_filtered(db: Session, filters: AdminActionFilters) -> int:

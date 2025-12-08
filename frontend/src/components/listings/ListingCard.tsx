@@ -14,6 +14,14 @@ interface ListingCardProps {
 export function ListingCard({ listing }: ListingCardProps) {
   const hasImage = listing.thumbnail_url;
 
+  // Build image URL safely
+  const imageUrl =
+    hasImage && listing.thumbnail_url
+      ? listing.thumbnail_url.startsWith("http")
+        ? listing.thumbnail_url
+        : `${STATIC_BASE_URL}${listing.thumbnail_url}`
+      : null;
+
   return (
     <Link
       href={`${LISTINGS_BASE_URL}/${listing.id}`}
@@ -21,10 +29,10 @@ export function ListingCard({ listing }: ListingCardProps) {
     >
       {/* Image or placeholder */}
       <div className="relative aspect-square bg-gray-800 rounded-md overflow-hidden">
-        {hasImage ? (
+        {imageUrl ? (
           <>
             <Image
-              src={`${STATIC_BASE_URL}${listing.thumbnail_url}`}
+              src={imageUrl}
               alt={listing.title}
               fill
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"

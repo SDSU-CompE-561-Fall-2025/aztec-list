@@ -23,12 +23,13 @@ export const createProfileQueryOptions = (userId: string | undefined) => {
         if (response.status === 404) return null;
 
         if (!response.ok) {
-          throw new Error("Failed to fetch profile");
+          // Return null instead of throwing to prevent console errors
+          return null;
         }
 
         return response.json();
       } catch (error) {
-        console.error("Failed to fetch profile:", error);
+        // Silently handle errors and return null
         return null;
       }
     },

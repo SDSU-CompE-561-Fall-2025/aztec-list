@@ -36,7 +36,9 @@ class AdminActionPublic(BaseModel):
 
     id: uuid.UUID
     admin_id: uuid.UUID
+    admin_username: str | None = Field(None, description="Username of admin who performed action")
     target_user_id: uuid.UUID
+    target_username: str | None = Field(None, description="Username of user receiving action")
     action_type: AdminActionType
     reason: str | None = None
     target_listing_id: uuid.UUID | None = None
@@ -50,6 +52,16 @@ class AdminActionStrike(BaseModel):
     """Schema for adding a strike (convenience wrapper)."""
 
     reason: str | None = Field(None, max_length=500, description="Brief explanation for strike")
+
+
+class AdminActionStrikeResponse(BaseModel):
+    """Schema for strike action response with auto-ban information."""
+
+    strike_action: AdminActionPublic
+    auto_ban_triggered: bool = Field(
+        default=False, description="True if this strike triggered an automatic ban"
+    )
+    strike_count: int = Field(..., description="Total number of strikes after this action")
 
 
 class AdminActionBan(BaseModel):

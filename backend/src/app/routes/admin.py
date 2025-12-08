@@ -14,6 +14,7 @@ from app.schemas.admin import (
     AdminActionListResponse,
     AdminActionPublic,
     AdminActionStrike,
+    AdminActionStrikeResponse,
     AdminListingRemoval,
     AdminListingRemovalResponse,
 )
@@ -120,14 +121,13 @@ async def delete_admin_action(
     "/users/{user_id}/strike",
     summary="Add a strike to a user",
     status_code=status.HTTP_201_CREATED,
-    response_model=AdminActionPublic,
 )
 async def strike_user(
     user_id: uuid.UUID,
     strike: AdminActionStrike,
     admin: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
-) -> AdminAction:
+) -> AdminActionStrikeResponse:
     """
     Add a strike to a user (convenience wrapper).
 
@@ -140,12 +140,19 @@ async def strike_user(
         db: Database session
 
     Returns:
-        AdminActionPublic: Created strike action
+        AdminActionStrikeResponse: Strike action with auto-ban info
 
     Raises:
         HTTPException: 401 if not authenticated, 403 if not admin, 404 if user not found
     """
-    return admin_action_service.create_strike(db, admin.id, user_id, strike)
+    strike_action, strike_count, auto_ban_triggered = admin_action_service.create_strike(
+        db, admin.id, user_id, strike
+    )
+    return AdminActionStrikeResponse(
+        strike_action=AdminActionPublic.model_validate(strike_action),
+        auto_ban_triggered=auto_ban_triggered,
+        strike_count=strike_count,
+    )
 
 
 @admin_router.post(
