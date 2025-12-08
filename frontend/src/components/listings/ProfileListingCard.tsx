@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ListingSummary } from "@/types/listing/listing";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getConditionColor } from "@/lib/utils";
 import { STATIC_BASE_URL, LISTINGS_BASE_URL } from "@/lib/constants";
 import { Edit, Eye, EyeOff, Trash2, ImageIcon } from "lucide-react";
 import Link from "next/link";
@@ -49,9 +49,12 @@ export function ProfileListingCard({
 
   return (
     <>
-      <div className="flex flex-col gap-2 relative group cursor-pointer" onClick={handleCardClick}>
-        {/* Image with inactive overlay */}
-        <div className="relative aspect-square bg-gray-800 rounded-md overflow-hidden">
+      <div
+        onClick={handleCardClick}
+        className="group bg-gray-900/60 backdrop-blur-sm border border-gray-800/60 rounded-xl overflow-hidden hover:border-purple-500/50 transition-all cursor-pointer hover:shadow-lg hover:shadow-purple-500/10 relative"
+      >
+        {/* Image Section */}
+        <div className="relative w-full aspect-square bg-gray-800/50 overflow-hidden">
           {hasImage ? (
             <>
               <Image
@@ -65,9 +68,10 @@ export function ProfileListingCard({
             </>
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <ImageIcon className="w-12 h-12 text-gray-600" />
+              <ImageIcon className="w-16 h-16 text-gray-700" />
             </div>
           )}
+
           {!listing.is_active && (
             <div className="absolute inset-0 bg-gray-950/60 flex items-center justify-center z-10">
               <span className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md text-sm font-medium">
@@ -75,47 +79,60 @@ export function ProfileListingCard({
               </span>
             </div>
           )}
+
+          {/* Action buttons - show on hover */}
+          <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+            <Button
+              size="icon"
+              variant="secondary"
+              className="h-9 w-9 bg-gray-900/90 hover:bg-gray-800 border border-purple-400 hover:border-purple-300 hover:shadow-lg hover:shadow-purple-500/20 text-white"
+              asChild
+            >
+              <Link href={`/listings/${listing.id}/edit`}>
+                <Edit className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button
+              size="icon"
+              variant="secondary"
+              className="h-9 w-9 bg-gray-900/90 hover:bg-gray-800 border border-blue-400 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/20 text-white"
+              onClick={() => onToggleActive(listing.id, !listing.is_active)}
+              disabled={isTogglingActive}
+            >
+              {listing.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
+            <Button
+              size="icon"
+              variant="secondary"
+              className="h-9 w-9 bg-gray-900/90 hover:bg-gray-800 border border-red-400 hover:border-red-300 hover:shadow-lg hover:shadow-red-500/20 text-white"
+              onClick={() => setShowDeleteDialog(true)}
+              disabled={isDeleting}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
-        {/* Action buttons - show on hover */}
-        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-          <Button
-            size="icon"
-            variant="secondary"
-            className="h-9 w-9 bg-gray-900/90 hover:bg-gray-800 border border-purple-400 hover:border-purple-300 hover:shadow-lg hover:shadow-purple-500/20 text-white"
-            asChild
-          >
-            <Link href={`/listings/${listing.id}/edit`}>
-              <Edit className="h-4 w-4" />
-            </Link>
-          </Button>
-          <Button
-            size="icon"
-            variant="secondary"
-            className="h-9 w-9 bg-gray-900/90 hover:bg-gray-800 border border-blue-400 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/20 text-white"
-            onClick={() => onToggleActive(listing.id, !listing.is_active)}
-            disabled={isTogglingActive}
-          >
-            {listing.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </Button>
-          <Button
-            size="icon"
-            variant="secondary"
-            className="h-9 w-9 bg-gray-900/90 hover:bg-gray-800 border border-red-400 hover:border-red-300 hover:shadow-lg hover:shadow-red-500/20 text-white"
-            onClick={() => setShowDeleteDialog(true)}
-            disabled={isDeleting}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+        {/* Content Section */}
+        <div className="p-4 space-y-2">
+          <h3 className="text-xl font-bold text-white line-clamp-1 group-hover:text-purple-300 transition-colors">
+            {listing.title}
+          </h3>
+
+          <p className="text-lg font-semibold text-white">{formatPrice(Number(listing.price))}</p>
+
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <span className={`capitalize font-medium ${getConditionColor(listing.condition)}`}>
+              {listing.condition.replace("_", " ")}
+            </span>
+            <span>•</span>
+            <span className="capitalize">{listing.category.replace("_", " ")}</span>
+          </div>
+
+          <p className="text-sm text-gray-500">
+            Posted {new Date(listing.created_at).toLocaleDateString()}
+          </p>
         </div>
-
-        {/* Title */}
-        <h3 className="text-base font-semibold text-gray-100 line-clamp-2 group-hover:text-purple-400 transition-colors">
-          {listing.title}
-        </h3>
-
-        {/* Price */}
-        <p className="text-base font-bold text-gray-100">{formatPrice(listing.price)}</p>
       </div>
 
       {/* Delete confirmation dialog */}

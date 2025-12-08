@@ -49,8 +49,8 @@ export function formatConditionLabel(condition: Condition): string {
 
 export function getConditionColor(condition: Condition): string {
   const colors: Record<Condition, string> = {
-    new: "text-cyan-400",
-    like_new: "text-blue-400",
+    new: "text-blue-400",
+    like_new: "text-cyan-400",
     good: "text-green-400",
     fair: "text-yellow-400",
     poor: "text-red-400",
