@@ -90,91 +90,33 @@ bun dev
 
 ## Code Quality & Pre-commit Hooks
 
-This monorepo uses the **[pre-commit](https://pre-commit.com/)** framework to enforce code quality standards across both backend (Python) and frontend (TypeScript/JavaScript). Pre-commit hooks run automatically on staged files when you commit, ensuring consistent formatting and catching common issues.
+This monorepo uses **[pre-commit](https://pre-commit.com/)** to enforce code quality standards. Hooks run automatically on commit for both backend (Python) and frontend (TypeScript).
 
-### One-Time Setup
-
-**1. Install pre-commit** (run from repo root):
+### Setup
 
 ```bash
-# Install the pre-commit tool
+# Install pre-commit (from repo root)
 uv tool install pre-commit
-
-# Install the git hooks
 pre-commit install
 ```
 
-**2. Install VS Code Extensions** (recommended):
+### What Runs on Commit
 
-Open the workspace and install recommended extensions when prompted, or install manually:
-
-- **Prettier** (`esbenp.prettier-vscode`) - Frontend formatter
-- **ESLint** (`dbaeumer.vscode-eslint`) - Frontend linter
-- **Tailwind CSS IntelliSense** (`bradlc.vscode-tailwindcss`) - Tailwind autocomplete
-- **Python** (`ms-python.python`) - Core Python support
-- **Pylance** (`ms-python.vscode-pylance`) - Python type checking
-- **Ruff** (`charliermarsh.ruff`) - Python formatter/linter
-
-The workspace settings (`.vscode/settings.json`) are configured to:
-
-- Format files on save (Prettier for frontend, Ruff for Python)
-- Trim trailing whitespace
-- Basic type checking for Python
-
-### What Runs Automatically on Commit
-
-Pre-commit hooks run **only on staged files** and are path-aware:
-
-#### Backend Files (`backend/**/*.py`)
-
-- ✅ **Ruff** - Fast Python linter and formatter
-- ✅ **Check AST** - Validate Python syntax
-- ✅ **Check docstrings** - Ensure docstring placement
-
-#### Frontend Files (`frontend/**/*.{ts,tsx,js,jsx}`)
-
-- ✅ **ESLint** - Lint and auto-fix TypeScript/JavaScript
-- ✅ **Prettier** - Format code consistently
-
-#### All Files
-
-- ✅ **Check large files** - Prevent accidentally committing large files
-- ✅ **Detect private keys** - Block commits with secrets
-- ✅ **Fix line endings** - Normalize to LF
-- ✅ **Trim trailing whitespace**
-- ✅ **Fix end-of-file** - Ensure final newline
-- ✅ **Validate JSON/YAML/TOML** - Check syntax
-
-**If unfixable errors are found, the commit is blocked.** Fix the issues and try again.
+- **Backend** (`backend/**/*.py`) - Ruff linter/formatter, Python syntax checks
+- **Frontend** (`frontend/**/*.{ts,tsx,js,jsx}`) - ESLint, Prettier
+- **All Files** - Trailing whitespace, line endings, large file checks, secret detection
 
 ### Manual Commands
 
-#### Run Pre-commit Hooks Manually
-
 ```bash
-# From repo root:
-
-# Run all hooks on all files (useful for CI or initial setup)
+# Run all hooks on all files
 pre-commit run --all-files
 
-# Run only on staged files (same as what happens on commit)
+# Run only on staged files
 pre-commit run
-
-# Update hook versions
-pre-commit autoupdate
 ```
 
-For backend-specific commands (Ruff, pytest), see [backend/README.md](backend/README.md).  
-For frontend-specific commands (ESLint, Prettier), see [frontend/README.md](frontend/README.md).
-
-### Configuration Files
-
-- **`.pre-commit-config.yaml`** (repo root) - Defines all hooks and which files they run on
-- **`backend/pyproject.toml`** - Ruff configuration for Python linting/formatting
-- **`frontend/.prettierrc`** - Prettier formatting rules
-- **`frontend/eslint.config.mjs`** - ESLint linting rules
-- **`.vscode/settings.json`** - VS Code workspace settings (formatters, type checking)
-- **`.vscode/extensions.json`** - Recommended VS Code extensions
+For detailed backend/frontend commands, see their respective READMEs.
 
 ## Testing
 
@@ -185,104 +127,7 @@ For detailed testing documentation, see:
 
 ## Environment Configuration
 
-The application uses environment variables for configuration. These are loaded from a `.env` file in the project root.
+Environment variables are configured separately in each workspace:
 
-### Setup Steps:
-
-1. **Copy the example file:**
-
-   ```bash
-   cp .env.example .env
-   ```
-
-2. **Generate a secure secret key:**
-
-   ```bash
-   uv run python -c "import secrets; print(secrets.token_urlsafe(32))"
-   ```
-
-3. **Edit `.env` and update the values:**
-   - **Required:** `JWT__SECRET_KEY` - Use the key generated above
-   - **Optional:** Modify database URL, token expiration, CORS origins, logging settings, etc.
-
-### Configuration Options:
-
-#### Security Settings (Required)
-
-```bash
-# IMPORTANT: Generate a secure key with:
-# uv run python -c "import secrets; print(secrets.token_urlsafe(32))"
-JWT__SECRET_KEY="your-generated-secret-key-here"
-JWT__ALGORITHM="HS256"
-JWT__ACCESS_TOKEN_EXPIRE_MINUTES=30
-```
-
-#### Database Settings
-
-```bash
-# SQLite (default for development):
-DB__DATABASE_URL="sqlite:///./aztec_list.db"
-
-# PostgreSQL (production):
-# DB__DATABASE_URL="postgresql://user:password@localhost:5432/aztec_list"
-
-DB__ECHO=false  # Set to true for SQL query logging
-```
-
-#### Application Settings
-
-```bash
-APP__TITLE="Aztec List"
-APP__DESCRIPTION="API for an OfferUp-style marketplace for college students"
-APP__VERSION="0.1.0"
-APP__DOCS_URL="/docs"      # Swagger UI path (set to null to disable)
-APP__REDOC_URL="/redoc"    # ReDoc UI path (set to null to disable)
-```
-
-#### CORS Settings
-
-```bash
-# WARNING: The default localhost origins are for DEVELOPMENT ONLY!
-# In production, override with your actual frontend domain(s).
-CORS__ALLOWED_ORIGINS='["http://localhost:3000"]'
-CORS__ALLOW_CREDENTIALS=true
-CORS__ALLOWED_METHODS='["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]'
-CORS__ALLOWED_HEADERS='["*"]'
-
-# NEVER use "*" (wildcard) with CORS__ALLOW_CREDENTIALS=true - this is a security risk!
-```
-
-#### Logging Settings
-
-```bash
-# Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-LOGGING__LEVEL="INFO"
-LOGGING__USE_JSON=false  # Use JSON format in production
-LOGGING__FORMAT="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-LOGGING__UVICORN_ACCESS_LEVEL="WARNING"
-LOGGING__UVICORN_ERROR_LEVEL="INFO"
-LOGGING__EXCLUDED_PATHS='["/health", "/docs", "/redoc", "/openapi.json"]'
-```
-
-#### Moderation Settings
-
-```bash
-# Number of strikes before automatic permanent ban
-MODERATION__STRIKE_AUTO_BAN_THRESHOLD=3
-```
-
-#### Listing Settings
-
-```bash
-# Maximum number of images allowed per listing
-LISTING__MAX_IMAGES_PER_LISTING=10
-```
-
-### Important Notes:
-
-- **Never commit your `.env` file** - It contains sensitive information
-- The `.env.example` file is safe to commit and serves as a template
-- Settings use nested delimiter `__` (e.g., `DB__DATABASE_URL` maps to `settings.db.database_url`)
-- The application will fail to start if `JWT__SECRET_KEY` is not set
-- CORS wildcard (`"*"`) is blocked when `CORS__ALLOW_CREDENTIALS=true` for security
-- Logging settings support both human-readable and JSON formats
+- **Backend**: See [backend/README.md](backend/README.md) for `.env` setup
+- **Frontend**: See [frontend/README.md](frontend/README.md) for `.env.local` setup
