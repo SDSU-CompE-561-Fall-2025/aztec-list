@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { CATEGORIES, Category } from "@/types/listing/filters/category";
 import { CONDITIONS, Condition } from "@/types/listing/filters/condition";
 import { SORT_OPTIONS, Sort } from "@/types/listing/filters/sort";
@@ -23,6 +23,19 @@ export function SearchFilters() {
   const [maxPrice, setMaxPrice] = useState("");
   const [priceError, setPriceError] = useState(false);
 
+  // Get current values from URL
+  const urlCategoryParam = searchParams.get("category");
+  const urlCategory =
+    urlCategoryParam && CATEGORIES.includes(urlCategoryParam as Category) ? urlCategoryParam : "";
+
+  const urlSortParam = searchParams.get("sort");
+  const urlSort =
+    urlSortParam && SORT_OPTIONS.includes(urlSortParam as Sort) ? urlSortParam : DEFAULT_SORT;
+
+  // Local state for pending category and sort changes (before "Apply Filters" is clicked)
+  const [selectedCategory, setSelectedCategory] = useState<string>(() => urlCategory);
+  const [selectedSort, setSelectedSort] = useState<string>(() => urlSort);
+
   // Derive condition from URL - this is the source of truth
   const urlConditionParam = searchParams.get("condition");
   const urlCondition =
@@ -36,13 +49,18 @@ export function SearchFilters() {
     urlCondition ? [urlCondition] : []
   );
 
-  // Sync with URL when it changes (e.g., browser back/forward, or after applying filters)
-  // Use a ref to track if we need to sync
-  const prevUrlConditionRef = useRef(urlCondition);
-  if (prevUrlConditionRef.current !== urlCondition) {
-    prevUrlConditionRef.current = urlCondition;
+  // Sync local state with URL changes (e.g., browser back/forward, or after applying filters)
+  useEffect(() => {
     setSelectedConditions(urlCondition ? [urlCondition] : []);
-  }
+  }, [urlCondition]);
+
+  useEffect(() => {
+    setSelectedCategory(urlCategory);
+  }, [urlCategory]);
+
+  useEffect(() => {
+    setSelectedSort(urlSort);
+  }, [urlSort]);
 
   const updateURL = (updates: Record<string, string | undefined>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -69,11 +87,11 @@ export function SearchFilters() {
   };
 
   const handleCategoryChange = (value: string) => {
-    updateURL({ category: value || undefined });
+    setSelectedCategory(value);
   };
 
   const handleSortChange = (value: string) => {
-    updateURL({ sort: value });
+    setSelectedSort(value);
   };
 
   const handleApplyFilters = () => {
@@ -93,6 +111,8 @@ export function SearchFilters() {
       minPrice: min?.toString(),
       maxPrice: max?.toString(),
       condition: conditionValue,
+      category: selectedCategory || undefined,
+      sort: selectedSort,
       offset: undefined, // Reset to first page when filters change
     });
   };
@@ -101,6 +121,8 @@ export function SearchFilters() {
     setMinPrice("");
     setMaxPrice("");
     setSelectedConditions([]);
+    setSelectedCategory("");
+    setSelectedSort(DEFAULT_SORT);
     setPriceError(false);
     router.replace(`${LISTINGS_BASE_URL}?sort=${DEFAULT_SORT}`);
   };
@@ -127,18 +149,6 @@ export function SearchFilters() {
     }
   };
 
-  const currentCategoryParam = searchParams.get("category");
-  const currentCategory =
-    currentCategoryParam && CATEGORIES.includes(currentCategoryParam as Category)
-      ? currentCategoryParam
-      : "";
-
-  const currentSortParam = searchParams.get("sort");
-  const currentSort =
-    currentSortParam && SORT_OPTIONS.includes(currentSortParam as Sort)
-      ? currentSortParam
-      : DEFAULT_SORT;
-
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const filtersContent = (
@@ -147,7 +157,7 @@ export function SearchFilters() {
       <div>
         <h3 className="text-sm font-semibold text-foreground mb-3">Category</h3>
         <select
-          value={currentCategory}
+          value={selectedCategory}
           onChange={(e) => handleCategoryChange(e.target.value)}
           className="w-full bg-background text-foreground border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
@@ -215,7 +225,7 @@ export function SearchFilters() {
       <div>
         <h3 className="text-sm font-semibold text-foreground mb-3">Sort By</h3>
         <select
-          value={currentSort}
+          value={selectedSort}
           onChange={(e) => handleSortChange(e.target.value)}
           className="w-full bg-background text-foreground border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
