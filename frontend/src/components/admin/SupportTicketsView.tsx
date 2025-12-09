@@ -1,0 +1,171 @@
+"use client";
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Mail } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { API_BASE_URL } from "@/lib/constants";
+import { getAuthToken } from "@/lib/auth";
+
+interface SupportTicket {
+  id: string;
+  user_id: string | null;
+  email: string;
+  subject: string;
+  message: string;
+  status: "open" | "in_progress" | "resolved" | "closed";
+  created_at: string;
+  updated_at: string;
+}
+
+const STATUS_COLORS = {
+  open: "bg-blue-500/10 text-blue-400 border-blue-500/30",
+  in_progress: "bg-yellow-500/10 text-yellow-400 border-yellow-500/30",
+  resolved: "bg-green-500/10 text-green-400 border-green-500/30",
+  closed: "bg-gray-500/10 text-gray-400 border-gray-500/30",
+};
+
+const STATUS_LABELS = {
+  open: "Open",
+  in_progress: "In Progress",
+  resolved: "Resolved",
+  closed: "Closed",
+};
+
+export function SupportTicketsView() {
+  const queryClient = useQueryClient();
+
+  const { data: tickets, isLoading } = useQuery<SupportTicket[]>({
+    queryKey: ["support-tickets"],
+    queryFn: async () => {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/support`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch support tickets");
+      }
+
+      return response.json();
+    },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ ticketId, status }: { ticketId: string; status: string }) => {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/support/${ticketId}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update ticket status");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["support-tickets"] });
+    },
+  });
+
+  const handleStatusChange = (ticketId: string, newStatus: string) => {
+    updateStatusMutation.mutate({ ticketId, status: newStatus });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600 mx-auto mb-3"></div>
+          <p className="text-muted-foreground text-sm">Loading tickets...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tickets || tickets.length === 0) {
+    return (
+      <Card className="bg-card border">
+        <CardContent className="py-12 text-center">
+          <Mail className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground">No support tickets yet.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {tickets.map((ticket) => (
+        <Card key={ticket.id} className="bg-card border">
+          <CardContent className="p-5">
+            <div className="space-y-4">
+              {/* Header with status and date */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full border ${
+                        STATUS_COLORS[ticket.status]
+                      }`}
+                    >
+                      {STATUS_LABELS[ticket.status]}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(ticket.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground truncate">
+                    {ticket.subject}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">{ticket.email}</p>
+                </div>
+
+                {/* Status selector */}
+                <div className="flex-shrink-0 w-40">
+                  <Select
+                    value={ticket.status}
+                    onValueChange={(value: string) => handleStatusChange(ticket.id, value)}
+                    disabled={updateStatusMutation.isPending}
+                  >
+                    <SelectTrigger className="w-full text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="open">Open</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
+                      <SelectItem value="closed">Closed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Message */}
+              <div className="bg-muted/50 border rounded-lg p-4">
+                <p className="text-sm text-foreground whitespace-pre-wrap">{ticket.message}</p>
+              </div>
+
+              {/* Ticket ID */}
+              <div className="text-xs text-muted-foreground font-mono">Ticket ID: {ticket.id}</div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}

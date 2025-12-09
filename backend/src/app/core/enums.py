@@ -73,3 +73,12 @@ class LogLevel(str, enum.Enum):
     WARNING = "WARNING"
     ERROR = "ERROR"
     CRITICAL = "CRITICAL"
+
+
+class TicketStatus(str, enum.Enum):
+    """Enum for support ticket status."""
+
+    OPEN = "open"
+    IN_PROGRESS = "in_progress"
+    RESOLVED = "resolved"
+    CLOSED = "closed"

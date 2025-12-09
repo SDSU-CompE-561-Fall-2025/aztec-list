@@ -167,6 +167,27 @@ class LoggingSettings(BaseModel):
     )
 
 
+class EmailSettings(BaseModel):
+    """Email service configuration using Resend."""
+
+    resend_api_key: str = Field(
+        default="",
+        description="Resend API key (configure via RESEND_API_KEY environment variable)",
+    )
+    from_email: str = Field(
+        default="support@yourdomain.com",
+        description="From email address for outgoing emails",
+    )
+    support_email: str = Field(
+        default="support@yourdomain.com",
+        description="Email address where support tickets are sent",
+    )
+    enabled: bool = Field(
+        default=True,
+        description="Enable/disable email sending (useful for testing)",
+    )
+
+
 class Settings(BaseSettings):
     """
     Application settings loaded from environment variables.
@@ -192,6 +213,7 @@ class Settings(BaseSettings):
     storage: StorageSettings = Field(default_factory=StorageSettings)
     cors: CORSSettings = Field(default_factory=CORSSettings)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
+    email: EmailSettings = Field(default_factory=EmailSettings)
 
 
 @lru_cache

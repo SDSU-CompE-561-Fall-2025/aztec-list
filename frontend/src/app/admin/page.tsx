@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle } from "lucide-react";
+import { SupportTicketsView } from "@/components/admin/SupportTicketsView";
 
 // Constants - moved outside component for performance
 const ACTION_TYPE_CONFIG = {
@@ -98,7 +99,9 @@ export default function AdminDashboard() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<"actions" | "strike" | "ban" | "remove">("actions");
+  const [activeTab, setActiveTab] = useState<"actions" | "strike" | "ban" | "remove" | "support">(
+    "actions"
+  );
   const [targetUserId, setTargetUserId] = useState("");
   const [listingId, setListingId] = useState("");
   const [reason, setReason] = useState("");
@@ -350,6 +353,16 @@ export default function AdminDashboard() {
           }`}
         >
           Remove Listing
+        </button>
+        <button
+          onClick={() => setActiveTab("support")}
+          className={`px-4 py-2 font-medium text-sm transition-colors ${
+            activeTab === "support"
+              ? "border-b-2 border-purple-500 text-purple-400"
+              : "text-gray-400 hover:text-gray-200"
+          }`}
+        >
+          Support Tickets
         </button>
       </div>
 
@@ -796,6 +809,14 @@ export default function AdminDashboard() {
             </form>
           </CardContent>
         </Card>
+      )}
+
+      {/* Support Tickets Tab */}
+      {activeTab === "support" && (
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-white">Support Tickets</h2>
+          <SupportTicketsView />
+        </div>
       )}
     </div>
   );

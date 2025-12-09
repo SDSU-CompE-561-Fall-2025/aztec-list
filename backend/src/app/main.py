@@ -12,6 +12,9 @@ from app.core.logging import configure_logging
 from app.core.middleware import RequestLoggingMiddleware, add_cache_headers_middleware
 from app.core.settings import settings
 
+# Import models to ensure they're registered with SQLAlchemy
+from app.models import admin, listing, listing_image, profile, support_ticket, user  # noqa: F401
+
 # Configure logging from settings
 configure_logging(settings.logging)
 
