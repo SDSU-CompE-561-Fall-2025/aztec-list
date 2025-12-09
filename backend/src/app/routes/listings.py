@@ -1,11 +1,12 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import require_not_banned
+from app.core.rate_limiter import limiter
 from app.models.listing import Listing
 from app.models.user import User
 from app.schemas.listing import (
@@ -30,7 +31,9 @@ listing_router = APIRouter(
     response_model=ListingPublic,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit("10/hour")
 async def create_listing(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     listing: ListingCreate,
     current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
@@ -38,7 +41,10 @@ async def create_listing(
     """
     Create a new item listing for sale.
 
+    Rate limit: 20 listings per hour to prevent spam.
+
     Args:
+        request: FastAPI request object (required for rate limiting)
         listing: Listing creation data (title, description, price, category, condition)
         current_user: Authenticated user (automatically set as seller)
         db: Database session
@@ -47,7 +53,7 @@ async def create_listing(
         ListingPublic: Created listing information
 
     Raises:
-        HTTPException: 401 if not authenticated, 403 if banned, 400 if validation fails
+        HTTPException: 401 if not authenticated, 403 if banned, 400 if validation fails, 429 if rate limit exceeded
     """
     return listing_service.create(db, current_user.id, listing)
 

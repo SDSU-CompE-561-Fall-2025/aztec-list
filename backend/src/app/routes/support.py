@@ -7,13 +7,14 @@ This module handles support ticket creation and management endpoints.
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.database import get_db
 from app.core.dependencies import get_optional_user, require_admin
 from app.core.email import email_service
+from app.core.rate_limiter import limiter
 from app.models.support_ticket import SupportTicket
 from app.models.user import User
 from app.schemas.support_ticket import (
@@ -26,7 +27,9 @@ router = APIRouter(prefix="/support", tags=["support"])
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
+@limiter.limit("3/hour;10/hour")
 async def create_support_ticket(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     ticket_data: SupportTicketCreate,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User | None, Depends(get_optional_user)] = None,
@@ -38,13 +41,21 @@ async def create_support_ticket(
     If logged in, the ticket will be associated with their account.
     Sends confirmation email to user and notification to support team.
 
+    Rate limits:
+    - All users: 3 tickets per hour (burst protection)
+    - All users: 10 tickets per hour (hourly limit)
+
     Args:
+        request: FastAPI request object (required for rate limiting)
         ticket_data: Support ticket data
         db: Database session
         current_user: Current authenticated user (optional)
 
     Returns:
         SupportTicket: Created support ticket
+
+    Raises:
+        HTTPException: 429 if rate limit exceeded
     """
     # Create ticket
     ticket = SupportTicket(
@@ -58,8 +69,14 @@ async def create_support_ticket(
     db.commit()
     db.refresh(ticket)
 
-    # Send notification to support team only (no user confirmation until domain is verified)
-    # This allows testing with Resend's free tier which only sends to verified email
+    # Send confirmation email to user
+    confirmation_sent = email_service.send_support_ticket_confirmation(
+        email=ticket.email,
+        subject=ticket.subject,
+        ticket_id=str(ticket.id),
+    )
+
+    # Send notification to support team
     notification_sent = email_service.send_support_ticket_notification(
         email=ticket.email,
         username=current_user.username if current_user else None,
@@ -70,7 +87,7 @@ async def create_support_ticket(
 
     # Return ticket with email status
     response_data = SupportTicketResponse.model_validate(ticket)
-    response_data.email_sent = notification_sent
+    response_data.email_sent = confirmation_sent and notification_sent
     return response_data
 
 

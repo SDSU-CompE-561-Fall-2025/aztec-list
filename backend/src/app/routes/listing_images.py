@@ -7,10 +7,11 @@ This module defines API endpoints for listing image operations.
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, File, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_db, require_not_banned
+from app.core.rate_limiter import limiter
 from app.models.listing_image import Image
 from app.models.user import User
 from app.schemas.listing_image import ImagePublic, ImageUpdate
@@ -28,7 +29,9 @@ listing_images_router = APIRouter(
     status_code=status.HTTP_201_CREATED,
     summary="Upload an image file to a listing",
 )
+@limiter.limit("50/hour")
 async def upload_image(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     listing_id: uuid.UUID,
     file: Annotated[UploadFile, File(description="Image file to upload")],
     db: Annotated[Session, Depends(get_db)],
@@ -43,7 +46,10 @@ async def upload_image(
     Only the seller of the listing can upload images. Maximum 10 images per listing.
     The first image uploaded will automatically be set as the thumbnail.
 
+    Rate limit: 50 uploads per hour to prevent storage/bandwidth abuse.
+
     Args:
+        request: FastAPI request object (required for rate limiting)
         listing_id: ID of the listing
         file: Image file (jpg, png, webp, gif - max 5MB)
         db: Database session
@@ -58,6 +64,7 @@ async def upload_image(
         HTTPException: 400 if validation fails or max images exceeded
         HTTPException: 413 if file too large
         HTTPException: 415 if unsupported file type
+        HTTPException: 429 if rate limit exceeded
     """
     return await ListingImageService.upload(db, listing_id, file, current_user)
 

@@ -5,15 +5,15 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.api.v1.routes import api_router
 from app.core.database import Base, engine
 from app.core.logging import configure_logging
 from app.core.middleware import RequestLoggingMiddleware, add_cache_headers_middleware
+from app.core.rate_limiter import limiter
 from app.core.settings import settings
-
-# Import models to ensure they're registered with SQLAlchemy
-from app.models import admin, listing, listing_image, profile, support_ticket, user  # noqa: F401
 
 # Configure logging from settings
 configure_logging(settings.logging)
@@ -45,6 +45,10 @@ app = FastAPI(
     redoc_url=settings.app.redoc_url,
     lifespan=lifespan,
 )
+
+# Add rate limiter to app state and register exception handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
 # Middleware is added in REVERSE order of execution
 # Execution flow: Request → RequestLoggingMiddleware → CORSMiddleware → CacheHeaders → Routes → Response

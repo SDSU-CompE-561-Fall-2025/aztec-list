@@ -45,7 +45,7 @@ export function ContactSupportForm() {
     },
     onSuccess: (data) => {
       const message = data.email_sent
-        ? "Your ticket has been submitted! Our support team has been notified and will respond to your email within 24-48 hours."
+        ? "Your ticket has been submitted! You'll receive a confirmation email and our support team will respond as soon as possible."
         : "Your ticket has been created. Our team will review it and respond as soon as possible. Note: Email notifications are currently unavailable.";
 
       setSuccessMessage(message);
