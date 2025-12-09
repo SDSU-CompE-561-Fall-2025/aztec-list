@@ -231,7 +231,11 @@ export default function SignupPage() {
               </div>
             )}
 
-            <Button type="submit" className="w-full text-lg" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full text-lg bg-purple-600 text-white hover:bg-purple-700"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />

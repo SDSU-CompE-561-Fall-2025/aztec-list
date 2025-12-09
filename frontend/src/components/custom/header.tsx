@@ -100,7 +100,7 @@ export function Header() {
               <Button variant="outline" asChild>
                 <Link href="/login">Login</Link>
               </Button>
-              <Button asChild>
+              <Button asChild className="bg-purple-600 text-white hover:bg-purple-700">
                 <Link href="/signup">Sign Up</Link>
               </Button>
             </>
