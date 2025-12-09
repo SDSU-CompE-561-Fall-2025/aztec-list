@@ -53,7 +53,7 @@ class ContactInfo(BaseModel):
 class ProfileBase(BaseModel):
     """Base profile schema with common fields."""
 
-    name: str = Field(..., min_length=1, description="Full name of the user")
+    name: str | None = Field(None, min_length=1, description="Full name of the user")
     campus: str | None = Field(None, description="University or campus name")
     contact_info: ContactInfo | None = Field(None, description="Contact information (email, phone)")
 

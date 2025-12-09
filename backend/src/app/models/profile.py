@@ -27,7 +27,7 @@ class Profile(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True
     )
-    name: Mapped[str] = mapped_column(String)
+    name: Mapped[str | None] = mapped_column(String)
     campus: Mapped[str | None] = mapped_column(String)
     contact_info: Mapped[dict[str, str] | None] = mapped_column(
         JSON
