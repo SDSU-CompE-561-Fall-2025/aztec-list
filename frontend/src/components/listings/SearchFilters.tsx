@@ -213,11 +213,11 @@ export function SearchFilters() {
 
       {/* Sort By Section */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-100 mb-3">Sort By</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-3">Sort By</h3>
         <select
           value={currentSort}
           onChange={(e) => handleSortChange(e.target.value)}
-          className="w-full bg-gray-800 text-gray-100 border border-gray-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full bg-background text-foreground border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           {SORT_OPTIONS.map((sort) => (
             <option key={sort} value={sort}>
@@ -238,7 +238,7 @@ export function SearchFilters() {
       {/* Clear Filters Button */}
       <button
         onClick={handleClearFilters}
-        className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-2 px-4 rounded-md text-sm transition-colors"
+        className="w-full bg-muted hover:bg-muted/80 text-muted-foreground font-medium py-2 px-4 rounded-md text-sm transition-colors"
       >
         Clear Filters
       </button>
@@ -256,9 +256,9 @@ export function SearchFilters() {
               Filters
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-80 bg-gray-900 border-gray-800">
+          <SheetContent side="left" className="w-80">
             <SheetHeader>
-              <SheetTitle className="text-gray-100">Filters</SheetTitle>
+              <SheetTitle>Filters</SheetTitle>
             </SheetHeader>
             <div className="mt-6">{filtersContent}</div>
           </SheetContent>
@@ -266,7 +266,7 @@ export function SearchFilters() {
       </div>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block w-80 bg-gray-900 p-6 rounded-lg">{filtersContent}</aside>
+      <aside className="hidden lg:block w-80 bg-card p-6 rounded-lg border">{filtersContent}</aside>
     </>
   );
 }

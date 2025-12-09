@@ -185,10 +185,10 @@ function ProfileContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 p-8">
+    <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto">
         {/* Profile Banner */}
-        <div className="mb-6 sm:mb-8 bg-gray-900/60 backdrop-blur-sm border border-gray-800/60 rounded-xl p-8">
+        <div className="mb-6 sm:mb-8 bg-card/50 backdrop-blur-sm border rounded-xl p-8">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
             {/* Profile Picture */}
             <div className="flex-shrink-0">
@@ -218,11 +218,11 @@ function ProfileContent() {
             <div className="flex-1 min-w-0 w-full">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-2xl font-bold text-white mb-2 text-center sm:text-left">
+                  <h2 className="text-2xl font-bold text-foreground mb-2 text-center sm:text-left">
                     {profileData?.name ? (
                       <>
                         {profileData.name}
-                        <span className="text-lg text-gray-400 font-normal sm:ml-2 block sm:inline mt-1 sm:mt-0">
+                        <span className="text-lg text-muted-foreground font-normal sm:ml-2 block sm:inline mt-1 sm:mt-0">
                           (@{user?.username})
                         </span>
                       </>
@@ -232,7 +232,7 @@ function ProfileContent() {
                   </h2>
                   <div className="space-y-2 text-sm">
                     {profileData?.campus && (
-                      <div className="flex items-center gap-2 text-gray-400 justify-center sm:justify-start">
+                      <div className="flex items-center gap-2 text-muted-foreground justify-center sm:justify-start">
                         <svg
                           className="w-4 h-4 flex-shrink-0"
                           fill="none"
@@ -249,7 +249,7 @@ function ProfileContent() {
                         <span className="truncate">{profileData.campus}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2 text-gray-400 justify-center sm:justify-start">
+                    <div className="flex items-center gap-2 text-muted-foreground justify-center sm:justify-start">
                       <svg
                         className="w-4 h-4 flex-shrink-0"
                         fill="none"
@@ -266,7 +266,7 @@ function ProfileContent() {
                       <span className="truncate">{user?.email}</span>
                     </div>
                     {profileData?.contact_info?.phone && (
-                      <div className="flex items-center gap-2 text-gray-400 justify-center sm:justify-start">
+                      <div className="flex items-center gap-2 text-muted-foreground justify-center sm:justify-start">
                         <svg
                           className="w-4 h-4 flex-shrink-0"
                           fill="none"
@@ -283,7 +283,7 @@ function ProfileContent() {
                         <span className="truncate">{profileData.contact_info.phone}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2 text-gray-400 justify-center sm:justify-start">
+                    <div className="flex items-center gap-2 text-muted-foreground justify-center sm:justify-start">
                       <svg
                         className="w-4 h-4 flex-shrink-0"
                         fill="none"
@@ -310,15 +310,15 @@ function ProfileContent() {
 
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-2 sm:gap-5 w-full sm:w-30 shrink-0">
-                  <Button
-                    asChild
-                    className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white"
-                  >
+                  <Button asChild variant="outline">
                     <Link href="/settings">Edit Profile</Link>
                   </Button>
 
                   {totalCount > 0 && (
-                    <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white">
+                    <Button
+                      asChild
+                      className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white"
+                    >
                       <Link href="/listings/create">Add Listing</Link>
                     </Button>
                   )}
@@ -384,17 +384,17 @@ function ProfileContent() {
         {/* Listings Section */}
         <div>
           <div className="flex items-center justify-between mb-4 sm:mb-6">
-            <h2 className="text-xl sm:text-2xl font-semibold text-gray-100">Your Listings</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold text-foreground">Your Listings</h2>
           </div>
 
           {/* Status Filter Tabs */}
-          <div className="flex gap-2 sm:gap-3 mb-6 border-b border-gray-800 overflow-x-auto">
+          <div className="flex gap-2 sm:gap-3 mb-6 border-b border overflow-x-auto">
             <button
               onClick={() => router.push("/profile?status=all")}
               className={`px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium transition-colors whitespace-nowrap ${
                 status === "all"
                   ? "text-purple-500 border-b-2 border-purple-500"
-                  : "text-gray-400 hover:text-gray-300"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               All ({totalCount})
@@ -404,7 +404,7 @@ function ProfileContent() {
               className={`px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium transition-colors whitespace-nowrap ${
                 status === "active"
                   ? "text-green-500 border-b-2 border-green-500"
-                  : "text-gray-400 hover:text-gray-300"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Active ({activeCount})
@@ -413,8 +413,8 @@ function ProfileContent() {
               onClick={() => router.push("/profile?status=inactive")}
               className={`px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium transition-colors whitespace-nowrap ${
                 status === "inactive"
-                  ? "text-gray-500 border-b-2 border-gray-500"
-                  : "text-gray-400 hover:text-gray-300"
+                  ? "text-muted-foreground/70 border-b-2 border-muted-foreground/50"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Inactive ({inactiveCount})
@@ -423,13 +423,17 @@ function ProfileContent() {
 
           {/* Empty state with CTA */}
           {data && totalCount === 0 ? (
-            <div className="bg-gray-900 rounded-lg p-12 text-center">
+            <div className="bg-muted rounded-lg p-12 text-center">
               <div className="max-w-md mx-auto">
-                <h3 className="text-xl font-semibold text-white mb-2">No listings yet</h3>
-                <p className="text-gray-400 mb-6 text-base">
+                <h3 className="text-xl font-semibold text-foreground mb-2">No listings yet</h3>
+                <p className="text-muted-foreground mb-6 text-base">
                   Start selling by creating your first listing. It only takes a minute!
                 </p>
-                <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white" size="lg">
+                <Button
+                  asChild
+                  className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white"
+                  size="lg"
+                >
                   <Link href="/listings/create">
                     <Plus className="w-5 h-5 mr-2" />
                     Create Your First Listing
@@ -438,12 +442,14 @@ function ProfileContent() {
               </div>
             </div>
           ) : filteredListings.length === 0 ? (
-            <div className="bg-gray-900 rounded-lg p-12 text-center">
+            <div className="bg-muted rounded-lg p-12 text-center">
               <div className="max-w-md mx-auto">
                 {status === "active" && (
                   <>
-                    <h3 className="text-lg font-semibold text-white mb-2">No active listings</h3>
-                    <p className="text-gray-400 mb-6 text-sm">
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                      No active listings
+                    </h3>
+                    <p className="text-muted-foreground mb-6 text-sm">
                       All your listings are currently hidden. Click &ldquo;Inactive&rdquo; to view
                       them.
                     </p>
@@ -451,8 +457,10 @@ function ProfileContent() {
                 )}
                 {status === "inactive" && (
                   <>
-                    <h3 className="text-lg font-semibold text-white mb-2">No hidden listings</h3>
-                    <p className="text-gray-400 mb-6 text-sm">
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                      No hidden listings
+                    </h3>
+                    <p className="text-muted-foreground mb-6 text-sm">
                       All your listings are currently visible. Great job!
                     </p>
                   </>
@@ -466,9 +474,9 @@ function ProfileContent() {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {Array.from({ length: DEFAULT_LIMIT }).map((_, i) => (
                     <div key={i} className="flex flex-col gap-2">
-                      <div className="aspect-square bg-gray-800 rounded-md animate-pulse" />
-                      <div className="h-4 bg-gray-800 rounded animate-pulse" />
-                      <div className="h-6 bg-gray-800 rounded animate-pulse w-1/2" />
+                      <div className="aspect-square bg-muted rounded-md animate-pulse" />
+                      <div className="h-4 bg-muted rounded animate-pulse" />
+                      <div className="h-6 bg-muted rounded animate-pulse w-1/2" />
                     </div>
                   ))}
                 </div>
@@ -503,7 +511,7 @@ export default function ProfilePage() {
       <Suspense
         fallback={
           <div className="flex items-center justify-center min-h-screen">
-            <p className="text-gray-400">Loading...</p>
+            <p className="text-muted-foreground">Loading...</p>
           </div>
         }
       >

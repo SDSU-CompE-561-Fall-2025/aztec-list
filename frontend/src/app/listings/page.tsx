@@ -53,7 +53,7 @@ function ListingsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 p-4 md:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="lg:flex lg:gap-8">
           {/* Sidebar with filters */}
