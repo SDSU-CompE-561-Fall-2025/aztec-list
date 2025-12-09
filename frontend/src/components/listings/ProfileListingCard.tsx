@@ -51,10 +51,10 @@ export function ProfileListingCard({
     <>
       <div
         onClick={handleCardClick}
-        className="group bg-gray-900/60 backdrop-blur-sm border border-gray-800/60 rounded-xl overflow-hidden hover:border-purple-500/50 transition-all cursor-pointer hover:shadow-lg hover:shadow-purple-500/10 relative"
+        className="group bg-card backdrop-blur-sm border rounded-xl overflow-hidden hover:border-purple-500/50 transition-all cursor-pointer hover:shadow-lg hover:shadow-purple-500/10 relative"
       >
         {/* Image Section */}
-        <div className="relative w-full aspect-square bg-gray-800/50 overflow-hidden">
+        <div className="relative w-full aspect-square bg-muted overflow-hidden">
           {hasImage ? (
             <>
               <Image
@@ -68,13 +68,13 @@ export function ProfileListingCard({
             </>
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <ImageIcon className="w-16 h-16 text-gray-700" />
+              <ImageIcon className="w-16 h-16 text-muted-foreground" />
             </div>
           )}
 
           {!listing.is_active && (
-            <div className="absolute inset-0 bg-gray-950/60 flex items-center justify-center z-10">
-              <span className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md text-sm font-medium">
+            <div className="absolute inset-0 bg-background/60 flex items-center justify-center z-10">
+              <span className="bg-muted text-muted-foreground px-3 py-1 rounded-md text-sm font-medium">
                 Hidden
               </span>
             </div>
@@ -85,7 +85,7 @@ export function ProfileListingCard({
             <Button
               size="icon"
               variant="secondary"
-              className="h-9 w-9 bg-gray-900/90 hover:bg-gray-800 border border-purple-400 hover:border-purple-300 hover:shadow-lg hover:shadow-purple-500/20 text-white"
+              className="h-9 w-9 bg-background/90 hover:bg-muted border border-purple-400 hover:border-purple-300 hover:shadow-lg hover:shadow-purple-500/20 text-foreground"
               asChild
             >
               <Link href={`/listings/${listing.id}/edit`}>
@@ -95,7 +95,7 @@ export function ProfileListingCard({
             <Button
               size="icon"
               variant="secondary"
-              className="h-9 w-9 bg-gray-900/90 hover:bg-gray-800 border border-blue-400 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/20 text-white"
+              className="h-9 w-9 bg-background/90 hover:bg-muted border border-blue-400 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/20 text-foreground"
               onClick={() => onToggleActive(listing.id, !listing.is_active)}
               disabled={isTogglingActive}
             >
@@ -104,7 +104,7 @@ export function ProfileListingCard({
             <Button
               size="icon"
               variant="secondary"
-              className="h-9 w-9 bg-gray-900/90 hover:bg-gray-800 border border-red-400 hover:border-red-300 hover:shadow-lg hover:shadow-red-500/20 text-white"
+              className="h-9 w-9 bg-background/90 hover:bg-muted border border-red-400 hover:border-red-300 hover:shadow-lg hover:shadow-red-500/20 text-foreground"
               onClick={() => setShowDeleteDialog(true)}
               disabled={isDeleting}
             >
@@ -115,13 +115,15 @@ export function ProfileListingCard({
 
         {/* Content Section */}
         <div className="p-4 space-y-2">
-          <h3 className="text-xl font-bold text-white line-clamp-1 group-hover:text-purple-300 transition-colors">
+          <h3 className="text-xl font-bold text-foreground line-clamp-1 group-hover:text-purple-300 transition-colors">
             {listing.title}
           </h3>
 
-          <p className="text-lg font-semibold text-white">{formatPrice(Number(listing.price))}</p>
+          <p className="text-lg font-semibold text-foreground">
+            {formatPrice(Number(listing.price))}
+          </p>
 
-          <div className="flex items-center gap-2 text-sm text-gray-400">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span className={`capitalize font-medium ${getConditionColor(listing.condition)}`}>
               {listing.condition.replace("_", " ")}
             </span>
@@ -129,7 +131,7 @@ export function ProfileListingCard({
             <span className="capitalize">{listing.category.replace("_", " ")}</span>
           </div>
 
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Posted {new Date(listing.created_at).toLocaleDateString()}
           </p>
         </div>
@@ -137,15 +139,15 @@ export function ProfileListingCard({
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="bg-gray-900 border-gray-800">
+        <AlertDialogContent className="bg-card border">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Delete listing?</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-400">
+            <AlertDialogTitle className="text-foreground">Delete listing?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
               This action cannot be undone. This will permanently delete your listing.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-gray-800 text-gray-100 hover:bg-gray-700">
+            <AlertDialogCancel className="bg-muted text-foreground hover:bg-muted/80">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction

@@ -370,7 +370,7 @@ export function ImageUpload({
 
   return (
     <div className={className}>
-      <Label className="text-gray-200 mb-2 block">
+      <Label className="text-foreground mb-2 block">
         Images {hasImages && `(${activeImagesCount}/10)`}
         {newUploads.size > 0 && (
           <span className="text-green-400 ml-2 text-sm font-bold">
@@ -401,7 +401,7 @@ export function ImageUpload({
                       ? "border-red-500 opacity-40 grayscale"
                       : isNewUpload
                         ? "border-green-500 opacity-70"
-                        : "border-gray-700"
+                        : "border"
                   }`}
                   loading="lazy"
                 />
@@ -455,12 +455,12 @@ export function ImageUpload({
       {uploadingFiles.size > 0 && (
         <div className="space-y-2 mb-4">
           {Array.from(uploadingFiles.values()).map((file) => (
-            <div key={file.id} className="bg-gray-800 rounded-md p-3">
+            <div key={file.id} className="bg-card rounded-md p-3">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-300 truncate flex-1 mr-2">{file.name}</span>
-                <span className="text-xs text-gray-500">{file.progress}%</span>
+                <span className="text-sm text-foreground truncate flex-1 mr-2">{file.name}</span>
+                <span className="text-xs text-muted-foreground">{file.progress}%</span>
               </div>
-              <div className="w-full bg-gray-700 rounded-full h-1.5">
+              <div className="w-full bg-muted rounded-full h-1.5">
                 <div
                   className="bg-purple-600 h-1.5 rounded-full transition-all duration-300"
                   style={{ width: `${file.progress}%` }}
@@ -486,23 +486,25 @@ export function ImageUpload({
           <label
             htmlFor="image-upload"
             className={`
-              bg-gray-800 rounded-md flex flex-col items-center justify-center
-              text-center p-6 cursor-pointer border-2 border-dashed border-gray-700
-              hover:border-purple-500 hover:bg-gray-750 transition-colors
+              bg-card rounded-md flex flex-col items-center justify-center
+              text-center p-6 cursor-pointer border-2 border-dashed
+              hover:border-purple-500 hover:bg-muted transition-colors
               ${isUploading ? "opacity-50 cursor-not-allowed" : ""}
             `}
           >
             {isUploading ? (
               <>
                 <Loader2 className="h-8 w-8 text-purple-500 mb-2 animate-spin" />
-                <p className="text-gray-400 text-sm">Uploading...</p>
+                <p className="text-muted-foreground text-sm">Uploading...</p>
               </>
             ) : (
               <>
-                <Upload className="h-8 w-8 text-gray-600 mb-2" />
-                <p className="text-gray-300 text-sm font-medium mb-1">Click to upload images</p>
-                <p className="text-gray-500 text-xs">JPG, PNG, WebP, GIF (max 5MB each)</p>
-                <p className="text-gray-500 text-xs mt-1">{10 - images.length} slots remaining</p>
+                <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                <p className="text-foreground text-sm font-medium mb-1">Click to upload images</p>
+                <p className="text-muted-foreground text-xs">JPG, PNG, WebP, GIF (max 5MB each)</p>
+                <p className="text-muted-foreground text-xs mt-1">
+                  {10 - images.length} slots remaining
+                </p>
               </>
             )}
           </label>
@@ -510,7 +512,7 @@ export function ImageUpload({
       )}
 
       {!hasImages && !isUploading && (
-        <p className="text-gray-500 text-sm mt-2">
+        <p className="text-muted-foreground text-sm mt-2">
           First image uploaded will be set as the thumbnail
         </p>
       )}

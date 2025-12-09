@@ -250,6 +250,7 @@ export default function SettingsPage() {
       }
 
       // Fetch updated profile to get latest data with fresh updated_at timestamp
+      // This is done regardless of whether fields were updated, since picture changes also need refresh
       const profileResponse = await fetch(`${API_BASE_URL}/users/profile/`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -727,7 +728,7 @@ export default function SettingsPage() {
                           value={formName}
                           onChange={(e) => setFormName(e.target.value)}
                           disabled={isProfileLoading}
-                          className="text-sm"
+                          className="text-sm placeholder:text-muted-foreground/50"
                         />
                       </div>
 
@@ -742,9 +743,8 @@ export default function SettingsPage() {
                           value={formCampus}
                           onChange={(e) => setFormCampus(e.target.value)}
                           disabled={isProfileLoading}
-                          className="text-sm"
+                          className="text-sm placeholder:text-muted-foreground/50"
                         />
-                        <p className="text-xs sm:text-sm text-muted-foreground">Optional</p>
                       </div>
 
                       <div className="space-y-1.5">
@@ -758,12 +758,15 @@ export default function SettingsPage() {
                           value={formPhone}
                           onChange={handlePhoneChange}
                           disabled={isProfileLoading}
-                          className={`text-sm ${phoneError ? "border-red-500" : ""}`}
+                          className={`text-sm placeholder:text-muted-foreground/50 ${phoneError ? "border-red-500" : ""}`}
                         />
-                        {phoneError && <p className="text-xs text-red-500">{phoneError}</p>}
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          Optional - US format: (555) 123-4567
-                        </p>
+                        {phoneError ? (
+                          <p className="text-xs text-red-500">{phoneError}</p>
+                        ) : (
+                          <p className="text-xs sm:text-sm text-muted-foreground">
+                            US format: (555) 123-4567
+                          </p>
+                        )}
                       </div>
 
                       <div className="flex gap-3 pt-2">
@@ -804,7 +807,7 @@ export default function SettingsPage() {
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel variant="outline">Keep Editing</AlertDialogCancel>
+                          <AlertDialogCancel>Keep Editing</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={handleCancelProfileChanges}
                             className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white"
@@ -900,7 +903,7 @@ export default function SettingsPage() {
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel variant="outline">Keep Editing</AlertDialogCancel>
+                      <AlertDialogCancel>Keep Editing</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleCancelAccountChanges}
                         className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white"

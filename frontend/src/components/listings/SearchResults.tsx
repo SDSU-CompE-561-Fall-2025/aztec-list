@@ -13,9 +13,9 @@ export function SearchResults({ listings, isLoading }: SearchResultsProps) {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {Array.from({ length: SKELETON_LOADING_COUNT }).map((_, i) => (
           <div key={i} className="flex flex-col gap-2">
-            <div className="aspect-square bg-gray-800 rounded-md animate-pulse" />
-            <div className="h-3 bg-gray-800 rounded animate-pulse" />
-            <div className="h-5 bg-gray-800 rounded animate-pulse w-20" />
+            <div className="aspect-square bg-muted rounded-md animate-pulse" />
+            <div className="h-3 bg-muted rounded animate-pulse" />
+            <div className="h-5 bg-muted rounded animate-pulse w-20" />
           </div>
         ))}
       </div>
@@ -25,7 +25,7 @@ export function SearchResults({ listings, isLoading }: SearchResultsProps) {
   if (listings.length === 0) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-gray-400 text-center">
+        <p className="text-muted-foreground text-center">
           No listings match your search. Try adjusting your filters.
         </p>
       </div>

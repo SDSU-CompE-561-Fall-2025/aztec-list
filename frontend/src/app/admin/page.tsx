@@ -287,7 +287,7 @@ export default function AdminDashboard() {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading admin dashboard...</p>
+            <p className="text-muted-foreground">Loading admin dashboard...</p>
           </div>
         </div>
       </div>
@@ -304,17 +304,19 @@ export default function AdminDashboard() {
     <div className="container mx-auto px-4 py-6 sm:px-6 sm:py-8 max-w-6xl">
       <div className="mb-6 max-w-4xl mx-auto">
         <h1 className="text-2xl sm:text-3xl font-bold text-white">Admin Dashboard</h1>
-        <p className="text-sm text-gray-400 mt-1">Manage users, listings, and moderation actions</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Manage users, listings, and moderation actions
+        </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-gray-800 max-w-4xl mx-auto">
+      <div className="flex gap-2 mb-6 border-b max-w-4xl mx-auto">
         <button
           onClick={() => setActiveTab("actions")}
           className={`px-4 py-2 font-medium text-sm transition-colors ${
             activeTab === "actions"
-              ? "border-b-2 border-purple-500 text-purple-400"
-              : "text-gray-400 hover:text-gray-200"
+              ? "border-b-2 border-purple-500 text-purple-300"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           Actions History
@@ -359,20 +361,20 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600 mx-auto mb-3"></div>
-                <p className="text-gray-400 text-sm">Loading actions...</p>
+                <p className="text-muted-foreground text-sm">Loading actions...</p>
               </div>
             </div>
           ) : actions.length === 0 ? (
-            <Card className="bg-gray-900 border-gray-800">
+            <Card className="bg-card border">
               <CardContent className="py-12 text-center">
-                <AlertCircle className="h-12 w-12 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400">No actions recorded yet.</p>
+                <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">No actions recorded yet.</p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-2.5">
               {actions.map((action: AdminAction) => (
-                <Card key={action.id} className="bg-gray-900 border-gray-800">
+                <Card key={action.id} className="bg-card border">
                   <CardContent className="p-3.5">
                     <div className="flex justify-between items-start gap-3">
                       <div className="flex-1 min-w-0 space-y-2">
@@ -397,25 +399,25 @@ export default function AdminDashboard() {
                               action.action_type as keyof typeof ACTION_TYPE_CONFIG
                             ]?.label || action.action_type.replace("_", " ")}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted-foreground">
                             {new Date(action.created_at).toLocaleString()}
                           </span>
                         </div>
 
                         {/* Target User */}
                         <div className="flex items-baseline gap-1.5">
-                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                             Target:
                           </span>
                           {action.target_username ? (
-                            <span className="text-sm font-medium text-white">
+                            <span className="text-sm font-medium text-foreground">
                               {action.target_username}
-                              <span className="text-xs text-gray-600 ml-1.5 font-mono">
+                              <span className="text-xs text-muted-foreground ml-1.5 font-mono">
                                 {action.target_user_id}
                               </span>
                             </span>
                           ) : (
-                            <span className="text-xs text-gray-500 font-mono">
+                            <span className="text-xs text-muted-foreground font-mono">
                               {action.target_user_id}
                             </span>
                           )}
@@ -423,18 +425,18 @@ export default function AdminDashboard() {
 
                         {/* Admin User */}
                         <div className="flex items-baseline gap-1.5">
-                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                             Admin:
                           </span>
                           {action.admin_username ? (
-                            <span className="text-sm text-gray-300">
+                            <span className="text-sm text-foreground">
                               {action.admin_username}
-                              <span className="text-xs text-gray-600 ml-1.5 font-mono">
+                              <span className="text-xs text-muted-foreground ml-1.5 font-mono">
                                 {action.admin_id}
                               </span>
                             </span>
                           ) : (
-                            <span className="text-xs text-gray-500 font-mono">
+                            <span className="text-xs text-muted-foreground font-mono">
                               {action.admin_id}
                             </span>
                           )}
@@ -443,10 +445,10 @@ export default function AdminDashboard() {
                         {/* Listing ID if present */}
                         {action.target_listing_id && (
                           <div className="flex items-baseline gap-1.5">
-                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                               Listing:
                             </span>
-                            <span className="text-xs text-gray-500 font-mono">
+                            <span className="text-xs text-muted-foreground font-mono">
                               {action.target_listing_id}
                             </span>
                           </div>
@@ -454,9 +456,9 @@ export default function AdminDashboard() {
 
                         {/* Reason - Most prominent */}
                         {action.reason && (
-                          <div className="pt-1.5 mt-1.5 border-t border-gray-800">
-                            <p className="text-sm text-gray-200 leading-relaxed">
-                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide mr-2">
+                          <div className="pt-1.5 mt-1.5 border-t">
+                            <p className="text-sm text-foreground leading-relaxed">
+                              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide mr-2">
                                 Reason:
                               </span>
                               {action.reason}
@@ -486,10 +488,12 @@ export default function AdminDashboard() {
 
       {/* Issue Strike Tab */}
       {activeTab === "strike" && (
-        <Card className="max-w-xl mx-auto bg-gray-900 border-gray-800">
+        <Card className="max-w-xl mx-auto bg-card border">
           <CardHeader>
-            <CardTitle className="text-lg sm:text-xl text-white">Issue Strike to User</CardTitle>
-            <p className="text-xs text-gray-400 mt-1">
+            <CardTitle className="text-lg sm:text-xl text-foreground">
+              Issue Strike to User
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
               Warn a user for policy violations. 3 strikes result in automatic ban.
             </p>
           </CardHeader>
@@ -520,7 +524,7 @@ export default function AdminDashboard() {
               className="space-y-4"
             >
               <div className="space-y-1.5">
-                <Label htmlFor="strike-user-id" className="text-sm font-medium text-white">
+                <Label htmlFor="strike-user-id" className="text-sm font-medium text-foreground">
                   User ID <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -538,9 +542,7 @@ export default function AdminDashboard() {
                       setStrikeErrors((prev) => ({ ...prev, userId: "User ID is required" }));
                     }
                   }}
-                  className={`border-gray-700 text-white placeholder:text-gray-500 ${
-                    strikeErrors.userId ? "border-red-500" : ""
-                  }`}
+                  className={`${strikeErrors.userId ? "border-red-500" : ""}`}
                   placeholder="Enter user UUID"
                 />
                 {strikeErrors.userId && (
@@ -551,7 +553,7 @@ export default function AdminDashboard() {
                 )}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="strike-reason" className="text-sm font-medium text-white">
+                <Label htmlFor="strike-reason" className="text-sm font-medium text-foreground">
                   Reason <span className="text-red-500">*</span>
                 </Label>
                 <Textarea
@@ -566,9 +568,7 @@ export default function AdminDashboard() {
                       setStrikeErrors((prev) => ({ ...prev, reason: "Reason is required" }));
                     }
                   }}
-                  className={`bg-gray-900 border-gray-700 text-white placeholder:text-gray-500 resize-none ${
-                    strikeErrors.reason ? "border-red-500" : ""
-                  }`}
+                  className={`resize-none ${strikeErrors.reason ? "border-red-500" : ""}`}
                   rows={3}
                   placeholder="Reason for strike..."
                 />
@@ -593,10 +593,12 @@ export default function AdminDashboard() {
 
       {/* Ban User Tab */}
       {activeTab === "ban" && (
-        <Card className="max-w-xl mx-auto bg-gray-900 border-gray-800">
+        <Card className="max-w-xl mx-auto bg-card border">
           <CardHeader>
-            <CardTitle className="text-lg sm:text-xl text-white">Ban User</CardTitle>
-            <p className="text-xs text-gray-400 mt-1">Permanently ban a user from the platform.</p>
+            <CardTitle className="text-lg sm:text-xl text-foreground">Ban User</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Permanently ban a user from the platform.
+            </p>
           </CardHeader>
           <CardContent>
             <form
@@ -625,7 +627,7 @@ export default function AdminDashboard() {
               className="space-y-4"
             >
               <div className="space-y-1.5">
-                <Label htmlFor="ban-user-id" className="text-sm font-medium text-white">
+                <Label htmlFor="ban-user-id" className="text-sm font-medium text-foreground">
                   User ID <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -643,9 +645,7 @@ export default function AdminDashboard() {
                       setBanErrors((prev) => ({ ...prev, userId: "User ID is required" }));
                     }
                   }}
-                  className={`border-gray-700 text-white placeholder:text-gray-500 ${
-                    banErrors.userId ? "border-red-500" : ""
-                  }`}
+                  className={`${banErrors.userId ? "border-red-500" : ""}`}
                   placeholder="Enter user UUID"
                 />
                 {banErrors.userId && (
@@ -656,7 +656,7 @@ export default function AdminDashboard() {
                 )}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="ban-reason" className="text-sm font-medium text-white">
+                <Label htmlFor="ban-reason" className="text-sm font-medium text-foreground">
                   Reason <span className="text-red-500">*</span>
                 </Label>
                 <Textarea
@@ -671,9 +671,7 @@ export default function AdminDashboard() {
                       setBanErrors((prev) => ({ ...prev, reason: "Reason is required" }));
                     }
                   }}
-                  className={`bg-gray-900 border-gray-700 text-white placeholder:text-gray-500 resize-none ${
-                    banErrors.reason ? "border-red-500" : ""
-                  }`}
+                  className={`resize-none ${banErrors.reason ? "border-red-500" : ""}`}
                   rows={3}
                   placeholder="Reason for ban..."
                 />
@@ -699,10 +697,10 @@ export default function AdminDashboard() {
 
       {/* Remove Listing Tab */}
       {activeTab === "remove" && (
-        <Card className="max-w-xl mx-auto bg-gray-900 border-gray-800">
+        <Card className="max-w-xl mx-auto bg-card border">
           <CardHeader>
-            <CardTitle className="text-lg sm:text-xl text-white">Remove Listing</CardTitle>
-            <p className="text-xs text-gray-400 mt-1">
+            <CardTitle className="text-lg sm:text-xl text-foreground">Remove Listing</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
               Delete a listing and issue a strike to its owner.
             </p>
           </CardHeader>
@@ -733,7 +731,7 @@ export default function AdminDashboard() {
               className="space-y-4"
             >
               <div className="space-y-1.5">
-                <Label htmlFor="remove-listing-id" className="text-sm font-medium text-white">
+                <Label htmlFor="remove-listing-id" className="text-sm font-medium text-foreground">
                   Listing ID <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -751,9 +749,7 @@ export default function AdminDashboard() {
                       setRemoveErrors((prev) => ({ ...prev, listingId: "Listing ID is required" }));
                     }
                   }}
-                  className={`border-gray-700 text-white placeholder:text-gray-500 ${
-                    removeErrors.listingId ? "border-red-500" : ""
-                  }`}
+                  className={`${removeErrors.listingId ? "border-red-500" : ""}`}
                   placeholder="Enter listing UUID"
                 />
                 {removeErrors.listingId && (
@@ -764,7 +760,7 @@ export default function AdminDashboard() {
                 )}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="remove-reason" className="text-sm font-medium text-white">
+                <Label htmlFor="remove-reason" className="text-sm font-medium text-foreground">
                   Reason <span className="text-red-500">*</span>
                 </Label>
                 <Textarea
@@ -779,9 +775,7 @@ export default function AdminDashboard() {
                       setRemoveErrors((prev) => ({ ...prev, reason: "Reason is required" }));
                     }
                   }}
-                  className={`bg-gray-900 border-gray-700 text-white placeholder:text-gray-500 resize-none ${
-                    removeErrors.reason ? "border-red-500" : ""
-                  }`}
+                  className={`resize-none ${removeErrors.reason ? "border-red-500" : ""}`}
                   rows={3}
                   placeholder="Reason for removal..."
                 />

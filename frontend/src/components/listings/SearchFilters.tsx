@@ -145,11 +145,11 @@ export function SearchFilters() {
     <div className="space-y-6">
       {/* Category Section */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-100 mb-3">Category</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-3">Category</h3>
         <select
           value={currentCategory}
           onChange={(e) => handleCategoryChange(e.target.value)}
-          className="w-full bg-gray-800 text-gray-100 border border-gray-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full bg-background text-foreground border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           <option value="">All Categories</option>
           {CATEGORIES.map((cat) => (
@@ -162,7 +162,7 @@ export function SearchFilters() {
 
       {/* Price Range Section */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-100 mb-3">Price Range</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-3">Price Range</h3>
         <div className="space-y-2">
           <input
             type="number"
@@ -171,8 +171,8 @@ export function SearchFilters() {
             value={minPrice}
             onChange={(e) => handlePriceChange(e.target.value, setMinPrice)}
             onKeyDown={handlePriceKeyDown}
-            className={`w-full bg-gray-800 text-gray-100 border ${
-              priceError ? "border-red-500" : "border-gray-700"
+            className={`w-full bg-background text-foreground border ${
+              priceError ? "border-red-500" : "border"
             } rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500`}
           />
           <input
@@ -182,8 +182,8 @@ export function SearchFilters() {
             value={maxPrice}
             onChange={(e) => handlePriceChange(e.target.value, setMaxPrice)}
             onKeyDown={handlePriceKeyDown}
-            className={`w-full bg-gray-800 text-gray-100 border ${
-              priceError ? "border-red-500" : "border-gray-700"
+            className={`w-full bg-background text-foreground border ${
+              priceError ? "border-red-500" : "border"
             } rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500`}
           />
           {priceError && <p className="text-xs text-red-500">{PRICE_ERROR_MESSAGE}</p>}
@@ -192,18 +192,18 @@ export function SearchFilters() {
 
       {/* Condition Section */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-100 mb-3">Condition</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-3">Condition</h3>
         <div className="space-y-2">
           {CONDITIONS.map((condition) => (
             <label
               key={condition}
-              className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer"
+              className="flex items-center gap-2 text-sm text-foreground cursor-pointer"
             >
               <input
                 type="checkbox"
                 checked={selectedConditions.includes(condition)}
                 onChange={() => handleConditionToggle(condition)}
-                className="rounded border-gray-700 bg-gray-800 text-purple-500 focus:ring-2 focus:ring-purple-500"
+                className="rounded border bg-background text-purple-500 focus:ring-2 focus:ring-purple-500"
               />
               {formatConditionLabel(condition)}
             </label>
