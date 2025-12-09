@@ -690,7 +690,7 @@ export default function SettingsPage() {
                               asChild
                               disabled={isProfileLoading}
                               size="sm"
-                              className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white cursor-pointer"
+                              className="bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
                             >
                               <span>
                                 <Upload className="w-4 h-4 mr-2" />
@@ -772,7 +772,7 @@ export default function SettingsPage() {
                       <div className="flex gap-3 pt-2">
                         <Button
                           type="submit"
-                          className="flex-1 bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                           disabled={isProfileLoading || !hasProfileChanges || !isFormValid}
                         >
                           {isProfileLoading ? "Saving..." : "Save Profile"}
@@ -810,7 +810,7 @@ export default function SettingsPage() {
                           <AlertDialogCancel>Keep Editing</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={handleCancelProfileChanges}
-                            className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white"
+                            className="bg-red-600 hover:bg-red-700 text-white"
                           >
                             Discard Changes
                           </AlertDialogAction>
@@ -906,7 +906,7 @@ export default function SettingsPage() {
                       <AlertDialogCancel>Keep Editing</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleCancelAccountChanges}
-                        className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white"
+                        className="bg-red-600 hover:bg-red-700 text-white"
                       >
                         Discard Changes
                       </AlertDialogAction>
@@ -1035,7 +1035,7 @@ export default function SettingsPage() {
 
                   <Button
                     type="submit"
-                    className="w-full bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed mt-4"
                     disabled={
                       isPasswordLoading || !currentPassword || !newPassword || !confirmPassword
                     }
