@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import require_not_banned
+from app.core.dependencies import require_not_banned, require_verified_user
 from app.core.rate_limiter import limiter
 from app.models.listing import Listing
 from app.models.user import User
@@ -26,7 +26,7 @@ listing_router = APIRouter(
 
 
 @listing_router.post(
-    "/",
+    "",
     summary="Create a new listing",
     response_model=ListingPublic,
     status_code=status.HTTP_201_CREATED,
@@ -35,26 +35,30 @@ listing_router = APIRouter(
 async def create_listing(
     request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     listing: ListingCreate,
-    current_user: Annotated[User, Depends(require_not_banned)],
+    current_user: Annotated[User, Depends(require_verified_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Listing:
     """
     Create a new item listing for sale.
 
+    Requires email verification to prevent spam and ensure accountability.
     Rate limit: 3 per minute (burst), 10 per hour (sustained) to prevent spam.
 
     Args:
         request: FastAPI request object (required for rate limiting)
         listing: Listing creation data (title, description, price, category, condition)
-        current_user: Authenticated user (automatically set as seller)
+        current_user: Authenticated and verified user (automatically set as seller)
         db: Database session
 
     Returns:
         ListingPublic: Created listing information
 
     Raises:
-        HTTPException: 401 if not authenticated, 403 if banned, 400 if validation fails, 429 if rate limit exceeded
+        HTTPException: 401 if not authenticated, 403 if not verified or banned, 400 if validation fails, 429 if rate limit exceeded
     """
+    # Still check ban status
+    require_not_banned(current_user, db)
+
     return listing_service.create(db, current_user.id, listing)
 
 
@@ -166,7 +170,7 @@ async def delete_listing_by_id(
 
 
 @listing_router.get(
-    "/",
+    "",
     summary="Search and filter listings",
     status_code=status.HTTP_200_OK,
 )

@@ -8,7 +8,7 @@ import { getAuthToken } from "@/lib/auth";
 export const getListings = async (params: ListingsParams = {}): Promise<ListingSearchResponse> => {
   const { q, category, minPrice, maxPrice, condition, sellerId, limit, offset, sort } = params;
 
-  const url = new URL(`${API_BASE_URL}/listings/`);
+  const url = new URL(`${API_BASE_URL}/listings`);
 
   // Match FastAPI parameter names 1:1
   if (q) url.searchParams.set("search_text", q);
@@ -404,4 +404,159 @@ export const deleteSupportTicket = async (ticketId: string): Promise<void> => {
     const errorText = await res.text().catch(() => "Unknown error");
     throw new Error(`Failed to delete ticket: ${res.status} ${errorText}`);
   }
+};
+
+// Profile API functions
+export const getMyProfile = async () => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const response = await fetch(`${API_BASE_URL}/users/profile`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  // Profile doesn't exist yet (404 is expected for users without profiles)
+  if (response.status === 404) {
+    throw new Error("Profile not found");
+  }
+
+  // Unauthorized - token might be expired or invalid
+  if (response.status === 401) {
+    throw new Error("Authentication failed. Please log in again.");
+  }
+
+  // Other errors should be thrown for proper error handling
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: "Failed to fetch profile" }));
+    console.error("getMyProfile error:", response.status, errorData);
+    throw new Error(errorData.detail || `Failed to fetch profile: ${response.status}`);
+  }
+
+  return response.json();
+};
+
+export const createProfile = async (data: {
+  name?: string | null;
+  campus?: string | null;
+  contact_info?: { email?: string; phone?: string };
+  profile_picture_url?: string | null;
+}) => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const profileResponse = await fetch(`${API_BASE_URL}/users/profile`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!profileResponse.ok) {
+    const error = await profileResponse.json();
+    throw new Error(error.detail || "Failed to create profile");
+  }
+
+  return profileResponse.json();
+};
+
+export const updateProfile = async (data: {
+  name?: string | null;
+  campus?: string | null;
+  contact_info?: { email?: string; phone?: string };
+  profile_picture_url?: string | null;
+}) => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const response = await fetch(`${API_BASE_URL}/users/profile`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || "Failed to update profile");
+  }
+
+  return response.json();
+};
+
+export const deleteProfile = async () => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const response = await fetch(`${API_BASE_URL}/users/profile`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to delete profile");
+  }
+};
+
+export const updateProfilePicture = async (file: File) => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE_URL}/users/profile/picture`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || "Failed to upload profile picture");
+  }
+
+  return response.json();
+};
+
+export const removeProfilePicture = async () => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const response = await fetch(`${API_BASE_URL}/users/profile`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ profile_picture_url: null }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || "Failed to remove profile picture");
+  }
+
+  return response.json();
 };

@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING
 from fastapi import HTTPException, status
 
 from app.core.auth import get_password_hash, verify_password
+from app.core.email import email_service
+from app.core.security import generate_verification_token, get_verification_token_expiry
 from app.repository.admin import AdminActionRepository
 from app.repository.user import UserRepository
 
@@ -94,7 +96,7 @@ class UserService:
 
     def create(self, db: Session, user: UserCreate) -> User:
         """
-        Create a new user with validation.
+        Create a new user with validation and send verification email.
 
         Args:
             db: Database session
@@ -118,8 +120,23 @@ class UserService:
                 detail="Username already registered",
             )
 
+        # Create user
         hashed_password = get_password_hash(user.password)
-        return UserRepository.create(db, user, hashed_password)
+        db_user = UserRepository.create(db, user, hashed_password)
+
+        # Generate and set verification token
+        verification_token = generate_verification_token()
+        expiry = get_verification_token_expiry()
+        UserRepository.set_verification_token(db, db_user, verification_token, expiry)
+
+        # Send verification email (non-blocking - failure doesn't prevent signup)
+        email_service.send_email_verification(
+            email=db_user.email,
+            username=db_user.username,
+            verification_token=verification_token,
+        )
+
+        return db_user
 
     def delete(self, db: Session, user_id: uuid.UUID) -> None:
         """
@@ -236,6 +253,51 @@ class UserService:
         # Hash and update new password
         user.hashed_password = get_password_hash(new_password)
         UserRepository.update(db, user)
+
+    def verify_user(self, db: Session, user_id: uuid.UUID) -> User:
+        """
+        Manually verify a user's email (admin action).
+
+        Clears verification token/expiry when verified.
+
+        Args:
+            db: Database session
+            user_id: ID of user to verify
+
+        Returns:
+            User: Updated user
+
+        Raises:
+            HTTPException: 404 if user not found
+        """
+        user = self.get_by_id(db, user_id)
+
+        user.is_verified = True
+        user.verification_token = None
+        user.verification_token_expires = None
+
+        return UserRepository.update(db, user)
+
+    def unverify_user(self, db: Session, user_id: uuid.UUID) -> User:
+        """
+        Manually unverify a user's email (admin action).
+
+        Used if verification was obtained fraudulently.
+
+        Args:
+            db: Database session
+            user_id: ID of user to unverify
+
+        Returns:
+            User: Updated user
+
+        Raises:
+            HTTPException: 404 if user not found
+        """
+        user = self.get_by_id(db, user_id)
+        user.is_verified = False
+
+        return UserRepository.update(db, user)
 
 
 # Create a singleton instance

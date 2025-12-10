@@ -129,7 +129,17 @@ function CreateListingContent() {
       });
     },
     onError: (error) => {
-      showErrorToast(error, "Failed to create listing");
+      // Check if it's a verification error
+      if (error instanceof Error && error.message.includes("verify your email")) {
+        toast.error(
+          "Please verify your email to create listings. Check your inbox for the verification link or resend from your account settings.",
+          {
+            duration: 6000,
+          }
+        );
+      } else {
+        showErrorToast(error, "Failed to create listing");
+      }
     },
   });
 

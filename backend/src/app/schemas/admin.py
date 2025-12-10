@@ -128,3 +128,19 @@ class AdminActionFilters(BaseModel):
     offset: int = Field(0, ge=0, description="Number of results to skip")
 
     model_config = {"populate_by_name": True}
+
+
+class AdminUserVerification(BaseModel):
+    """Schema for manually verifying a user."""
+
+    is_verified: bool = Field(..., description="Verification status to set")
+
+
+class AdminUserVerificationResponse(BaseModel):
+    """Schema for user verification response."""
+
+    user_id: uuid.UUID
+    is_verified: bool
+    message: str
+
+    model_config = {"from_attributes": True}

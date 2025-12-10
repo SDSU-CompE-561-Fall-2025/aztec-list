@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import Image from "next/image";
@@ -12,6 +12,7 @@ import { DEFAULT_LIMIT } from "@/lib/constants";
 import { Plus } from "lucide-react";
 import { deleteListing, toggleListingActive } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { refreshCurrentUser } from "@/lib/auth";
 import { createOwnListingsQueryOptions } from "@/queryOptions/createOwnListingsQueryOptions";
 import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOptions";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
@@ -28,6 +29,21 @@ function ProfileContent() {
 
   const offset = parseInt(searchParams.get("offset") ?? "0", 10) || 0;
   const status = (searchParams.get("status") ?? "all") as "all" | "active" | "inactive";
+
+  // Refresh user data on mount to ensure we have latest verification status
+  useEffect(() => {
+    const refreshUser = async () => {
+      try {
+        await refreshCurrentUser();
+      } catch (error) {
+        console.error("Failed to refresh user data:", error);
+      }
+    };
+
+    if (user) {
+      refreshUser();
+    }
+  }, []); // Only run on mount
 
   // Fetch profile data
   const { data: profileData, isLoading: isProfileLoading } = useQuery(
@@ -313,6 +329,47 @@ function ProfileContent() {
             </div>
           </div>
         </div>
+
+        {/* Email Verification Banner - Only show if email is not verified */}
+        {!user?.is_verified && (
+          <div className="mb-4 sm:mb-6">
+            <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-500/30 rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <svg
+                  className="w-5 h-5 text-purple-600 dark:text-purple-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-purple-900 dark:text-purple-300 font-semibold text-sm mb-1.5">
+                  Please verify your email to create listings.
+                </h3>
+                <p className="text-purple-800 dark:text-purple-200/70 text-xs sm:text-sm">
+                  Check your inbox for the verification link or resend from your account settings.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="border-purple-300 dark:border-purple-500/50 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:text-purple-800 dark:hover:text-purple-200 flex-1 sm:flex-initial shrink-0"
+                >
+                  <Link href="/settings">Verify Email</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Incomplete Profile Banner - Only show if profile is incomplete */}
         {isProfileIncomplete && showIncompleteBanner && (

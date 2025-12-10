@@ -1,15 +1,18 @@
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.core.auth import create_access_token
 from app.core.database import get_db
+from app.core.email import email_service
 from app.core.rate_limiter import limiter
+from app.core.security import generate_verification_token, get_verification_token_expiry
 from app.core.settings import Settings, get_settings
 from app.models.user import User
+from app.repository.user import UserRepository
 from app.schemas.user import Token, UserCreate, UserPublic
 from app.services.user import user_service
 
@@ -91,3 +94,103 @@ async def login(
         token_type="bearer",  # noqa: S106
         user=UserPublic.model_validate(user),
     )
+
+
+@auth_router.post(
+    "/verify-email",
+    summary="Verify user email address",
+    status_code=status.HTTP_200_OK,
+)
+@limiter.limit("5/minute")
+async def verify_email(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
+    token: str,
+    db: Annotated[Session, Depends(get_db)],
+) -> dict[str, str]:
+    """
+    Verify user email address using token from email.
+
+    Rate limit: 5 per minute to prevent token bruteforce.
+
+    Args:
+        request: FastAPI request object (required for rate limiting)
+        token: Verification token from email link
+        db: Database session
+
+    Returns:
+        dict: Success message
+
+    Raises:
+        HTTPException: 400 if token is invalid or expired, 429 if rate limit exceeded
+    """
+    user = UserRepository.get_by_verification_token(db, token)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification token",
+        )
+
+    if user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already verified",
+        )
+
+    UserRepository.mark_as_verified(db, user)
+
+    return {"message": "Email verified successfully"}
+
+
+@auth_router.post(
+    "/resend-verification",
+    summary="Resend verification email",
+    status_code=status.HTTP_200_OK,
+)
+@limiter.limit("2/hour")
+async def resend_verification(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
+    email: str,
+    db: Annotated[Session, Depends(get_db)],
+) -> dict[str, str]:
+    """
+    Resend verification email to user.
+
+    Rate limit: 2 per hour to prevent email spam.
+
+    Args:
+        request: FastAPI request object (required for rate limiting)
+        email: User's email address
+        db: Database session
+
+    Returns:
+        dict: Success message
+
+    Raises:
+        HTTPException: 400 if user not found or already verified, 429 if rate limit exceeded
+    """
+    user = UserRepository.get_by_email(db, email)
+
+    if not user:
+        # Don't reveal if email exists for security
+        return {"message": "If that email exists, a verification link has been sent"}
+
+    if user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already verified",
+        )
+
+    # Generate new verification token
+    verification_token = generate_verification_token()
+    expiry = get_verification_token_expiry()
+    UserRepository.set_verification_token(db, user, verification_token, expiry)
+
+    # Send verification email
+    email_service.send_email_verification(
+        email=user.email,
+        username=user.username,
+        verification_token=verification_token,
+    )
+
+    return {"message": "Verification email sent"}

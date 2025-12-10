@@ -170,3 +170,31 @@ export const changePassword = async (
     throw new Error(errorData.detail || "Could not change password");
   }
 };
+
+/**
+ * Refresh current user data from the server and update localStorage.
+ * Call this after actions that modify user state (email verification, profile updates, etc.)
+ *
+ * @throws Error if not authenticated or fetch fails
+ */
+export const refreshCurrentUser = async (): Promise<User> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/users/me`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to refresh user data");
+  }
+
+  const user = (await res.json()) as User;
+  setStoredUser(user);
+  return user;
+};

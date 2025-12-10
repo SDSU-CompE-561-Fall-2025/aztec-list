@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verify Your Email</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      font-family:
+        -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto,
+        &quot;Helvetica Neue&quot;, Arial, sans-serif;
+      background-color: #f9fafb;
+    "
+  >
+    <div
+      style="
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        background-color: #ffffff;
+      "
+    >
+      <!-- Header -->
+      <div style="text-align: center; margin-bottom: 30px">
+        <div
+          style="
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px auto;
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M3 8L10.89 13.26C11.2187 13.4793 11.6049 13.5963 12 13.5963C12.3951 13.5963 12.7813 13.4793 13.11 13.26L21 8M5 19H19C19.5304 19 20.0391 18.7893 20.4142 18.4142C20.7893 18.0391 21 17.5304 21 17V7C21 6.46957 20.7893 5.96086 20.4142 5.58579C20.0391 5.21071 19.5304 5 19 5H5C4.46957 5 3.96086 5.21071 3.58579 5.58579C3.21071 5.96086 3 6.46957 3 7V17C3 17.5304 3.21071 18.0391 3.58579 18.4142C3.96086 18.7893 4.46957 19 5 19Z"
+              stroke="white"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+        <h1
+          style="
+            color: #111827;
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+          "
+        >
+          Verify Your Email Address
+        </h1>
+        <p style="color: #6b7280; font-size: 15px; margin: 0; line-height: 1.5">
+          Welcome to Aztec List! Please verify your email to get started.
+        </p>
+      </div>
+
+      <!-- Content Card -->
+      <div
+        style="
+          background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+          border-left: 4px solid #7c3aed;
+          border-radius: 8px;
+          padding: 20px;
+          margin-bottom: 24px;
+        "
+      >
+        <p
+          style="
+            margin: 0 0 16px 0;
+            color: #374151;
+            font-size: 15px;
+            line-height: 1.6;
+          "
+        >
+          Hi <strong>{{ username }}</strong>,
+        </p>
+        <p style="margin: 0; color: #4b5563; font-size: 15px; line-height: 1.6">
+          Thank you for signing up! Click the button below to verify your email
+          address and complete your registration.
+        </p>
+      </div>
+
+      <!-- CTA Button -->
+      <div style="text-align: center; margin-bottom: 24px">
+        <a
+          href="{{ verification_url }}"
+          style="
+            display: inline-block;
+            background-color: #7c3aed;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 14px 32px;
+            text-decoration: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(124, 58, 237, 0.2);
+          "
+        >
+          Verify Email Address
+        </a>
+      </div>
+
+      <!-- Alternative Link -->
+      <div
+        style="
+          background-color: #f9fafb;
+          border-radius: 6px;
+          padding: 16px;
+          margin-bottom: 30px;
+        "
+      >
+        <p
+          style="
+            margin: 0 0 8px 0;
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.4;
+          "
+        >
+          If the button doesn't work, copy and paste this link into your
+          browser:
+        </p>
+        <p
+          style="
+            margin: 0;
+            color: #7c3aed;
+            font-size: 13px;
+            word-break: break-all;
+          "
+        >
+          {{ verification_url }}
+        </p>
+      </div>
+
+      <!-- Expiration Notice -->
+      <div
+        style="
+          background-color: #fef3c7;
+          border: 1px solid #fbbf24;
+          border-radius: 6px;
+          padding: 12px;
+          margin-bottom: 30px;
+        "
+      >
+        <p style="margin: 0; color: #92400e; font-size: 13px; line-height: 1.4">
+          ⏱ This verification link will expire in 24 hours. If you didn't create
+          an account, please ignore this email.
+        </p>
+      </div>
+
+      <!-- Footer -->
+      <div
+        style="
+          border-top: 1px solid #e5e7eb;
+          padding-top: 20px;
+          text-align: center;
+        "
+      >
+        <p style="color: #9ca3af; font-size: 12px; margin: 0">
+          © {{ current_year }} Aztec List. All rights reserved.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

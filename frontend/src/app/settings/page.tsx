@@ -5,7 +5,15 @@ import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { toast } from "sonner";
-import { ChevronLeft, Trash2, AlertTriangle, Upload } from "lucide-react";
+import {
+  ChevronLeft,
+  Trash2,
+  AlertTriangle,
+  Upload,
+  Mail,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/custom/ProtectedRoute";
@@ -27,7 +35,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { API_BASE_URL } from "@/lib/constants";
-import { getAuthToken, setStoredUser, changePassword } from "@/lib/auth";
+import { getAuthToken, setStoredUser, changePassword, refreshCurrentUser } from "@/lib/auth";
+import { updateProfile, updateProfilePicture, removeProfilePicture, getMyProfile } from "@/lib/api";
 import { showErrorToast } from "@/lib/errorHandling";
 import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOptions";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
@@ -101,6 +110,9 @@ function SettingsContent() {
   // Delete account state
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Email verification state
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
+
   // Cancel confirmation dialogs
   const [showProfileCancelDialog, setShowProfileCancelDialog] = useState(false);
   const [showAccountCancelDialog, setShowAccountCancelDialog] = useState(false);
@@ -117,6 +129,21 @@ function SettingsContent() {
       setUsername(user.username);
     }
   }, [user]);
+
+  // Refresh user data on mount to ensure we have latest verification status
+  useEffect(() => {
+    const refreshUser = async () => {
+      try {
+        await refreshCurrentUser();
+      } catch (error) {
+        console.error("Failed to refresh user data:", error);
+      }
+    };
+
+    if (user) {
+      refreshUser();
+    }
+  }, [user]); // Only run on mount
 
   // Format and validate phone number
   const formatPhoneNumber = (value: string): string => {
@@ -171,56 +198,25 @@ function SettingsContent() {
     setIsProfileLoading(true);
 
     try {
-      const token = getAuthToken();
-      if (!token) throw new Error("Not authenticated");
-
       // Step 1: Handle profile picture upload if staged
       if (stagedPictureFile) {
-        const formData = new FormData();
-        formData.append("file", stagedPictureFile);
-
-        const pictureResponse = await fetch(`${API_BASE_URL}/users/profile/picture`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        });
-
-        if (!pictureResponse.ok) {
-          const errorData = await pictureResponse.json().catch(() => ({}));
-          throw new Error(errorData.detail || "Failed to upload profile picture");
-        }
+        await updateProfilePicture(stagedPictureFile);
       }
 
       // Step 2: Handle profile picture removal if staged
       if (isPictureRemovalStaged) {
-        const removeResponse = await fetch(`${API_BASE_URL}/users/profile/`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            profile_picture_url: null,
-          }),
-        });
-
-        if (!removeResponse.ok) {
-          const errorData = await removeResponse.json().catch(() => ({}));
-          throw new Error(errorData.detail || "Failed to remove profile picture");
-        }
+        await removeProfilePicture();
       }
 
       // Step 3: Update other profile fields
       const updates: ProfileUpdatePayload = {};
 
       if (formName !== (profile?.name || "")) {
-        updates.name = formName.trim() || null;
+        updates.name = formName.trim() || null; // null clears the field
       }
 
       if (formCampus !== (profile?.campus || "")) {
-        updates.campus = formCampus.trim() || null;
+        updates.campus = formCampus.trim() || null; // null clears the field
       }
 
       const originalPhone = profile?.contact_info?.phone || "";
@@ -236,41 +232,21 @@ function SettingsContent() {
 
       // Update profile fields if there are changes
       if (Object.keys(updates).length > 0) {
-        const response = await fetch(`${API_BASE_URL}/users/profile/`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(updates),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.detail || "Failed to save profile");
-        }
+        await updateProfile(updates);
       }
 
       // Fetch updated profile to get latest data with fresh updated_at timestamp
       // This is done regardless of whether fields were updated, since picture changes also need refresh
-      const profileResponse = await fetch(`${API_BASE_URL}/users/profile/`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const updatedProfile = await getMyProfile();
 
-      if (profileResponse.ok) {
-        const updatedProfile = await profileResponse.json();
+      // Update the React Query cache with fresh data from server
+      // This triggers all components using this query to re-render with new updated_at
+      queryClient.setQueryData(["profile", user?.id], updatedProfile);
 
-        // Update the React Query cache with fresh data from server
-        // This triggers all components using this query to re-render with new updated_at
-        queryClient.setQueryData(["profile", user?.id], updatedProfile);
-
-        // Update form fields to match the saved data
-        setFormName(updatedProfile.name || "");
-        setFormCampus(updatedProfile.campus || "");
-        setFormPhone(updatedProfile.contact_info?.phone || "");
-      }
+      // Update form fields to match the saved data
+      setFormName(updatedProfile.name || "");
+      setFormCampus(updatedProfile.campus || "");
+      setFormPhone(updatedProfile.contact_info?.phone || "");
 
       // Clear staged changes
       setPreviewUrl(null);
@@ -413,6 +389,42 @@ function SettingsContent() {
     // Reset username to original value
     setUsername(user?.username ?? "");
     setShowAccountCancelDialog(false);
+  };
+
+  const handleResendVerification = async () => {
+    if (!user?.email) return;
+
+    setIsResendingVerification(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: user.email }),
+      });
+
+      if (response.ok) {
+        toast.success("Verification email sent! Check your inbox.", {
+          style: {
+            background: "rgb(20, 83, 45)",
+            color: "white",
+            border: "1px solid rgb(34, 197, 94)",
+          },
+        });
+      } else {
+        const data = await response.json();
+        if (response.status === 429) {
+          toast.error("Too many requests. Please try again later.");
+        } else {
+          toast.error(data.detail || "Failed to send verification email");
+        }
+      }
+    } catch (error) {
+      showErrorToast(error, "Failed to resend verification email");
+    } finally {
+      setIsResendingVerification(false);
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -836,6 +848,48 @@ function SettingsContent() {
                     <p className="text-xs sm:text-sm text-muted-foreground">
                       Email cannot be changed at this time
                     </p>
+                  </div>
+
+                  {/* Email Verification Status */}
+                  <div className="rounded-lg border p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        {user?.is_verified ? (
+                          <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                        ) : (
+                          <Mail className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                        )}
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium">
+                            {user?.is_verified ? "Email Verified" : "Email Not Verified"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {user?.is_verified
+                              ? "Your email address has been verified"
+                              : "Please verify your email address to access all features"}
+                          </p>
+                        </div>
+                      </div>
+                      {!user?.is_verified && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={handleResendVerification}
+                          disabled={isResendingVerification}
+                          className="flex-shrink-0"
+                        >
+                          {isResendingVerification ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Sending...
+                            </>
+                          ) : (
+                            "Resend Email"
+                          )}
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex gap-3 pt-2">

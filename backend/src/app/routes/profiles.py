@@ -26,7 +26,7 @@ profile_router = APIRouter(
 
 
 @profile_router.post(
-    "/",
+    "",
     summary="Create a profile for the authenticated user",
     status_code=status.HTTP_201_CREATED,
     response_model=ProfilePublic,
@@ -57,7 +57,7 @@ async def create_profile(
 
 
 @profile_router.get(
-    "/", summary="Get the authenticated user's profile", response_model=ProfilePublic
+    "", summary="Get the authenticated user's profile", response_model=ProfilePublic
 )
 async def get_my_profile(
     current_user: Annotated[User, Depends(get_current_user)],
@@ -82,7 +82,7 @@ async def get_my_profile(
 
 
 @profile_router.patch(
-    "/", summary="Update the authenticated user's profile", response_model=ProfilePublic
+    "", summary="Update the authenticated user's profile", response_model=ProfilePublic
 )
 @limiter.limit("10/minute;30/hour")
 async def update_profile(
@@ -181,7 +181,7 @@ async def update_profile_picture(
 
 
 @profile_router.delete(
-    "/",
+    "",
     summary="Delete a user profile",
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
