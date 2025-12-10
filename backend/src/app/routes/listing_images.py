@@ -29,7 +29,7 @@ listing_images_router = APIRouter(
     status_code=status.HTTP_201_CREATED,
     summary="Upload an image file to a listing",
 )
-@limiter.limit("50/hour")
+@limiter.limit("10/minute;50/hour")
 async def upload_image(
     request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     listing_id: uuid.UUID,
@@ -46,7 +46,7 @@ async def upload_image(
     Only the seller of the listing can upload images. Maximum 10 images per listing.
     The first image uploaded will automatically be set as the thumbnail.
 
-    Rate limit: 50 uploads per hour to prevent storage/bandwidth abuse.
+    Rate limit: 10 per minute (burst), 50 per hour (sustained) to prevent storage/bandwidth abuse.
 
     Args:
         request: FastAPI request object (required for rate limiting)
@@ -74,7 +74,9 @@ async def upload_image(
     response_model=ImagePublic,
     summary="Update an image",
 )
+@limiter.limit("10/minute;30/hour")
 async def update_image(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     image_id: uuid.UUID,
     image_update: ImageUpdate,
     db: Annotated[Session, Depends(get_db)],
@@ -82,6 +84,8 @@ async def update_image(
 ) -> Image:
     """
     Update an existing image.
+
+    Rate limit: 10 per minute (burst), 30 per hour (sustained).
 
     Only the seller of the listing can update images.
 
@@ -96,6 +100,7 @@ async def update_image(
     - The listing's thumbnail_url is updated
 
     Args:
+        request: FastAPI request object (required for rate limiting)
         image_id: ID of the image to update
         image_update: Fields to update (url, is_thumbnail, alt_text - all optional)
         db: Database session
@@ -116,7 +121,9 @@ async def update_image(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete an image",
 )
+@limiter.limit("5/minute;20/hour")
 async def delete_image(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     image_id: uuid.UUID,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(require_not_banned)],
@@ -124,11 +131,14 @@ async def delete_image(
     """
     Delete an image from a listing.
 
+    Rate limit: 5 per minute (burst), 20 per hour (sustained).
+
     Only the seller of the listing can delete images.
     If the deleted image was the thumbnail, another image will be
     automatically set as the thumbnail (if any remain).
 
     Args:
+        request: FastAPI request object (required for rate limiting)
         image_id: ID of the image to delete
         db: Database session
         current_user: Current authenticated user

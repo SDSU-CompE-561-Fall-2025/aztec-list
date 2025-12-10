@@ -1,11 +1,12 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_admin, require_not_banned
+from app.core.rate_limiter import limiter
 from app.models.admin import AdminAction
 from app.models.user import User
 from app.schemas.admin import (
@@ -91,7 +92,9 @@ async def get_admin_action(
     summary="Revoke an admin action",
     status_code=status.HTTP_204_NO_CONTENT,
 )
+@limiter.limit("10/minute;50/hour")
 async def delete_admin_action(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     action_id: uuid.UUID,
     admin: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
@@ -99,11 +102,14 @@ async def delete_admin_action(
     """
     Revoke an admin action (e.g., lift a ban or undo an accidental strike).
 
+    Rate limit: 10 per minute (burst), 50 per hour (sustained) - generous for admin operations.
+
     **Requires:** Admin privileges
 
     **Security:** Admins cannot revoke actions targeting themselves.
 
     Args:
+        request: FastAPI request object (required for rate limiting)
         action_id: ID of the action to revoke
         admin: Authenticated admin user from JWT token
         db: Database session
@@ -122,7 +128,9 @@ async def delete_admin_action(
     summary="Add a strike to a user",
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit("10/minute;50/hour")
 async def strike_user(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     user_id: uuid.UUID,
     strike: AdminActionStrike,
     admin: Annotated[User, Depends(get_current_user)],
@@ -131,9 +139,12 @@ async def strike_user(
     """
     Add a strike to a user (convenience wrapper).
 
+    Rate limit: 10 per minute (burst), 50 per hour (sustained) - generous for admin operations.
+
     **Requires:** Admin privileges
 
     Args:
+        request: FastAPI request object (required for rate limiting)
         user_id: ID of the user to strike
         strike: Strike data with optional reason
         admin: Authenticated admin user from JWT token
@@ -161,7 +172,9 @@ async def strike_user(
     status_code=status.HTTP_201_CREATED,
     response_model=AdminActionPublic,
 )
+@limiter.limit("5/minute;20/hour")
 async def ban_user(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     user_id: uuid.UUID,
     ban: AdminActionBan,
     admin: Annotated[User, Depends(get_current_user)],
@@ -170,9 +183,12 @@ async def ban_user(
     """
     Ban a user (temporary via expires_at or permanent if omitted).
 
+    Rate limit: 5 per minute (burst), 20 per hour (sustained) - moderate for sensitive admin action.
+
     **Requires:** Admin privileges
 
     Args:
+        request: FastAPI request object (required for rate limiting)
         user_id: ID of the user to ban
         ban: Ban data with optional reason and expires_at
         admin: Authenticated admin user from JWT token
@@ -192,7 +208,9 @@ async def ban_user(
     summary="Remove a listing for violating policies",
     status_code=status.HTTP_200_OK,
 )
+@limiter.limit("5/minute;20/hour")
 async def remove_listing(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     listing_id: uuid.UUID,
     removal: AdminListingRemoval,
     admin: Annotated[User, Depends(get_current_user)],
@@ -201,12 +219,15 @@ async def remove_listing(
     """
     Remove a listing that violates policies (spam, inappropriate content, etc.).
 
+    Rate limit: 5 per minute (burst), 20 per hour (sustained) - moderate for sensitive admin action.
+
     Creates a listing_removal admin action, issues a strike to the listing owner,
     and hard deletes the listing. The strike counts toward auto-escalation to ban.
 
     **Requires:** Admin privileges
 
     Args:
+        request: FastAPI request object (required for rate limiting)
         listing_id: ID of the listing to remove
         removal: Removal data with reason
         admin: Authenticated admin user from JWT token

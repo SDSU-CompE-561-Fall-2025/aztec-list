@@ -1,11 +1,12 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_not_banned
+from app.core.rate_limiter import limiter
 from app.models.profile import Profile
 from app.models.user import User
 from app.schemas.listing import (
@@ -143,7 +144,9 @@ async def get_user_listings(
     status_code=status.HTTP_200_OK,
     response_model=UserPublic,
 )
+@limiter.limit("10/minute;30/hour")
 async def update_current_user(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     update_data: UserUpdate,
     current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
@@ -151,7 +154,10 @@ async def update_current_user(
     """
     Update the current user's profile.
 
+    Rate limit: 10 per minute (burst), 30 per hour (sustained).
+
     Args:
+        request: FastAPI request object (required for rate limiting)
         update_data: Fields to update
         current_user: The authenticated user
         db: Database session
@@ -171,7 +177,9 @@ async def update_current_user(
     summary="Change current user password",
     status_code=status.HTTP_200_OK,
 )
+@limiter.limit("3/minute;5/hour")
 async def change_password(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     password_data: PasswordChange,
     current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
@@ -179,7 +187,10 @@ async def change_password(
     """
     Change the current user's password.
 
+    Rate limit: 3 per minute (burst), 5 per hour (sustained) - strict for security.
+
     Args:
+        request: FastAPI request object (required for rate limiting)
         password_data: Current and new password
         current_user: The authenticated user
         db: Database session
@@ -205,16 +216,21 @@ async def change_password(
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
 )
+@limiter.limit("1/minute;2/hour")
 async def delete_user(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     """
     Delete the current user's account.
 
+    Rate limit: 1 per minute (burst), 2 per hour (sustained) - very strict for safety.
+
     Args:
-        db: Database session
+        request: FastAPI request object (required for rate limiting)
         current_user: The authenticated user (must not be banned)
+        db: Database session
 
     Returns:
         None

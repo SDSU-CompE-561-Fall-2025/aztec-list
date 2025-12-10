@@ -25,7 +25,7 @@ auth_router = APIRouter(
     status_code=status.HTTP_201_CREATED,
     response_model=UserPublic,
 )
-@limiter.limit("5/hour")
+@limiter.limit("2/minute;5/hour")
 async def signup(
     request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     user: UserCreate,
@@ -34,7 +34,7 @@ async def signup(
     """
     Register a new user account.
 
-    Rate limit: 5 registrations per IP per hour to prevent spam accounts.
+    Rate limit: 2 per minute (burst), 5 per hour (sustained) to prevent spam accounts.
 
     Args:
         request: FastAPI request object (required for rate limiting)
@@ -51,7 +51,7 @@ async def signup(
 
 
 @auth_router.post("/login", summary="Authenticate and obtain a JWT access token")
-@limiter.limit("10/hour")
+@limiter.limit("3/minute;10/hour")
 async def login(
     request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
@@ -63,7 +63,7 @@ async def login(
 
     OAuth2 compatible token login - username field accepts email or username.
 
-    Rate limit: 10 login attempts per IP per hour to prevent brute force attacks.
+    Rate limit: 3 per minute (burst), 10 per hour (sustained) to prevent brute force attacks.
 
     Args:
         request: FastAPI request object (required for rate limiting)

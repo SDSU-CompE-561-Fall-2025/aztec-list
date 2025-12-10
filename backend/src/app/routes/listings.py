@@ -31,7 +31,7 @@ listing_router = APIRouter(
     response_model=ListingPublic,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("10/hour")
+@limiter.limit("3/minute;10/hour")
 async def create_listing(
     request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     listing: ListingCreate,
@@ -41,7 +41,7 @@ async def create_listing(
     """
     Create a new item listing for sale.
 
-    Rate limit: 20 listings per hour to prevent spam.
+    Rate limit: 3 per minute (burst), 10 per hour (sustained) to prevent spam.
 
     Args:
         request: FastAPI request object (required for rate limiting)
@@ -90,7 +90,9 @@ async def get_listing_by_id(
     response_model=ListingPublic,
     status_code=status.HTTP_200_OK,
 )
+@limiter.limit("5/minute;20/hour")
 async def update_listing(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     listing_id: uuid.UUID,
     listing: ListingUpdate,
     current_user: Annotated[User, Depends(require_not_banned)],
@@ -98,6 +100,8 @@ async def update_listing(
 ) -> Listing:
     """
     Update an existing listing's details (owner only).
+
+    Rate limit: 5 per minute (burst), 20 per hour (sustained).
 
     All fields are optional; only provided fields will be updated.
     The is_active field can be toggled to temporarily hide/show the listing
@@ -107,6 +111,7 @@ async def update_listing(
     Admins must use admin endpoints for any listing modifications.
 
     Args:
+        request: FastAPI request object (required for rate limiting)
         listing_id: ID of the listing to update
         listing: Listing update data (any combination of title, description, price, etc.)
         current_user: Authenticated user from JWT token
@@ -127,13 +132,17 @@ async def update_listing(
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
 )
+@limiter.limit("2/minute;10/hour")
 async def delete_listing_by_id(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     listing_id: uuid.UUID,
     current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     """
     Permanently delete a listing from the database (owner only).
+
+    Rate limit: 2 per minute (burst), 10 per hour (sustained).
 
     This is a hard delete that cannot be undone.
     To temporarily hide a listing instead, use PATCH to set is_active=false.
@@ -142,6 +151,7 @@ async def delete_listing_by_id(
     Admins must use the admin endpoints (POST /admin/actions/remove-listing) to remove listings.
 
     Args:
+        request: FastAPI request object (required for rate limiting)
         listing_id: ID of the listing to delete
         current_user: Authenticated user from JWT token
         db: Database session

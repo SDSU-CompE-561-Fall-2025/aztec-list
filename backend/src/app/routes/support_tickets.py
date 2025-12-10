@@ -31,7 +31,7 @@ router = APIRouter(prefix="/support", tags=["Support"])
     summary="Create support ticket",
     description="Submit a support ticket. Authentication optional - if logged in, ticket will be linked to your account.",
 )
-@limiter.limit("3/hour;10/hour")
+@limiter.limit("3/minute;10/hour")
 async def create_support_ticket(
     request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     ticket_data: SupportTicketCreate,
@@ -46,8 +46,8 @@ async def create_support_ticket(
     Sends confirmation email to user and notification to support team.
 
     Rate limits:
-    - All users: 3 tickets per hour (burst protection)
-    - All users: 10 tickets per hour (hourly limit)
+    - All users: 3 tickets per minute (burst protection)
+    - All users: 10 tickets per hour (sustained limit)
 
     Args:
         request: FastAPI request object (required for rate limiting)
@@ -125,7 +125,9 @@ async def get_support_ticket(
     summary="Update ticket status",
     description="Update the status of a support ticket (OPEN, IN_PROGRESS, RESOLVED, CLOSED). Admin access required.",
 )
+@limiter.limit("10/minute;50/hour")
 async def update_ticket_status(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     ticket_id: uuid.UUID,
     status_update: SupportTicketStatusUpdate,
     db: Annotated[Session, Depends(get_db)],
@@ -134,7 +136,10 @@ async def update_ticket_status(
     """
     Update support ticket status (admin only).
 
+    Rate limit: 10 per minute (burst), 50 per hour (sustained) - generous for admin operations.
+
     Args:
+        request: FastAPI request object (required for rate limiting)
         ticket_id: ID of the ticket
         status_update: New status data
         db: Database session
@@ -155,7 +160,9 @@ async def update_ticket_status(
     summary="Delete support ticket",
     description="Permanently delete a support ticket. Useful for removing spam or test tickets. Admin access required.",
 )
+@limiter.limit("5/minute;20/hour")
 async def delete_support_ticket(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     ticket_id: uuid.UUID,
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[User, Depends(require_admin)],
@@ -163,9 +170,12 @@ async def delete_support_ticket(
     """
     Delete a support ticket (admin only).
 
+    Rate limit: 5 per minute (burst), 20 per hour (sustained) - moderate for admin operations.
+
     Useful for removing test tickets or spam.
 
     Args:
+        request: FastAPI request object (required for rate limiting)
         ticket_id: ID of the ticket to delete
         db: Database session
         _: Admin user (required)

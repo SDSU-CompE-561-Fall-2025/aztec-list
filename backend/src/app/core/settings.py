@@ -188,6 +188,15 @@ class EmailSettings(BaseModel):
     )
 
 
+class RateLimitSettings(BaseModel):
+    """Rate limiting configuration."""
+
+    enabled: bool = Field(
+        default=True,
+        description="Master switch to enable/disable all rate limiting (useful for emergencies or testing)",
+    )
+
+
 class Settings(BaseSettings):
     """
     Application settings loaded from environment variables.
@@ -214,6 +223,7 @@ class Settings(BaseSettings):
     cors: CORSSettings = Field(default_factory=CORSSettings)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
     email: EmailSettings = Field(default_factory=EmailSettings)
+    rate_limit: RateLimitSettings = Field(default_factory=RateLimitSettings)
 
 
 @lru_cache
