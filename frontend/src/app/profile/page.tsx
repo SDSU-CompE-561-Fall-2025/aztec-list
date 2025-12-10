@@ -304,10 +304,7 @@ function ProfileContent() {
                   </Button>
 
                   {totalCount > 0 && (
-                    <Button
-                      asChild
-                      className="bg-purple-600 hover:bg-purple-700 text-white"
-                    >
+                    <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white">
                       <Link href="/listings/create">Add Listing</Link>
                     </Button>
                   )}
@@ -414,17 +411,13 @@ function ProfileContent() {
 
           {/* Empty state with CTA */}
           {data && totalCount === 0 ? (
-            <div className="bg-muted rounded-lg p-12 text-center">
+            <div className="bg-card/50 backdrop-blur-sm border rounded-lg p-12 text-center">
               <div className="max-w-md mx-auto">
                 <h3 className="text-xl font-semibold text-foreground mb-2">No listings yet</h3>
                 <p className="text-muted-foreground mb-6 text-base">
                   Start selling by creating your first listing. It only takes a minute!
                 </p>
-                <Button
-                  asChild
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
-                  size="lg"
-                >
+                <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white" size="lg">
                   <Link href="/listings/create">
                     <Plus className="w-5 h-5 mr-2" />
                     Create Your First Listing
