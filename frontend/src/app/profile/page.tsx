@@ -331,10 +331,10 @@ function ProfileContent() {
         {/* Incomplete Profile Banner - Only show if profile is incomplete */}
         {isProfileIncomplete && showIncompleteBanner && (
           <div className="mb-4 sm:mb-6">
-            <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row items-start gap-3">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row items-start gap-3">
               <div className="flex-shrink-0 mt-0.5">
                 <svg
-                  className="w-5 h-5 text-blue-400"
+                  className="w-5 h-5 text-blue-600 dark:text-blue-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -348,8 +348,10 @@ function ProfileContent() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-blue-300 font-semibold text-sm mb-1">Complete Your Profile</h3>
-                <p className="text-blue-200/80 text-xs sm:text-sm">
+                <h3 className="text-blue-900 dark:text-blue-300 font-semibold text-sm mb-1">
+                  Complete Your Profile
+                </h3>
+                <p className="text-blue-700 dark:text-blue-200/80 text-xs sm:text-sm">
                   Add your name, campus, and contact information to help buyers connect with you.
                 </p>
               </div>
@@ -358,13 +360,13 @@ function ProfileContent() {
                   asChild
                   variant="outline"
                   size="sm"
-                  className="border-blue-500/50 text-blue-300 hover:bg-blue-900/30 hover:text-blue-200 flex-1 sm:flex-initial shrink-0"
+                  className="border-blue-300 dark:border-blue-500/50 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-800 dark:hover:text-blue-200 flex-1 sm:flex-initial shrink-0"
                 >
                   <Link href="/settings">Complete Profile</Link>
                 </Button>
                 <button
                   onClick={() => setShowIncompleteBanner(false)}
-                  className="text-blue-400 hover:text-blue-300 shrink-0 cursor-pointer"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 shrink-0 cursor-pointer"
                   aria-label="Dismiss"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

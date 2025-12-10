@@ -69,7 +69,6 @@ export function Header() {
             <span className="text-purple-500">Aztec</span>
             <span className="text-foreground">List</span>
           </div>
-          <span className="text-sm text-muted-foreground">Campus</span>
         </Link>
 
         {/* Search Bar */}
