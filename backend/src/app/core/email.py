@@ -6,6 +6,7 @@ transactional emails, including support ticket notifications and
 confirmations.
 """
 
+import html
 import logging
 
 import resend
@@ -40,6 +41,10 @@ class EmailService:
             return False
 
         try:
+            # Escape user input to prevent XSS
+            safe_ticket_id = html.escape(str(ticket_id))
+            safe_subject = html.escape(subject)
+
             resend.Emails.send(
                 {
                     "from": settings.email.from_email,
@@ -51,8 +56,8 @@ class EmailService:
                         <p>Thank you for contacting Aztec List support. We have received your message and will respond as soon as possible.</p>
 
                         <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                            <p style="margin: 0;"><strong>Ticket ID:</strong> {ticket_id}</p>
-                            <p style="margin: 10px 0 0 0;"><strong>Subject:</strong> {subject}</p>
+                            <p style="margin: 0;"><strong>Ticket ID:</strong> {safe_ticket_id}</p>
+                            <p style="margin: 10px 0 0 0;"><strong>Subject:</strong> {safe_subject}</p>
                         </div>
 
                         <p style="color: #6b7280; font-size: 14px;">
@@ -97,7 +102,15 @@ class EmailService:
             return False
 
         try:
-            user_info = f"{username} ({email})" if username else email
+            # Escape all user input to prevent XSS and HTML injection
+            safe_username = html.escape(username) if username else None
+            safe_email = html.escape(email)
+            safe_subject = html.escape(subject)
+            safe_message = html.escape(message)
+            safe_ticket_id = html.escape(str(ticket_id))
+
+            user_info = f"{safe_username} ({safe_email})" if safe_username else safe_email
+
             # Get frontend URL from CORS settings for admin dashboard link
             frontend_url = settings.cors.allowed_origins[0] if settings.cors.allowed_origins else ""
             admin_url = f"{frontend_url}/admin" if frontend_url else "#"
@@ -106,20 +119,20 @@ class EmailService:
                 {
                     "from": settings.email.from_email,
                     "to": settings.email.support_email,
-                    "subject": f"New Support Ticket: {subject}",
+                    "subject": f"New Support Ticket: {safe_subject}",
                     "html": f"""
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                         <h2 style="color: #1f2937;">New Support Ticket</h2>
 
                         <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                            <p style="margin: 0;"><strong>Ticket ID:</strong> {ticket_id}</p>
+                            <p style="margin: 0;"><strong>Ticket ID:</strong> {safe_ticket_id}</p>
                             <p style="margin: 10px 0 0 0;"><strong>From:</strong> {user_info}</p>
-                            <p style="margin: 10px 0 0 0;"><strong>Subject:</strong> {subject}</p>
+                            <p style="margin: 10px 0 0 0;"><strong>Subject:</strong> {safe_subject}</p>
                         </div>
 
                         <div style="background-color: #ffffff; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px;">
                             <p style="margin: 0;"><strong>Message:</strong></p>
-                            <p style="margin: 10px 0 0 0; white-space: pre-wrap;">{message}</p>
+                            <p style="margin: 10px 0 0 0; white-space: pre-wrap;">{safe_message}</p>
                         </div>
 
                         <p style="margin-top: 20px;">

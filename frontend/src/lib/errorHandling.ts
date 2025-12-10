@@ -2,12 +2,10 @@ import { toast } from "sonner";
 
 /**
  * Check if an error message indicates a banned account.
+ * Checks for the exact error message returned by the backend to avoid false positives.
  */
 export function isBannedError(errorMessage: string): boolean {
-  return (
-    errorMessage.toLowerCase().includes("account banned") ||
-    errorMessage.toLowerCase().includes("banned")
-  );
+  return errorMessage.includes("Account banned. Contact support for assistance.");
 }
 
 /**

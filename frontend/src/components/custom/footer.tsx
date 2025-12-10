@@ -12,7 +12,7 @@ export function Footer() {
             <span className="font-semibold text-foreground">
               <span className="text-purple-500">Aztec</span>List
             </span>
-            <span>© 2025 All rights reserved.</span>
+            <span>© {new Date().getFullYear()} All rights reserved.</span>
           </div>
 
           <div className="flex items-center gap-6">
