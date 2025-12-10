@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ChevronLeft, Trash2, AlertTriangle, Upload } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/custom/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { API_BASE_URL } from "@/lib/constants";
 import { getAuthToken, setStoredUser, changePassword } from "@/lib/auth";
+import { showErrorToast } from "@/lib/errorHandling";
 import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOptions";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
 import type { ContactInfo } from "@/types/user";
@@ -37,7 +39,7 @@ interface ProfileUpdatePayload {
   contact_info?: ContactInfo;
 }
 
-export default function SettingsPage() {
+function SettingsContent() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -283,14 +285,7 @@ export default function SettingsPage() {
         },
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to save profile";
-      toast.error(message, {
-        style: {
-          background: "rgb(153, 27, 27)",
-          color: "white",
-          border: "1px solid rgb(220, 38, 38)",
-        },
-      });
+      showErrorToast(error, "Failed to save profile");
     } finally {
       setIsProfileLoading(false);
     }
@@ -408,15 +403,7 @@ export default function SettingsPage() {
     } catch (error) {
       // Reset username to original value on error
       setUsername(user?.username ?? "");
-      const message = error instanceof Error ? error.message : "Failed to update account";
-      toast.error(message, {
-        duration: 5000,
-        style: {
-          background: "rgb(153, 27, 27)", // red-900
-          color: "white",
-          border: "1px solid rgb(220, 38, 38)", // red-600
-        },
-      });
+      showErrorToast(error, "Failed to update account");
     } finally {
       setIsAccountLoading(false);
     }
@@ -459,14 +446,7 @@ export default function SettingsPage() {
       });
       router.push("/");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to delete account";
-      toast.error(message, {
-        style: {
-          background: "rgb(153, 27, 27)",
-          color: "white",
-          border: "1px solid rgb(220, 38, 38)",
-        },
-      });
+      showErrorToast(error, "Failed to delete account");
       setIsDeleting(false);
     }
   };
@@ -537,15 +517,7 @@ export default function SettingsPage() {
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to change password";
-      toast.error(message, {
-        duration: 5000,
-        style: {
-          background: "rgb(153, 27, 27)",
-          color: "white",
-          border: "1px solid rgb(220, 38, 38)",
-        },
-      });
+      showErrorToast(error, "Failed to change password");
     } finally {
       setIsPasswordLoading(false);
     }
@@ -1049,5 +1021,13 @@ export default function SettingsPage() {
         </Tabs>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <ProtectedRoute>
+      <SettingsContent />
+    </ProtectedRoute>
   );
 }

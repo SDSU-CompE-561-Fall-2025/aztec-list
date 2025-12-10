@@ -2,6 +2,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.auth import oauth2_scheme, verify_token
@@ -10,6 +11,9 @@ from app.core.security import ensure_admin
 from app.models.user import User
 from app.repository.admin import AdminActionRepository
 from app.services.user import user_service
+
+# Optional bearer token scheme (doesn't raise error if missing)
+optional_oauth2_scheme = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
@@ -78,6 +82,45 @@ def require_admin(
     """
     ensure_admin(current_user)
     return current_user
+
+
+def get_optional_user(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(optional_oauth2_scheme)],
+    db: Annotated[Session, Depends(get_db)],
+) -> User | None:
+    """
+    Optionally get the current authenticated user from JWT token.
+
+    Returns the user if a valid token is provided, or None if no token
+    or invalid token. Does not raise an exception for missing/invalid tokens.
+
+    Use this for endpoints that work for both authenticated and guest users.
+
+    Args:
+        credentials: Optional JWT access token
+        db: Database session
+
+    Returns:
+        User | None: Current authenticated user, or None if not authenticated
+    """
+    if credentials is None:
+        return None
+
+    token = credentials.credentials
+    payload = verify_token(token)
+    if payload is None:
+        return None
+
+    user_id_str: str | None = payload.get("sub")
+    if user_id_str is None:
+        return None
+
+    try:
+        user_id = UUID(user_id_str)
+    except (ValueError, AttributeError):
+        return None
+
+    return user_service.get_by_id(db, user_id=user_id)
 
 
 def require_not_banned(

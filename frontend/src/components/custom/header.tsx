@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LISTINGS_BASE_URL, DEFAULT_SORT } from "@/lib/constants";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, Settings, User, Search, Shield } from "lucide-react";
+import { LogOut, Settings, User, Search, Shield, Mail } from "lucide-react";
 import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOptions";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
 import { ThemeSwitcher } from "@/components/custom/theme-switcher";
@@ -139,6 +139,12 @@ export function Header() {
                   <Link href="/settings" className="cursor-pointer py-2">
                     <Settings className="mr-2 h-4 w-4" />
                     <span className="text-sm">Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/support" className="cursor-pointer py-2">
+                    <Mail className="mr-2 h-4 w-4" />
+                    <span className="text-sm">Contact Support</span>
                   </Link>
                 </DropdownMenuItem>
                 {user?.role === "admin" && (

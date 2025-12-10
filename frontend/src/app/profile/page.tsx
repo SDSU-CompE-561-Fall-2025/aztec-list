@@ -16,6 +16,7 @@ import { createOwnListingsQueryOptions } from "@/queryOptions/createOwnListingsQ
 import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOptions";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
 import { toast } from "sonner";
+import { showErrorToast } from "@/lib/errorHandling";
 import { ProtectedRoute } from "@/components/custom/ProtectedRoute";
 import type { ListingSummary, ListingSearchResponse } from "@/types/listing/listing";
 
@@ -109,13 +110,7 @@ function ProfileContent() {
           context.previousData
         );
       }
-      toast.error("Failed to update listing visibility", {
-        style: {
-          background: "rgb(153, 27, 27)",
-          color: "white",
-          border: "1px solid rgb(220, 38, 38)",
-        },
-      });
+      showErrorToast(err, "Failed to update listing visibility");
     },
     onSuccess: (updatedListing, { isActive }) => {
       // Update the cache with the actual server response
@@ -162,14 +157,8 @@ function ProfileContent() {
         },
       });
     },
-    onError: () => {
-      toast.error("Failed to delete listing", {
-        style: {
-          background: "rgb(153, 27, 27)",
-          color: "white",
-          border: "1px solid rgb(220, 38, 38)",
-        },
-      });
+    onError: (error) => {
+      showErrorToast(error, "Failed to delete listing");
     },
   });
 

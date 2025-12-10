@@ -159,7 +159,7 @@ export function SearchFilters() {
         <select
           value={selectedCategory}
           onChange={(e) => handleCategoryChange(e.target.value)}
-          className="w-full bg-background text-foreground border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full h-9 rounded-md border px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none bg-transparent dark:bg-input/30 border-input focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
         >
           <option value="">All Categories</option>
           {CATEGORIES.map((cat) => (
@@ -181,9 +181,9 @@ export function SearchFilters() {
             value={minPrice}
             onChange={(e) => handlePriceChange(e.target.value, setMinPrice)}
             onKeyDown={handlePriceKeyDown}
-            className={`w-full bg-background text-foreground border ${
-              priceError ? "border-red-500" : "border"
-            } rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500`}
+            className={`w-full h-9 rounded-md border px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none bg-transparent dark:bg-input/30 border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] ${
+              priceError ? "border-red-500 ring-destructive/20" : ""
+            }`}
           />
           <input
             type="number"
@@ -192,9 +192,9 @@ export function SearchFilters() {
             value={maxPrice}
             onChange={(e) => handlePriceChange(e.target.value, setMaxPrice)}
             onKeyDown={handlePriceKeyDown}
-            className={`w-full bg-background text-foreground border ${
-              priceError ? "border-red-500" : "border"
-            } rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500`}
+            className={`w-full h-9 rounded-md border px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none bg-transparent dark:bg-input/30 border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] ${
+              priceError ? "border-red-500 ring-destructive/20" : ""
+            }`}
           />
           {priceError && <p className="text-xs text-red-500">{PRICE_ERROR_MESSAGE}</p>}
         </div>
@@ -227,7 +227,7 @@ export function SearchFilters() {
         <select
           value={selectedSort}
           onChange={(e) => handleSortChange(e.target.value)}
-          className="w-full bg-background text-foreground border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full h-9 rounded-md border px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none bg-transparent dark:bg-input/30 border-input focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
         >
           {SORT_OPTIONS.map((sort) => (
             <option key={sort} value={sort}>

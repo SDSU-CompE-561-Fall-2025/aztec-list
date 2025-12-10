@@ -55,7 +55,7 @@ repos:
         name: Frontend Prettier
         entry: python .pre-commit-hooks/run-prettier.py
         language: system
-        files: ^frontend/.*\.(ts|tsx|js|jsx|json|css|md)$
+        files: ^(frontend/.*\.(ts|tsx|js|jsx|json|css|md)|backend/src/app/templates/.*\.html)$
         pass_filenames: true
 
       - id: frontend-eslint

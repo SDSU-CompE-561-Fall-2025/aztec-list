@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from app.models.admin import AdminAction
     from app.models.listing import Listing
     from app.models.profile import Profile
+    from app.models.support_ticket import SupportTicket
 
 
 class User(Base):
@@ -59,4 +60,9 @@ class User(Base):
         "AdminAction",
         foreign_keys="AdminAction.target_user_id",
         back_populates="target_user",
+    )
+
+    # one-to-many -> Support tickets submitted by this user
+    support_tickets: Mapped[list[SupportTicket]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
     )
