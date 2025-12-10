@@ -6,15 +6,23 @@ transactional emails, including support ticket notifications and
 confirmations.
 """
 
-import html
 import logging
 from datetime import UTC, datetime
+from pathlib import Path
 
 import resend
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from app.core.settings import settings
 
 logger = logging.getLogger(__name__)
+
+# Set up Jinja2 environment for email templates
+TEMPLATES_DIR = Path(__file__).parent.parent / "templates" / "emails"
+jinja_env = Environment(
+    loader=FileSystemLoader(TEMPLATES_DIR),
+    autoescape=select_autoescape(["html", "xml"]),
+)
 
 
 class EmailService:
@@ -42,36 +50,20 @@ class EmailService:
             return False
 
         try:
-            # Escape user input to prevent XSS
-            safe_ticket_id = html.escape(str(ticket_id))
-            safe_subject = html.escape(subject)
-            current_year = datetime.now(UTC).year
+            # Render template with Jinja2 (automatic escaping enabled)
+            template = jinja_env.get_template("support_ticket_confirmation.html")
+            html_content = template.render(
+                ticket_id=ticket_id,
+                subject=subject,
+                current_year=datetime.now(UTC).year,
+            )
 
             resend.Emails.send(
                 {
                     "from": settings.email.from_email,
                     "to": email,
                     "subject": "Support Ticket Received - Aztec List",
-                    "html": f"""
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <h2 style="color: #1f2937;">Support Ticket Received</h2>
-                        <p>Thank you for contacting Aztec List support. We have received your message and will respond as soon as possible.</p>
-
-                        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                            <p style="margin: 0;"><strong>Ticket ID:</strong> {safe_ticket_id}</p>
-                            <p style="margin: 10px 0 0 0;"><strong>Subject:</strong> {safe_subject}</p>
-                        </div>
-
-                        <p style="color: #6b7280; font-size: 14px;">
-                            If you didn't submit this request, please ignore this email.
-                        </p>
-
-                        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-                        <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-                            © {current_year} Aztec List. All rights reserved.
-                        </p>
-                    </div>
-                    """,
+                    "html": html_content,
                 }
             )
         except Exception:
@@ -104,45 +96,25 @@ class EmailService:
             return False
 
         try:
-            # Escape all user input to prevent XSS and HTML injection
-            safe_username = html.escape(username) if username else None
-            safe_email = html.escape(email)
-            safe_subject = html.escape(subject)
-            safe_message = html.escape(message)
-            safe_ticket_id = html.escape(str(ticket_id))
+            # Prepare user info string
+            user_info = f"{username} ({email})" if username else email
 
-            user_info = f"{safe_username} ({safe_email})" if safe_username else safe_email
-
-            # Use configured frontend URL for admin dashboard link
-            admin_url = f"{settings.cors.frontend_url}/admin"
+            # Render template with Jinja2 (automatic escaping enabled)
+            template = jinja_env.get_template("support_ticket_notification.html")
+            html_content = template.render(
+                ticket_id=ticket_id,
+                user_info=user_info,
+                subject=subject,
+                message=message,
+                admin_url=f"{settings.cors.frontend_url}/admin",
+            )
 
             resend.Emails.send(
                 {
                     "from": settings.email.from_email,
                     "to": settings.email.support_email,
-                    "subject": f"New Support Ticket: {safe_subject}",
-                    "html": f"""
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <h2 style="color: #1f2937;">New Support Ticket</h2>
-
-                        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                            <p style="margin: 0;"><strong>Ticket ID:</strong> {safe_ticket_id}</p>
-                            <p style="margin: 10px 0 0 0;"><strong>From:</strong> {user_info}</p>
-                            <p style="margin: 10px 0 0 0;"><strong>Subject:</strong> {safe_subject}</p>
-                        </div>
-
-                        <div style="background-color: #ffffff; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px;">
-                            <p style="margin: 0;"><strong>Message:</strong></p>
-                            <p style="margin: 10px 0 0 0; white-space: pre-wrap;">{safe_message}</p>
-                        </div>
-
-                        <p style="margin-top: 20px;">
-                            <a href="{admin_url}" style="background-color: #374151; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                                View in Admin Dashboard
-                            </a>
-                        </p>
-                    </div>
-                    """,
+                    "subject": f"New Support Ticket: {subject}",
+                    "html": html_content,
                 }
             )
         except Exception:
