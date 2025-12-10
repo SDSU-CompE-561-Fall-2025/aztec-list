@@ -26,8 +26,7 @@ try:
         sys.exit(0)
 
     print(
-        f"\nRunning Prettier on {len(all_files)} file(s) with {runner}...\n",
-        file=sys.stderr,
+        f"Running Prettier on {len(all_files)} file(s)...", file=sys.stderr, flush=True
     )
 
     if frontend_files and not backend_files:
@@ -64,22 +63,55 @@ try:
             stderr=result_frontend.stderr + result_backend.stderr,
         )
 
+    output_lines = []
+    seen_lines = set()
+
+    noise_patterns = [
+        "Resolved, downloaded",
+        "Saved lockfile",
+        "Saved",
+        "Resolving dependencies",
+    ]
+
+    def should_skip(line: str) -> bool:
+        line_stripped = line.strip()
+        return any(pattern in line_stripped for pattern in noise_patterns)
+
+    # Process stdout
     if result.stdout:
         for line in result.stdout.splitlines():
-            print(line, file=sys.stderr, flush=True)
+            line_stripped = line.strip()
+            if (
+                line_stripped
+                and line_stripped not in seen_lines
+                and not should_skip(line)
+            ):
+                seen_lines.add(line_stripped)
+                output_lines.append(line)
 
+    # Process stderr (deduplicate against stdout)
     if result.stderr:
         for line in result.stderr.splitlines():
-            print(line, file=sys.stderr, flush=True)
+            line_stripped = line.strip()
+            if (
+                line_stripped
+                and line_stripped not in seen_lines
+                and not should_skip(line)
+            ):
+                seen_lines.add(line_stripped)
+                output_lines.append(line)
+
+    for line in output_lines:
+        print(line, file=sys.stderr, flush=True)
 
     if result.returncode != 0:
         print(
-            f"\n❌ Prettier failed with exit code {result.returncode}\n",
+            f"Prettier failed with exit code {result.returncode}",
             file=sys.stderr,
             flush=True,
         )
     else:
-        print("\n✅ Prettier completed successfully\n", file=sys.stderr, flush=True)
+        print("Prettier completed successfully", file=sys.stderr, flush=True)
 
     sys.exit(result.returncode)
 
