@@ -14,7 +14,9 @@ try:
         print("No files to lint", file=sys.stderr)
         sys.exit(0)
 
-    print(f"Running ESLint on {len(files)} file(s) with {runner}...", file=sys.stderr)
+    print(
+        f"\nRunning ESLint on {len(files)} file(s) with {runner}...\n", file=sys.stderr
+    )
     result = subprocess.run(
         [runner, "eslint", "--fix", *files],
         cwd=frontend_dir,
@@ -23,14 +25,21 @@ try:
     )
 
     if result.stdout:
-        print(result.stdout, file=sys.stderr)
+        for line in result.stdout.splitlines():
+            print(line, file=sys.stderr, flush=True)
+
     if result.stderr:
-        print(result.stderr, file=sys.stderr)
+        for line in result.stderr.splitlines():
+            print(line, file=sys.stderr, flush=True)
 
     if result.returncode != 0:
-        print(f"ESLint failed with exit code {result.returncode}", file=sys.stderr)
+        print(
+            f"\n❌ ESLint failed with exit code {result.returncode}\n",
+            file=sys.stderr,
+            flush=True,
+        )
     else:
-        print("ESLint completed successfully", file=sys.stderr)
+        print("\n✅ ESLint completed successfully\n", file=sys.stderr, flush=True)
 
     sys.exit(result.returncode)
 
