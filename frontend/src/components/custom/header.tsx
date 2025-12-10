@@ -130,19 +130,28 @@ export function Header() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/profile" className="cursor-pointer py-2">
+                  <Link
+                    href="/profile"
+                    className="cursor-pointer py-2 hover:bg-purple-50 dark:hover:bg-purple-950/30 focus:bg-purple-50 dark:focus:bg-purple-950/30"
+                  >
                     <User className="mr-2 h-4 w-4" />
                     <span className="text-sm">Profile</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings" className="cursor-pointer py-2">
+                  <Link
+                    href="/settings"
+                    className="cursor-pointer py-2 hover:bg-purple-50 dark:hover:bg-purple-950/30 focus:bg-purple-50 dark:focus:bg-purple-950/30"
+                  >
                     <Settings className="mr-2 h-4 w-4" />
                     <span className="text-sm">Settings</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/support" className="cursor-pointer py-2">
+                  <Link
+                    href="/support"
+                    className="cursor-pointer py-2 hover:bg-purple-50 dark:hover:bg-purple-950/30 focus:bg-purple-50 dark:focus:bg-purple-950/30"
+                  >
                     <Mail className="mr-2 h-4 w-4" />
                     <span className="text-sm">Contact Support</span>
                   </Link>
@@ -151,7 +160,10 @@ export function Header() {
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link href="/admin" className="cursor-pointer py-2 text-purple-400">
+                      <Link
+                        href="/admin"
+                        className="cursor-pointer py-2 hover:bg-purple-50 dark:hover:bg-purple-950/30 focus:bg-purple-50 dark:focus:bg-purple-950/30 text-purple-400"
+                      >
                         <Shield className="mr-2 h-4 w-4" />
                         <span className="text-sm font-semibold">Admin Dashboard</span>
                       </Link>
@@ -159,9 +171,12 @@ export function Header() {
                   </>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout} className="cursor-pointer py-2">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span className="text-sm">Log out</span>
+                <DropdownMenuItem
+                  onClick={logout}
+                  className="cursor-pointer py-2 hover:bg-red-50 dark:hover:bg-red-950/30 focus:bg-red-50 dark:focus:bg-red-950/30"
+                >
+                  <LogOut className="mr-2 h-4 w-4 text-red-600 dark:text-red-400" />
+                  <span className="text-sm text-red-600 dark:text-red-400">Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
