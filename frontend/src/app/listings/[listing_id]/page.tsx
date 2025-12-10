@@ -1,10 +1,10 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, User, Mail, Phone, Edit } from "lucide-react";
+import { ChevronLeft, User, Mail, Phone, Edit, MessageSquare, Loader2 } from "lucide-react";
 import { cn, getConditionColor } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import { createListingDetailQueryOptions } from "@/queryOptions/createListingDetailQueryOptions";
@@ -20,6 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { createOrGetConversation } from "@/lib/messaging-api";
+import { toast } from "sonner";
 
 const CONDITION_LABELS = {
   new: "New",
@@ -63,6 +65,7 @@ export default function ListingDetailPage() {
   const router = useRouter();
   const listingId = params.listing_id as string;
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: listing, isLoading, error } = useQuery(createListingDetailQueryOptions(listingId));
 
@@ -90,6 +93,45 @@ export default function ListingDetailPage() {
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showContactDialog, setShowContactDialog] = useState(false);
+
+  // Message seller mutation
+  const createConversationMutation = useMutation({
+    mutationFn: (otherUserId: string) => createOrGetConversation(otherUserId),
+    onSuccess: (conversation) => {
+      const otherUserId =
+        conversation.user_1_id === user?.id ? conversation.user_2_id : conversation.user_1_id;
+
+      // Invalidate conversations query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["conversations", user?.id] });
+
+      setShowContactDialog(false);
+      toast.success("Opening conversation...");
+      router.push(`/messages?conversation=${conversation.id}&user=${otherUserId}`);
+    },
+    onError: (error) => {
+      if (error instanceof Error && error.message === "SESSION_EXPIRED") {
+        toast.error("Your session has expired. Please log in again.");
+        // Clear auth state
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user");
+        router.push(`/login?redirect=/listings/${listingId}`);
+      } else {
+        toast.error(error instanceof Error ? error.message : "Failed to start conversation");
+      }
+    },
+  });
+
+  const handleMessageSeller = () => {
+    if (!user) {
+      toast.error("Please log in to message sellers");
+      router.push(`/login?redirect=/listings/${listingId}`);
+      return;
+    }
+
+    if (listing?.seller_id) {
+      createConversationMutation.mutate(listing.seller_id);
+    }
+  };
 
   const galleryImages = useMemo<GalleryImage[]>(() => {
     if (!listing) {
@@ -508,6 +550,31 @@ export default function ListingDetailPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-2 pt-3 sm:pt-4 pb-1 sm:pb-2">
+              {/* Message Option */}
+              <button
+                onClick={handleMessageSeller}
+                disabled={createConversationMutation.isPending}
+                className="w-full flex items-center gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-lg bg-muted hover:bg-muted/80 border hover:border-blue-500/50 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/20 shrink-0">
+                  {createConversationMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 animate-spin" />
+                  ) : (
+                    <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-foreground font-semibold text-sm sm:text-base mb-0.5">
+                    Send Message
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    {createConversationMutation.isPending
+                      ? "Starting conversation..."
+                      : "Chat with seller"}
+                  </p>
+                </div>
+              </button>
+
               {/* Email Option */}
               <a
                 href={`mailto:${seller?.email}?subject=${encodeURIComponent(`Interested in: ${listing.title}`)}&body=${encodeURIComponent(`Hi ${seller?.username},\n\nI'm interested in your listing "${listing.title}" on AztecList.\n\n`)}`}
