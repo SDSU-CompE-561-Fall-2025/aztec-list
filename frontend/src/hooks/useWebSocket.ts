@@ -42,6 +42,20 @@ export function useWebSocket({
   const baseReconnectDelay = 2000; // Slightly faster initial retry
   const hasShownMaxRetriesError = useRef(false);
 
+  // Use refs to store callbacks to prevent dependency changes
+  const onMessageRef = useRef(onMessage);
+  const onErrorRef = useRef(onError);
+  const onConnectRef = useRef(onConnect);
+  const onDisconnectRef = useRef(onDisconnect);
+
+  // Update refs when callbacks change
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+    onErrorRef.current = onError;
+    onConnectRef.current = onConnect;
+    onDisconnectRef.current = onDisconnect;
+  }, [onMessage, onError, onConnect, onDisconnect]);
+
   // Use a ref to store the connect function to avoid hoisting issues
   const connectFnRef = useRef<(() => void) | undefined>(undefined);
 
@@ -72,13 +86,13 @@ export function useWebSocket({
         setIsConnecting(false);
         reconnectAttemptsRef.current = 0; // Reset reconnect counter on successful connection
         hasShownMaxRetriesError.current = false; // Reset error flag
-        onConnect?.();
+        onConnectRef.current?.();
       };
 
       ws.onmessage = (event) => {
         try {
           const message: Message = JSON.parse(event.data);
-          onMessage(message);
+          onMessageRef.current(message);
         } catch (error) {
           console.error("Failed to parse WebSocket message:", error);
         }
@@ -87,14 +101,14 @@ export function useWebSocket({
       ws.onerror = (error) => {
         console.error("WebSocket error:", error);
         setIsConnecting(false);
-        onError?.(error);
+        onErrorRef.current?.(error);
       };
 
       ws.onclose = (event) => {
         console.log(`WebSocket disconnected: ${event.code} ${event.reason}`);
         setIsConnected(false);
         setIsConnecting(false);
-        onDisconnect?.();
+        onDisconnectRef.current?.();
 
         // Auto-reconnect with exponential backoff if not a normal closure
         if (event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts) {
@@ -114,7 +128,7 @@ export function useWebSocket({
         ) {
           console.error("Max reconnection attempts reached");
           hasShownMaxRetriesError.current = true;
-          onError?.(new Event("Max reconnection attempts reached"));
+          onErrorRef.current?.(new Event("Max reconnection attempts reached"));
         }
       };
 
@@ -123,7 +137,7 @@ export function useWebSocket({
       console.error("Failed to create WebSocket connection:", error);
       setIsConnecting(false);
     }
-  }, [conversationId, onMessage, onError, onConnect, onDisconnect]);
+  }, [conversationId]);
 
   // Store connect function in ref (inside effect to avoid render-phase assignment)
   useEffect(() => {
@@ -155,9 +169,13 @@ export function useWebSocket({
 
   // Connect on mount, disconnect on unmount
   useEffect(() => {
-    connect();
+    // Defer connection to avoid synchronous setState in effect
+    const timer = setTimeout(() => {
+      connect();
+    }, 0);
 
     return () => {
+      clearTimeout(timer);
       hasShownMaxRetriesError.current = false;
       disconnect();
     };
