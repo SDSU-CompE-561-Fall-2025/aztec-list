@@ -433,7 +433,7 @@ function ProfileContent() {
                 </p>
                 <Button
                   asChild
-                  className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white"
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
                   size="lg"
                 >
                   <Link href="/listings/create">
