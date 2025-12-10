@@ -250,6 +250,7 @@ export default function SettingsPage() {
       }
 
       // Fetch updated profile to get latest data with fresh updated_at timestamp
+      // This is done regardless of whether fields were updated, since picture changes also need refresh
       const profileResponse = await fetch(`${API_BASE_URL}/users/profile/`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -551,42 +552,42 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+    <div className="min-h-screen bg-background px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
       <div className="max-w-2xl mx-auto w-full">
         {/* Header */}
         <div className="mb-4 sm:mb-6">
           <Button
             variant="ghost"
-            className="text-gray-400 hover:text-gray-100 hover:bg-gray-800/50 -ml-3 mb-3"
+            className="text-muted-foreground hover:text-foreground -ml-3 mb-3"
             onClick={() => router.push("/profile")}
           >
             <ChevronLeft className="w-4 h-4 mr-2" />
             Back to Profile
           </Button>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Account Settings</h1>
-          <p className="text-gray-400 text-sm sm:text-base">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">Account Settings</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Manage your account preferences and information
           </p>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="profile" className="space-y-3 sm:space-y-4">
-          <TabsList className="bg-gray-900 border border-gray-800 w-full grid grid-cols-3 h-auto p-1">
+          <TabsList className="bg-muted border w-full grid grid-cols-3 h-auto p-1">
             <TabsTrigger
               value="profile"
-              className="text-xs sm:text-sm data-[state=active]:bg-gray-800"
+              className="text-xs sm:text-sm data-[state=active]:bg-background"
             >
               Profile
             </TabsTrigger>
             <TabsTrigger
               value="account"
-              className="text-xs sm:text-sm data-[state=active]:bg-gray-800"
+              className="text-xs sm:text-sm data-[state=active]:bg-background"
             >
               Account
             </TabsTrigger>
             <TabsTrigger
               value="security"
-              className="text-xs sm:text-sm data-[state=active]:bg-gray-800"
+              className="text-xs sm:text-sm data-[state=active]:bg-background"
             >
               Security
             </TabsTrigger>
@@ -594,10 +595,12 @@ export default function SettingsPage() {
 
           {/* Profile Tab */}
           <TabsContent value="profile">
-            <Card className="bg-gray-900 border-gray-800">
+            <Card className="bg-card border">
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl text-white">Profile Information</CardTitle>
-                <CardDescription className="text-sm sm:text-base text-gray-400">
+                <CardTitle className="text-lg sm:text-xl text-foreground">
+                  Profile Information
+                </CardTitle>
+                <CardDescription className="text-sm sm:text-base text-muted-foreground">
                   Add details to help buyers connect with you
                 </CardDescription>
               </CardHeader>
@@ -605,38 +608,38 @@ export default function SettingsPage() {
                 {isInitialLoading ? (
                   <div className="animate-pulse">
                     {/* Profile Picture Skeleton */}
-                    <div className="mb-6 pb-6 border-b border-gray-800">
+                    <div className="mb-6 pb-6 border-b">
                       <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-gray-800 rounded-full"></div>
+                        <div className="w-16 h-16 bg-muted rounded-full"></div>
                         <div className="flex gap-2">
-                          <div className="h-8 w-24 bg-gray-800 rounded"></div>
-                          <div className="h-8 w-24 bg-gray-800 rounded"></div>
+                          <div className="h-8 w-24 bg-muted rounded"></div>
+                          <div className="h-8 w-24 bg-muted rounded"></div>
                         </div>
                       </div>
                     </div>
                     {/* Form Fields Skeleton - wrapped in space-y-4 to match form */}
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <div className="h-6 w-24 bg-gray-800 rounded"></div>
-                        <div className="h-9 bg-gray-800 rounded"></div>
+                        <div className="h-6 w-24 bg-muted rounded"></div>
+                        <div className="h-9 bg-muted rounded"></div>
                       </div>
                       <div className="space-y-2">
-                        <div className="h-6 w-16 bg-gray-800 rounded"></div>
-                        <div className="h-9 bg-gray-800 rounded"></div>
-                        <div className="h-5 w-20 bg-gray-800 rounded"></div>
+                        <div className="h-6 w-16 bg-muted rounded"></div>
+                        <div className="h-9 bg-muted rounded"></div>
+                        <div className="h-5 w-20 bg-muted rounded"></div>
                       </div>
                       <div className="space-y-2">
-                        <div className="h-6 w-28 bg-gray-800 rounded"></div>
-                        <div className="h-9 bg-gray-800 rounded"></div>
-                        <div className="h-5 w-52 bg-gray-800 rounded"></div>
+                        <div className="h-6 w-28 bg-muted rounded"></div>
+                        <div className="h-9 bg-muted rounded"></div>
+                        <div className="h-5 w-52 bg-muted rounded"></div>
                       </div>
-                      <div className="h-9 w-full bg-gray-800 rounded"></div>
+                      <div className="h-9 w-full bg-muted rounded"></div>
                     </div>
                   </div>
                 ) : (
                   <>
                     {/* Profile Picture Section */}
-                    <div className="mb-6 pb-6 border-b border-gray-800">
+                    <div className="mb-6 pb-6 border-b">
                       <div className="flex items-center gap-4">
                         <div className="relative">
                           <div className="w-16 h-16 bg-gradient-to-br from-purple-500/20 to-purple-600/20 border-2 border-purple-500/30 rounded-full flex items-center justify-center overflow-hidden relative group">
@@ -715,7 +718,7 @@ export default function SettingsPage() {
 
                     <form onSubmit={handleProfileSave} className="space-y-3">
                       <div className="space-y-1.5">
-                        <Label htmlFor="name" className="text-sm sm:text-base text-gray-200">
+                        <Label htmlFor="name" className="text-sm sm:text-base text-foreground">
                           Full Name
                         </Label>
                         <Input
@@ -725,12 +728,12 @@ export default function SettingsPage() {
                           value={formName}
                           onChange={(e) => setFormName(e.target.value)}
                           disabled={isProfileLoading}
-                          className="bg-gray-950 border-gray-700 text-white text-sm placeholder:text-gray-600"
+                          className="text-sm placeholder:text-muted-foreground/50"
                         />
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label htmlFor="campus" className="text-sm sm:text-base text-gray-200">
+                        <Label htmlFor="campus" className="text-sm sm:text-base text-foreground">
                           Campus
                         </Label>
                         <Input
@@ -740,13 +743,12 @@ export default function SettingsPage() {
                           value={formCampus}
                           onChange={(e) => setFormCampus(e.target.value)}
                           disabled={isProfileLoading}
-                          className="bg-gray-950 border-gray-700 text-white text-sm placeholder:text-gray-600"
+                          className="text-sm placeholder:text-muted-foreground/50"
                         />
-                        <p className="text-xs sm:text-sm text-gray-500">Optional</p>
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label htmlFor="phone" className="text-sm sm:text-base text-gray-200">
+                        <Label htmlFor="phone" className="text-sm sm:text-base text-foreground">
                           Phone Number
                         </Label>
                         <Input
@@ -756,14 +758,15 @@ export default function SettingsPage() {
                           value={formPhone}
                           onChange={handlePhoneChange}
                           disabled={isProfileLoading}
-                          className={`bg-gray-950 border-gray-700 text-white text-sm placeholder:text-gray-600 ${
-                            phoneError ? "border-red-500" : ""
-                          }`}
+                          className={`text-sm placeholder:text-muted-foreground/50 ${phoneError ? "border-red-500" : ""}`}
                         />
-                        {phoneError && <p className="text-xs text-red-500">{phoneError}</p>}
-                        <p className="text-xs sm:text-sm text-gray-500">
-                          Optional - US format: (555) 123-4567
-                        </p>
+                        {phoneError ? (
+                          <p className="text-xs text-red-500">{phoneError}</p>
+                        ) : (
+                          <p className="text-xs sm:text-sm text-muted-foreground">
+                            US format: (555) 123-4567
+                          </p>
+                        )}
                       </div>
 
                       <div className="flex gap-3 pt-2">
@@ -793,20 +796,18 @@ export default function SettingsPage() {
                       open={showProfileCancelDialog}
                       onOpenChange={setShowProfileCancelDialog}
                     >
-                      <AlertDialogContent className="bg-gray-900 border-gray-800">
+                      <AlertDialogContent className="bg-card border">
                         <AlertDialogHeader>
-                          <AlertDialogTitle className="text-white">
+                          <AlertDialogTitle className="text-foreground">
                             Discard Changes?
                           </AlertDialogTitle>
-                          <AlertDialogDescription className="text-gray-400">
+                          <AlertDialogDescription className="text-muted-foreground">
                             Are you sure you want to discard your changes? This action cannot be
                             undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel className="bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-700">
-                            Keep Editing
-                          </AlertDialogCancel>
+                          <AlertDialogCancel>Keep Editing</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={handleCancelProfileChanges}
                             className="bg-red-600 hover:bg-red-700 text-white"
@@ -824,17 +825,19 @@ export default function SettingsPage() {
 
           {/* Account Tab */}
           <TabsContent value="account">
-            <Card className="bg-gray-900 border-gray-800">
+            <Card className="bg-card border">
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl text-white">Account Details</CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-gray-400">
+                <CardTitle className="text-lg sm:text-xl text-foreground">
+                  Account Details
+                </CardTitle>
+                <CardDescription className="text-xs sm:text-sm text-muted-foreground">
                   Update your username
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleAccountUpdate} className="space-y-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="username" className="text-sm sm:text-base text-gray-200">
+                    <Label htmlFor="username" className="text-sm sm:text-base text-foreground">
                       Username
                     </Label>
                     <Input
@@ -843,12 +846,12 @@ export default function SettingsPage() {
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       disabled={isAccountLoading}
-                      className="bg-gray-950 border-gray-700 text-white text-sm placeholder:text-gray-600"
+                      className="text-sm"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="email-display" className="text-sm sm:text-base text-gray-200">
+                    <Label htmlFor="email-display" className="text-sm sm:text-base text-foreground">
                       Email
                     </Label>
                     <Input
@@ -856,9 +859,9 @@ export default function SettingsPage() {
                       type="email"
                       value={user?.email ?? ""}
                       disabled
-                      className="bg-gray-950 border-gray-700 text-gray-500 text-sm cursor-not-allowed"
+                      className="text-sm cursor-not-allowed opacity-60"
                     />
-                    <p className="text-xs sm:text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Email cannot be changed at this time
                     </p>
                   </div>
@@ -890,17 +893,17 @@ export default function SettingsPage() {
                   open={showAccountCancelDialog}
                   onOpenChange={setShowAccountCancelDialog}
                 >
-                  <AlertDialogContent className="bg-gray-900 border-gray-800">
+                  <AlertDialogContent className="bg-card border">
                     <AlertDialogHeader>
-                      <AlertDialogTitle className="text-white">Discard Changes?</AlertDialogTitle>
-                      <AlertDialogDescription className="text-gray-400">
+                      <AlertDialogTitle className="text-foreground">
+                        Discard Changes?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className="text-muted-foreground">
                         Are you sure you want to discard your changes? This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel className="bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-700">
-                        Keep Editing
-                      </AlertDialogCancel>
+                      <AlertDialogCancel>Keep Editing</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleCancelAccountChanges}
                         className="bg-red-600 hover:bg-red-700 text-white"
@@ -913,16 +916,16 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            <Separator className="my-4 sm:my-6 bg-gray-800" />
+            <Separator className="my-4 sm:my-6" />
 
             {/* Delete Account Section */}
-            <Card className="bg-gray-900 border-red-900/50">
+            <Card className="bg-card border border-red-900/50">
               <CardHeader>
                 <CardTitle className="text-base sm:text-lg text-red-500 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4" />
                   Danger Zone
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-gray-400">
+                <CardDescription className="text-xs sm:text-sm text-muted-foreground">
                   Permanently delete your account and all associated data
                 </CardDescription>
               </CardHeader>
@@ -938,12 +941,12 @@ export default function SettingsPage() {
                       Delete Account
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="bg-gray-900 border-gray-800 max-w-md mx-4">
+                  <AlertDialogContent className="bg-card border max-w-md mx-4">
                     <AlertDialogHeader>
-                      <AlertDialogTitle className="text-base sm:text-lg text-white">
+                      <AlertDialogTitle className="text-base sm:text-lg text-foreground">
                         Are you absolutely sure?
                       </AlertDialogTitle>
-                      <AlertDialogDescription className="text-xs text-gray-400">
+                      <AlertDialogDescription className="text-xs text-muted-foreground">
                         This action cannot be undone. This will permanently delete your account, all
                         your listings, and remove all your data from our servers.
                       </AlertDialogDescription>
@@ -965,10 +968,12 @@ export default function SettingsPage() {
 
           {/* Security Tab */}
           <TabsContent value="security">
-            <Card className="bg-gray-900 border-gray-800">
+            <Card className="bg-card border">
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl text-white">Change Password</CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-gray-400">
+                <CardTitle className="text-lg sm:text-xl text-foreground">
+                  Change Password
+                </CardTitle>
+                <CardDescription className="text-xs sm:text-sm text-muted-foreground">
                   Update your password to keep your account secure
                 </CardDescription>
               </CardHeader>
@@ -977,7 +982,7 @@ export default function SettingsPage() {
                   <div className="space-y-1.5">
                     <Label
                       htmlFor="current-password"
-                      className="text-sm sm:text-base text-gray-200"
+                      className="text-sm sm:text-base text-foreground"
                     >
                       Current Password
                     </Label>
@@ -987,13 +992,13 @@ export default function SettingsPage() {
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       disabled={isPasswordLoading}
-                      className="bg-gray-950 border-gray-700 text-white text-sm placeholder:text-gray-600"
+                      className="text-sm"
                       placeholder="Enter current password"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="new-password" className="text-sm sm:text-base text-gray-200">
+                    <Label htmlFor="new-password" className="text-sm sm:text-base text-foreground">
                       New Password
                     </Label>
                     <Input
@@ -1002,10 +1007,10 @@ export default function SettingsPage() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       disabled={isPasswordLoading}
-                      className="bg-gray-950 border-gray-700 text-white text-sm placeholder:text-gray-600"
+                      className="text-sm"
                       placeholder="Enter new password"
                     />
-                    <p className="text-xs sm:text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Must be at least 8 characters
                     </p>
                   </div>
@@ -1013,7 +1018,7 @@ export default function SettingsPage() {
                   <div className="space-y-1.5">
                     <Label
                       htmlFor="confirm-password"
-                      className="text-sm sm:text-base text-gray-200"
+                      className="text-sm sm:text-base text-foreground"
                     >
                       Confirm New Password
                     </Label>
@@ -1023,7 +1028,7 @@ export default function SettingsPage() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       disabled={isPasswordLoading}
-                      className="bg-gray-950 border-gray-700 text-white text-sm placeholder:text-gray-600"
+                      className="text-sm"
                       placeholder="Confirm new password"
                     />
                   </div>

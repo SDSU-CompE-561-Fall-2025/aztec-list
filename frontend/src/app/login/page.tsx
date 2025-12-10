@@ -51,7 +51,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Login</CardTitle>
@@ -72,7 +72,6 @@ function LoginForm() {
                 required
                 disabled={isLoading}
                 autoComplete="username"
-                className="text-base"
               />
             </div>
 
@@ -107,7 +106,11 @@ function LoginForm() {
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full bg-purple-600 text-white hover:bg-purple-700"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -119,7 +122,7 @@ function LoginForm() {
             </Button>
           </form>
 
-          <div className="mt-4 text-center text-base">
+          <div className="mt-4 text-center text-sm">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="text-primary hover:underline font-medium">
               Sign up

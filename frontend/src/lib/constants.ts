@@ -11,7 +11,7 @@ export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Aztec List";
 
 // Query and pagination defaults
 export const DEFAULT_SORT = "recent";
-export const DEFAULT_LIMIT = 20;
+export const DEFAULT_LIMIT = 16;
 
 // Search configuration
 export const MAX_SEARCH_LENGTH = 200;

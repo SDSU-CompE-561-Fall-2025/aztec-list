@@ -15,11 +15,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LISTINGS_BASE_URL, DEFAULT_SORT, STATIC_BASE_URL } from "@/lib/constants";
+import { LISTINGS_BASE_URL, DEFAULT_SORT } from "@/lib/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { LogOut, Settings, User, Search, Shield } from "lucide-react";
 import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOptions";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
+import { ThemeSwitcher } from "@/components/custom/theme-switcher";
 
 export function Header() {
   const router = useRouter();
@@ -60,45 +61,45 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-gray-950">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <div className="text-2xl font-bold">
             <span className="text-purple-500">Aztec</span>
-            <span className="text-white">List</span>
+            <span className="text-foreground">List</span>
           </div>
-          <span className="text-sm text-gray-400">Campus</span>
         </Link>
 
         {/* Search Bar */}
         <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 bg-gray-900 border-gray-700 text-gray-100 placeholder:text-gray-500"
+              className="w-full pl-10"
             />
           </div>
         </form>
 
         {/* Auth Buttons / User Menu */}
         <div className="flex items-center gap-3">
+          <ThemeSwitcher />
           {isLoading ? (
             // Show placeholder while checking auth to avoid hydration mismatch
             <div className="flex items-center gap-3">
-              <div className="h-9 w-16 bg-gray-800 rounded animate-pulse" />
-              <div className="h-9 w-20 bg-gray-800 rounded animate-pulse" />
+              <div className="h-9 w-16 bg-muted rounded animate-pulse" />
+              <div className="h-9 w-20 bg-muted rounded animate-pulse" />
             </div>
           ) : !isAuthenticated ? (
             <>
               <Button variant="outline" asChild>
                 <Link href="/login">Login</Link>
               </Button>
-              <Button asChild>
+              <Button asChild className="bg-purple-600 text-white hover:bg-purple-700">
                 <Link href="/signup">Sign Up</Link>
               </Button>
             </>

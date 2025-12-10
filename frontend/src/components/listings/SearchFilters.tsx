@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { CATEGORIES, Category } from "@/types/listing/filters/category";
 import { CONDITIONS, Condition } from "@/types/listing/filters/condition";
 import { SORT_OPTIONS, Sort } from "@/types/listing/filters/sort";
@@ -23,6 +23,19 @@ export function SearchFilters() {
   const [maxPrice, setMaxPrice] = useState("");
   const [priceError, setPriceError] = useState(false);
 
+  // Get current values from URL
+  const urlCategoryParam = searchParams.get("category");
+  const urlCategory =
+    urlCategoryParam && CATEGORIES.includes(urlCategoryParam as Category) ? urlCategoryParam : "";
+
+  const urlSortParam = searchParams.get("sort");
+  const urlSort =
+    urlSortParam && SORT_OPTIONS.includes(urlSortParam as Sort) ? urlSortParam : DEFAULT_SORT;
+
+  // Local state for pending category and sort changes (before "Apply Filters" is clicked)
+  const [selectedCategory, setSelectedCategory] = useState<string>(() => urlCategory);
+  const [selectedSort, setSelectedSort] = useState<string>(() => urlSort);
+
   // Derive condition from URL - this is the source of truth
   const urlConditionParam = searchParams.get("condition");
   const urlCondition =
@@ -36,13 +49,18 @@ export function SearchFilters() {
     urlCondition ? [urlCondition] : []
   );
 
-  // Sync with URL when it changes (e.g., browser back/forward, or after applying filters)
-  // Use a ref to track if we need to sync
-  const prevUrlConditionRef = useRef(urlCondition);
-  if (prevUrlConditionRef.current !== urlCondition) {
-    prevUrlConditionRef.current = urlCondition;
+  // Sync local state with URL changes (e.g., browser back/forward, or after applying filters)
+  useEffect(() => {
     setSelectedConditions(urlCondition ? [urlCondition] : []);
-  }
+  }, [urlCondition]);
+
+  useEffect(() => {
+    setSelectedCategory(urlCategory);
+  }, [urlCategory]);
+
+  useEffect(() => {
+    setSelectedSort(urlSort);
+  }, [urlSort]);
 
   const updateURL = (updates: Record<string, string | undefined>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -69,11 +87,11 @@ export function SearchFilters() {
   };
 
   const handleCategoryChange = (value: string) => {
-    updateURL({ category: value || undefined });
+    setSelectedCategory(value);
   };
 
   const handleSortChange = (value: string) => {
-    updateURL({ sort: value });
+    setSelectedSort(value);
   };
 
   const handleApplyFilters = () => {
@@ -93,6 +111,8 @@ export function SearchFilters() {
       minPrice: min?.toString(),
       maxPrice: max?.toString(),
       condition: conditionValue,
+      category: selectedCategory || undefined,
+      sort: selectedSort,
       offset: undefined, // Reset to first page when filters change
     });
   };
@@ -101,6 +121,8 @@ export function SearchFilters() {
     setMinPrice("");
     setMaxPrice("");
     setSelectedConditions([]);
+    setSelectedCategory("");
+    setSelectedSort(DEFAULT_SORT);
     setPriceError(false);
     router.replace(`${LISTINGS_BASE_URL}?sort=${DEFAULT_SORT}`);
   };
@@ -127,29 +149,17 @@ export function SearchFilters() {
     }
   };
 
-  const currentCategoryParam = searchParams.get("category");
-  const currentCategory =
-    currentCategoryParam && CATEGORIES.includes(currentCategoryParam as Category)
-      ? currentCategoryParam
-      : "";
-
-  const currentSortParam = searchParams.get("sort");
-  const currentSort =
-    currentSortParam && SORT_OPTIONS.includes(currentSortParam as Sort)
-      ? currentSortParam
-      : DEFAULT_SORT;
-
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const filtersContent = (
     <div className="space-y-6">
       {/* Category Section */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-100 mb-3">Category</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-3">Category</h3>
         <select
-          value={currentCategory}
+          value={selectedCategory}
           onChange={(e) => handleCategoryChange(e.target.value)}
-          className="w-full bg-gray-800 text-gray-100 border border-gray-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full bg-background text-foreground border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           <option value="">All Categories</option>
           {CATEGORIES.map((cat) => (
@@ -162,7 +172,7 @@ export function SearchFilters() {
 
       {/* Price Range Section */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-100 mb-3">Price Range</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-3">Price Range</h3>
         <div className="space-y-2">
           <input
             type="number"
@@ -171,8 +181,8 @@ export function SearchFilters() {
             value={minPrice}
             onChange={(e) => handlePriceChange(e.target.value, setMinPrice)}
             onKeyDown={handlePriceKeyDown}
-            className={`w-full bg-gray-800 text-gray-100 border ${
-              priceError ? "border-red-500" : "border-gray-700"
+            className={`w-full bg-background text-foreground border ${
+              priceError ? "border-red-500" : "border"
             } rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500`}
           />
           <input
@@ -182,8 +192,8 @@ export function SearchFilters() {
             value={maxPrice}
             onChange={(e) => handlePriceChange(e.target.value, setMaxPrice)}
             onKeyDown={handlePriceKeyDown}
-            className={`w-full bg-gray-800 text-gray-100 border ${
-              priceError ? "border-red-500" : "border-gray-700"
+            className={`w-full bg-background text-foreground border ${
+              priceError ? "border-red-500" : "border"
             } rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500`}
           />
           {priceError && <p className="text-xs text-red-500">{PRICE_ERROR_MESSAGE}</p>}
@@ -192,18 +202,18 @@ export function SearchFilters() {
 
       {/* Condition Section */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-100 mb-3">Condition</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-3">Condition</h3>
         <div className="space-y-2">
           {CONDITIONS.map((condition) => (
             <label
               key={condition}
-              className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer"
+              className="flex items-center gap-2 text-sm text-foreground cursor-pointer"
             >
               <input
                 type="checkbox"
                 checked={selectedConditions.includes(condition)}
                 onChange={() => handleConditionToggle(condition)}
-                className="rounded border-gray-700 bg-gray-800 text-purple-500 focus:ring-2 focus:ring-purple-500"
+                className="rounded border bg-background text-purple-500 focus:ring-2 focus:ring-purple-500"
               />
               {formatConditionLabel(condition)}
             </label>
@@ -213,11 +223,11 @@ export function SearchFilters() {
 
       {/* Sort By Section */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-100 mb-3">Sort By</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-3">Sort By</h3>
         <select
-          value={currentSort}
+          value={selectedSort}
           onChange={(e) => handleSortChange(e.target.value)}
-          className="w-full bg-gray-800 text-gray-100 border border-gray-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full bg-background text-foreground border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           {SORT_OPTIONS.map((sort) => (
             <option key={sort} value={sort}>
@@ -238,7 +248,7 @@ export function SearchFilters() {
       {/* Clear Filters Button */}
       <button
         onClick={handleClearFilters}
-        className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-2 px-4 rounded-md text-sm transition-colors"
+        className="w-full bg-muted hover:bg-muted/80 text-muted-foreground font-medium py-2 px-4 rounded-md text-sm transition-colors"
       >
         Clear Filters
       </button>
@@ -256,9 +266,9 @@ export function SearchFilters() {
               Filters
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-80 bg-gray-900 border-gray-800">
+          <SheetContent side="left" className="w-80">
             <SheetHeader>
-              <SheetTitle className="text-gray-100">Filters</SheetTitle>
+              <SheetTitle>Filters</SheetTitle>
             </SheetHeader>
             <div className="mt-6">{filtersContent}</div>
           </SheetContent>
@@ -266,7 +276,7 @@ export function SearchFilters() {
       </div>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block w-80 bg-gray-900 p-6 rounded-lg">{filtersContent}</aside>
+      <aside className="hidden lg:block w-80 bg-card p-6 rounded-lg border">{filtersContent}</aside>
     </>
   );
 }

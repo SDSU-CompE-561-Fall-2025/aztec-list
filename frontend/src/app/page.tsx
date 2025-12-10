@@ -27,14 +27,15 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 p-8">
+    <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto">
         {/* Hero Section */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-white mb-3">
-            Welcome to <span className="text-purple-500">AztecList</span> Campus
+          <h1 className="text-3xl font-bold mb-3">
+            Welcome to <span className="text-purple-500">Aztec</span>
+            <span className="text-foreground">List</span>
           </h1>
-          <p className="text-gray-400 text-base">
+          <p className="text-muted-foreground text-base">
             Buy and sell items on campus. Find great deals from fellow students.
           </p>
         </div>
@@ -42,9 +43,9 @@ export default function HomePage() {
         {/* Listings Section */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-100">Latest Listings</h2>
+            <h2 className="text-xl font-semibold text-foreground">Latest Listings</h2>
             {data && (
-              <p className="text-base text-gray-400">
+              <p className="text-base text-muted-foreground">
                 {data.count} {data.count === 1 ? "listing" : "listings"} available
               </p>
             )}

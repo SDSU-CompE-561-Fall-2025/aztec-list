@@ -118,9 +118,6 @@ class ProfileService:
             profile_data = profile.model_dump(exclude_unset=True)
             if profile_data.get("profile_picture_url"):
                 profile_data["profile_picture_url"] = str(profile_data["profile_picture_url"])
-            # Ensure required field 'name' has a default value if not provided
-            if "name" not in profile_data:
-                profile_data["name"] = "User"
             return ProfileRepository.create(db, user_id, profile_data)
 
         update_data = profile.model_dump(exclude_unset=True)
@@ -148,10 +145,8 @@ class ProfileService:
         """
         db_profile = ProfileRepository.get_by_user_id(db, user_id)
         if not db_profile:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Profile for user ID {user_id} not found",
-            )
+            # Create empty profile if it doesn't exist
+            db_profile = ProfileRepository.create(db, user_id, {})
         return ProfileRepository.update_profile_picture(db, db_profile, str(data.picture_url))
 
     async def upload_profile_picture(

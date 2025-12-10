@@ -53,7 +53,7 @@ function ListingsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 p-4 md:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="lg:flex lg:gap-8">
           {/* Sidebar with filters */}
@@ -64,11 +64,11 @@ function ListingsContent() {
             {/* Search query display */}
             {filters.q && (
               <div className="mb-6">
-                <h1 className="text-xl font-bold text-gray-100">
+                <h1 className="text-xl font-bold text-foreground">
                   Search results for &quot;{filters.q}&quot;
                 </h1>
                 {data && (
-                  <p className="text-sm text-gray-400 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {data.count} {data.count === 1 ? "result" : "results"} found
                   </p>
                 )}

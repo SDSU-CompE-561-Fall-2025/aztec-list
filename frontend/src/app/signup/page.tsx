@@ -105,7 +105,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
@@ -164,7 +164,7 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -179,7 +179,7 @@ export default function SignupPage() {
                       <div
                         key={i}
                         className={`h-1 flex-1 rounded-full transition-colors ${
-                          i < passwordStrength ? strengthInfo.color : "bg-gray-700"
+                          i < passwordStrength ? strengthInfo.color : "bg-muted"
                         }`}
                       />
                     ))}
@@ -190,13 +190,11 @@ export default function SignupPage() {
                 </div>
               )}
 
-              <p className="text-base text-muted-foreground">At least 8 characters</p>
+              <p className="text-xs text-muted-foreground">At least 8 characters</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-lg">
-                Confirm Password
-              </Label>
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
@@ -213,7 +211,7 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   tabIndex={-1}
                 >
                   {showConfirmPassword ? (
@@ -226,12 +224,16 @@ export default function SignupPage() {
             </div>
 
             {error && (
-              <div className="text-lg text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3">
+              <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3">
                 {error}
               </div>
             )}
 
-            <Button type="submit" className="w-full text-lg" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full bg-purple-600 text-white hover:bg-purple-700"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -243,7 +245,7 @@ export default function SignupPage() {
             </Button>
           </form>
 
-          <div className="mt-4 text-center text-base">
+          <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
             <Link href="/login" className="text-primary hover:underline font-medium">
               Login

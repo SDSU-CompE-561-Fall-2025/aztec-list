@@ -5,7 +5,10 @@ import { HeaderClient } from "@/components/custom/header-client";
 import { ToasterClient } from "@/components/ui/toaster-client";
 
 export const metadata: Metadata = {
-  title: "AztecList Campus",
+  title: {
+    template: "%s | AztecList",
+    default: "AztecList",
+  },
   description: "Campus marketplace for students",
 };
 
