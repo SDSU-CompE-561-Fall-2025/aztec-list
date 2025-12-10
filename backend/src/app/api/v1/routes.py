@@ -5,7 +5,7 @@ from app.routes.auth import auth_router
 from app.routes.listing_images import listing_images_router
 from app.routes.listings import listing_router
 from app.routes.profiles import profile_router
-from app.routes.support import router as support_router
+from app.routes.support_tickets import router as support_router
 from app.routes.users import user_router
 
 api_router = APIRouter(prefix="/api/v1")

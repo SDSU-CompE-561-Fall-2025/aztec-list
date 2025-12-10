@@ -7,13 +7,11 @@ This module handles support ticket creation and management endpoints.
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from fastapi import APIRouter, Depends, Request, status
+from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_optional_user, require_admin
-from app.core.email import email_service
 from app.core.rate_limiter import limiter
 from app.models.support_ticket import SupportTicket
 from app.models.user import User
@@ -22,11 +20,17 @@ from app.schemas.support_ticket import (
     SupportTicketResponse,
     SupportTicketStatusUpdate,
 )
+from app.services.support_ticket import support_ticket_service
 
-router = APIRouter(prefix="/support", tags=["support"])
+router = APIRouter(prefix="/support", tags=["Support"])
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create support ticket",
+    description="Submit a support ticket. Authentication optional - if logged in, ticket will be linked to your account.",
+)
 @limiter.limit("3/hour;10/hour")
 async def create_support_ticket(
     request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
@@ -52,46 +56,20 @@ async def create_support_ticket(
         current_user: Current authenticated user (optional)
 
     Returns:
-        SupportTicket: Created support ticket
+        SupportTicketResponse: Created support ticket with email status
 
     Raises:
         HTTPException: 429 if rate limit exceeded
     """
-    # Create ticket
-    ticket = SupportTicket(
-        user_id=current_user.id if current_user else None,
-        email=ticket_data.email,
-        subject=ticket_data.subject,
-        message=ticket_data.message,
-    )
-
-    db.add(ticket)
-    db.commit()
-    db.refresh(ticket)
-
-    # Send confirmation email to user
-    confirmation_sent = email_service.send_support_ticket_confirmation(
-        email=ticket.email,
-        subject=ticket.subject,
-        ticket_id=str(ticket.id),
-    )
-
-    # Send notification to support team
-    notification_sent = email_service.send_support_ticket_notification(
-        email=ticket.email,
-        username=current_user.username if current_user else None,
-        subject=ticket.subject,
-        message=ticket.message,
-        ticket_id=str(ticket.id),
-    )
-
-    # Return ticket with email status
-    response_data = SupportTicketResponse.model_validate(ticket)
-    response_data.email_sent = confirmation_sent and notification_sent
-    return response_data
+    return support_ticket_service.create(db, ticket_data, current_user)
 
 
-@router.get("", response_model=list[SupportTicketResponse])
+@router.get(
+    "",
+    response_model=list[SupportTicketResponse],
+    summary="List all support tickets",
+    description="Retrieve all support tickets with pagination. Admin access required.",
+)
 async def get_support_tickets(
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[User, Depends(require_admin)],
@@ -108,19 +86,17 @@ async def get_support_tickets(
         limit: Maximum number of records to return
 
     Returns:
-        list[SupportTicket]: List of support tickets
+        list[SupportTicketResponse]: List of support tickets
     """
-    result = db.execute(
-        select(SupportTicket)
-        .options(selectinload(SupportTicket.user))
-        .order_by(SupportTicket.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-    )
-    return list(result.scalars().all())
+    return support_ticket_service.get_all(db, skip=skip, limit=limit)
 
 
-@router.get("/{ticket_id}", response_model=SupportTicketResponse)
+@router.get(
+    "/{ticket_id}",
+    response_model=SupportTicketResponse,
+    summary="Get support ticket by ID",
+    description="Retrieve a specific support ticket by its ID. Admin access required.",
+)
 async def get_support_ticket(
     ticket_id: uuid.UUID,
     db: Annotated[Session, Depends(get_db)],
@@ -135,28 +111,20 @@ async def get_support_ticket(
         _: Admin user (required)
 
     Returns:
-        SupportTicket: Support ticket details
+        SupportTicketResponse: Support ticket details
 
     Raises:
         HTTPException: If ticket not found
     """
-    result = db.execute(
-        select(SupportTicket)
-        .options(selectinload(SupportTicket.user))
-        .where(SupportTicket.id == ticket_id)
-    )
-    ticket = result.scalar_one_or_none()
-
-    if not ticket:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Support ticket not found",
-        )
-
-    return ticket
+    return support_ticket_service.get_by_id(db, ticket_id)
 
 
-@router.patch("/{ticket_id}/status", response_model=SupportTicketResponse)
+@router.patch(
+    "/{ticket_id}/status",
+    response_model=SupportTicketResponse,
+    summary="Update ticket status",
+    description="Update the status of a support ticket (OPEN, IN_PROGRESS, RESOLVED, CLOSED). Admin access required.",
+)
 async def update_ticket_status(
     ticket_id: uuid.UUID,
     status_update: SupportTicketStatusUpdate,
@@ -173,28 +141,20 @@ async def update_ticket_status(
         _: Admin user (required)
 
     Returns:
-        SupportTicket: Updated support ticket
+        SupportTicketResponse: Updated support ticket
 
     Raises:
         HTTPException: If ticket not found
     """
-    result = db.execute(select(SupportTicket).where(SupportTicket.id == ticket_id))
-    ticket = result.scalar_one_or_none()
-
-    if not ticket:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Support ticket not found",
-        )
-
-    ticket.status = status_update.status
-    db.commit()
-    db.refresh(ticket)
-
-    return ticket
+    return support_ticket_service.update_status(db, ticket_id, status_update.status)
 
 
-@router.delete("/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{ticket_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete support ticket",
+    description="Permanently delete a support ticket. Useful for removing spam or test tickets. Admin access required.",
+)
 async def delete_support_ticket(
     ticket_id: uuid.UUID,
     db: Annotated[Session, Depends(get_db)],
@@ -213,14 +173,4 @@ async def delete_support_ticket(
     Raises:
         HTTPException: If ticket not found
     """
-    result = db.execute(select(SupportTicket).where(SupportTicket.id == ticket_id))
-    ticket = result.scalar_one_or_none()
-
-    if not ticket:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Support ticket not found",
-        )
-
-    db.delete(ticket)
-    db.commit()
+    support_ticket_service.delete(db, ticket_id)
