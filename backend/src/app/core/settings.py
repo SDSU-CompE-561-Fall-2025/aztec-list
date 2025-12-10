@@ -114,6 +114,10 @@ class CORSSettings(BaseModel):
         default=["*"],
         description="HTTP headers allowed in CORS requests (* allows all)",
     )
+    frontend_url: str = Field(
+        default="http://localhost:3000",
+        description="Primary frontend URL for email links and redirects. Should match production frontend domain.",
+    )
 
     @model_validator(mode="after")
     def validate_credentials_with_wildcard(self) -> "CORSSettings":

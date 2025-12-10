@@ -22,21 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { API_BASE_URL } from "@/lib/constants";
-import { getAuthToken } from "@/lib/auth";
 import { toast } from "sonner";
 import { showErrorToast } from "@/lib/errorHandling";
-
-interface SupportTicket {
-  id: string;
-  user_id: string | null;
-  email: string;
-  subject: string;
-  message: string;
-  status: "open" | "in_progress" | "resolved" | "closed";
-  created_at: string;
-  updated_at: string;
-}
+import {
+  getSupportTickets,
+  updateSupportTicketStatus,
+  deleteSupportTicket,
+  type SupportTicket,
+} from "@/lib/api";
 
 const STATUS_COLORS = {
   open: "bg-blue-500/10 text-blue-400 border-blue-500/30",
@@ -57,40 +50,12 @@ export function SupportTicketsView() {
 
   const { data: tickets, isLoading } = useQuery<SupportTicket[]>({
     queryKey: ["support-tickets"],
-    queryFn: async () => {
-      const token = getAuthToken();
-      const response = await fetch(`${API_BASE_URL}/support`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch support tickets");
-      }
-
-      return response.json();
-    },
+    queryFn: getSupportTickets,
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ ticketId, status }: { ticketId: string; status: string }) => {
-      const token = getAuthToken();
-      const response = await fetch(`${API_BASE_URL}/support/${ticketId}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update ticket status");
-      }
-
-      return response.json();
-    },
+    mutationFn: ({ ticketId, status }: { ticketId: string; status: string }) =>
+      updateSupportTicketStatus(ticketId, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["support-tickets"] });
       toast.success("Ticket status updated");
@@ -101,19 +66,7 @@ export function SupportTicketsView() {
   });
 
   const deleteTicketMutation = useMutation({
-    mutationFn: async (ticketId: string) => {
-      const token = getAuthToken();
-      const response = await fetch(`${API_BASE_URL}/support/${ticketId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete ticket");
-      }
-    },
+    mutationFn: deleteSupportTicket,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["support-tickets"] });
       toast.success("Ticket deleted");

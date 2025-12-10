@@ -8,6 +8,7 @@ confirmations.
 
 import html
 import logging
+from datetime import UTC, datetime
 
 import resend
 
@@ -44,6 +45,7 @@ class EmailService:
             # Escape user input to prevent XSS
             safe_ticket_id = html.escape(str(ticket_id))
             safe_subject = html.escape(subject)
+            current_year = datetime.now(UTC).year
 
             resend.Emails.send(
                 {
@@ -66,7 +68,7 @@ class EmailService:
 
                         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
                         <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-                            © 2025 Aztec List. All rights reserved.
+                            © {current_year} Aztec List. All rights reserved.
                         </p>
                     </div>
                     """,
@@ -111,9 +113,8 @@ class EmailService:
 
             user_info = f"{safe_username} ({safe_email})" if safe_username else safe_email
 
-            # Get frontend URL from CORS settings for admin dashboard link
-            frontend_url = settings.cors.allowed_origins[0] if settings.cors.allowed_origins else ""
-            admin_url = f"{frontend_url}/admin" if frontend_url else "#"
+            # Use configured frontend URL for admin dashboard link
+            admin_url = f"{settings.cors.frontend_url}/admin"
 
             resend.Emails.send(
                 {

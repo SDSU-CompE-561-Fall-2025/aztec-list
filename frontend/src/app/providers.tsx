@@ -21,7 +21,14 @@ export function Providers({ children }: { children: ReactNode }) {
               // Automatically handle banned users globally
               const message = error instanceof Error ? error.message : String(error);
               if (isBannedError(message)) {
-                handleBannedUser();
+                // Track if we've already handled this to prevent duplicate logout/redirects
+                if (
+                  typeof window !== "undefined" &&
+                  !window.sessionStorage.getItem("banned_handler_called")
+                ) {
+                  window.sessionStorage.setItem("banned_handler_called", "true");
+                  handleBannedUser();
+                }
               }
             },
           },

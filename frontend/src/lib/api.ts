@@ -289,3 +289,119 @@ export const getUser = async (userId: string): Promise<UserPublic> => {
 
   return data as UserPublic;
 };
+
+// Support Ticket API functions
+
+export interface SupportTicket {
+  id: string;
+  user_id: string | null;
+  email: string;
+  subject: string;
+  message: string;
+  status: "open" | "in_progress" | "resolved" | "closed";
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateSupportTicketData {
+  email: string;
+  subject: string;
+  message: string;
+}
+
+export interface CreateSupportTicketResponse extends SupportTicket {
+  email_sent: boolean;
+}
+
+export const createSupportTicket = async (
+  data: CreateSupportTicketData
+): Promise<CreateSupportTicketResponse> => {
+  const token = getAuthToken();
+
+  const res = await fetch(`${API_BASE_URL}/support`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: "Failed to submit ticket" }));
+    throw new Error(error.detail || "Failed to submit ticket");
+  }
+
+  return res.json();
+};
+
+export const getSupportTickets = async (): Promise<SupportTicket[]> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/support`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to fetch support tickets: ${res.status} ${errorText}`);
+  }
+
+  const data = await res.json();
+
+  if (!Array.isArray(data)) {
+    throw new Error("Invalid response format from API");
+  }
+
+  return data as SupportTicket[];
+};
+
+export const updateSupportTicketStatus = async (
+  ticketId: string,
+  status: string
+): Promise<SupportTicket> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/support/${ticketId}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to update ticket status: ${res.status} ${errorText}`);
+  }
+
+  return res.json();
+};
+
+export const deleteSupportTicket = async (ticketId: string): Promise<void> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/support/${ticketId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to delete ticket: ${res.status} ${errorText}`);
+  }
+};

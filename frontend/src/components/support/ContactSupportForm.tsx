@@ -9,40 +9,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
-import { API_BASE_URL } from "@/lib/constants";
-
-interface SupportTicketData {
-  email: string;
-  subject: string;
-  message: string;
-}
+import { createSupportTicket, type CreateSupportTicketData } from "@/lib/api";
 
 export function ContactSupportForm() {
   const { user } = useAuth();
   const [email, setEmail] = useState(user?.email || "");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
-  const [errors, setErrors] = useState<Partial<Record<keyof SupportTicketData, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof CreateSupportTicketData, string>>>({});
   const [successMessage, setSuccessMessage] = useState("");
 
   const createTicketMutation = useMutation({
-    mutationFn: async (data: SupportTicketData) => {
-      const response = await fetch(`${API_BASE_URL}/support`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to submit ticket");
-      }
-
-      return response.json();
-    },
+    mutationFn: createSupportTicket,
     onSuccess: (data) => {
       const message = data.email_sent
         ? "Your ticket has been submitted! You'll receive a confirmation email and our support team will respond as soon as possible."
@@ -62,7 +40,7 @@ export function ContactSupportForm() {
   });
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof SupportTicketData, string>> = {};
+    const newErrors: Partial<Record<keyof CreateSupportTicketData, string>> = {};
 
     if (!email.trim()) {
       newErrors.email = "Email is required";
@@ -178,10 +156,11 @@ export function ContactSupportForm() {
               }}
               placeholder="Please provide as much detail as possible..."
               rows={6}
+              maxLength={2000}
               className={`resize-none ${errors.message ? "border-red-500" : ""}`}
             />
             {errors.message && <p className="text-sm text-red-500">{errors.message}</p>}
-            <p className="text-xs text-muted-foreground">{message.length} / 5000 characters</p>
+            <p className="text-xs text-muted-foreground">{message.length} / 2000 characters</p>
           </div>
 
           {/* Submit Button */}

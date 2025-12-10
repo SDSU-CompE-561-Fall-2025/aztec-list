@@ -16,9 +16,9 @@ from app.core.enums import TicketStatus
 class SupportTicketCreate(BaseModel):
     """Schema for creating a support ticket."""
 
-    email: EmailStr = Field(..., description="Email address for contact")
+    email: EmailStr = Field(..., max_length=254, description="Email address for contact")
     subject: str = Field(..., min_length=3, max_length=200, description="Ticket subject")
-    message: str = Field(..., min_length=10, max_length=5000, description="Ticket message")
+    message: str = Field(..., min_length=10, max_length=2000, description="Ticket message")
 
 
 class SupportTicketResponse(BaseModel):
