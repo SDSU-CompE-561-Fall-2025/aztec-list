@@ -47,7 +47,7 @@ class EmailService:
                     "subject": "Support Ticket Received - Aztec List",
                     "html": f"""
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <h2 style="color: #9333ea;">Support Ticket Received</h2>
+                        <h2 style="color: #1f2937;">Support Ticket Received</h2>
                         <p>Thank you for contacting Aztec List support. We have received your message and will respond as soon as possible.</p>
 
                         <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
@@ -98,6 +98,9 @@ class EmailService:
 
         try:
             user_info = f"{username} ({email})" if username else email
+            # Get frontend URL from CORS settings for admin dashboard link
+            frontend_url = settings.cors.allowed_origins[0] if settings.cors.allowed_origins else ""
+            admin_url = f"{frontend_url}/admin" if frontend_url else "#"
 
             resend.Emails.send(
                 {
@@ -106,7 +109,7 @@ class EmailService:
                     "subject": f"New Support Ticket: {subject}",
                     "html": f"""
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <h2 style="color: #9333ea;">New Support Ticket</h2>
+                        <h2 style="color: #1f2937;">New Support Ticket</h2>
 
                         <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
                             <p style="margin: 0;"><strong>Ticket ID:</strong> {ticket_id}</p>
@@ -120,7 +123,7 @@ class EmailService:
                         </div>
 
                         <p style="margin-top: 20px;">
-                            <a href="#" style="background-color: #9333ea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                            <a href="{admin_url}" style="background-color: #374151; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; display: inline-block;">
                                 View in Admin Dashboard
                             </a>
                         </p>
