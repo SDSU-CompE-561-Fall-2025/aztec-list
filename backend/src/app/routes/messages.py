@@ -110,6 +110,7 @@ async def get_conversations(
     """
     return ConversationRepository.get_user_conversations(db, current_user.id)
 
+
 @message_router.get(
     "/conversations/{conversation_id}/messages",
     summary="Get messages from a conversation",
@@ -120,7 +121,9 @@ async def get_conversation_messages(
     conversation_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
-    limit: Annotated[int, Query(ge=1, le=100, description="Maximum number of messages to return")] = 20,
+    limit: Annotated[
+        int, Query(ge=1, le=100, description="Maximum number of messages to return")
+    ] = 20,
     skip: Annotated[int, Query(ge=0, description="Number of messages to skip")] = 0,
 ) -> list[Message]:
     """

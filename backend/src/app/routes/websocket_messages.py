@@ -23,9 +23,7 @@ websocket_router = APIRouter()
 active_connections: dict[uuid.UUID, list[WebSocket]] = {}
 
 
-async def broadcast_message_to_conversation(
-    conversation_id: uuid.UUID, message_json: str
-) -> None:
+async def broadcast_message_to_conversation(conversation_id: uuid.UUID, message_json: str) -> None:
     """
     Broadcast a message to all active WebSocket connections in a conversation.
 
@@ -83,9 +81,7 @@ def remove_websocket_connection(conversation_id: uuid.UUID, websocket: WebSocket
         del active_connections[conversation_id]
 
 
-async def verify_conversation_access(
-    conversation_id: uuid.UUID, user_id: uuid.UUID
-) -> bool:
+async def verify_conversation_access(conversation_id: uuid.UUID, user_id: uuid.UUID) -> bool:
     """
     Verify that a conversation exists and user is a participant.
 
