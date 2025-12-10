@@ -64,6 +64,7 @@ function SettingsContent() {
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const isInitializedRef = useRef(false);
+  const hasRefreshedRef = useRef(false);
 
   // Fetch existing profile data using React Query
   const { data: profile, isLoading: isProfileFetching } = useQuery(
@@ -122,16 +123,22 @@ function SettingsContent() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
+  const hasInitializedUsernameRef = useRef(false);
 
-  // Initialize username from user data
+  // Initialize username from user data (only once)
   useEffect(() => {
-    if (user?.username) {
+    if (user?.username && !hasInitializedUsernameRef.current) {
+      hasInitializedUsernameRef.current = true;
       setUsername(user.username);
     }
   }, [user]);
 
   // Refresh user data on mount to ensure we have latest verification status
   useEffect(() => {
+    if (!user || hasRefreshedRef.current) return;
+
+    hasRefreshedRef.current = true;
+
     const refreshUser = async () => {
       try {
         await refreshCurrentUser();
@@ -140,10 +147,8 @@ function SettingsContent() {
       }
     };
 
-    if (user) {
-      refreshUser();
-    }
-  }, [user]); // Only run on mount
+    refreshUser();
+  }, [user]);
 
   // Format and validate phone number
   const formatPhoneNumber = (value: string): string => {
@@ -596,28 +601,30 @@ function SettingsContent() {
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-16 bg-muted rounded-full"></div>
                         <div className="flex gap-2">
-                          <div className="h-8 w-24 bg-muted rounded"></div>
-                          <div className="h-8 w-24 bg-muted rounded"></div>
+                          <div className="h-9 w-[72px] bg-muted rounded"></div>
+                          <div className="h-9 w-[76px] bg-muted rounded"></div>
                         </div>
                       </div>
                     </div>
-                    {/* Form Fields Skeleton - wrapped in space-y-4 to match form */}
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="h-6 w-24 bg-muted rounded"></div>
+                    {/* Form Fields Skeleton - matching exact spacing */}
+                    <div className="space-y-3">
+                      <div className="space-y-1.5">
+                        <div className="h-5 w-[70px] bg-muted rounded"></div>
                         <div className="h-9 bg-muted rounded"></div>
                       </div>
-                      <div className="space-y-2">
-                        <div className="h-6 w-16 bg-muted rounded"></div>
+                      <div className="space-y-1.5">
+                        <div className="h-5 w-[52px] bg-muted rounded"></div>
                         <div className="h-9 bg-muted rounded"></div>
-                        <div className="h-5 w-20 bg-muted rounded"></div>
                       </div>
-                      <div className="space-y-2">
-                        <div className="h-6 w-28 bg-muted rounded"></div>
+                      <div className="space-y-1.5">
+                        <div className="h-5 w-[104px] bg-muted rounded"></div>
                         <div className="h-9 bg-muted rounded"></div>
-                        <div className="h-5 w-52 bg-muted rounded"></div>
+                        <div className="h-4 w-[172px] bg-muted rounded"></div>
                       </div>
-                      <div className="h-9 w-full bg-muted rounded"></div>
+                      <div className="flex gap-3 pt-2">
+                        <div className="h-9 flex-1 bg-muted rounded"></div>
+                        <div className="h-9 w-[70px] bg-muted rounded"></div>
+                      </div>
                     </div>
                   </div>
                 ) : (

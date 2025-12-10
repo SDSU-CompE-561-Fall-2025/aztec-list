@@ -91,8 +91,8 @@ export function Header() {
           {isLoading ? (
             // Show placeholder while checking auth to avoid hydration mismatch
             <div className="flex items-center gap-3">
-              <div className="h-9 w-16 bg-muted rounded animate-pulse" />
-              <div className="h-9 w-20 bg-muted rounded animate-pulse" />
+              <div className="h-9 w-[60px] bg-muted rounded animate-pulse" />
+              <div className="h-9 w-[78px] bg-muted rounded animate-pulse" />
             </div>
           ) : !isAuthenticated ? (
             <>

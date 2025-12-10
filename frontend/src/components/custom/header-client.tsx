@@ -27,7 +27,6 @@ export function HeaderClient() {
               <span className="text-purple-500">Aztec</span>
               <span className="text-white">List</span>
             </div>
-            <span className="text-sm text-gray-400">Campus</span>
           </div>
           <div className="flex-1 max-w-2xl">
             <div className="relative">

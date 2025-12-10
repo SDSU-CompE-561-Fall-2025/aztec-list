@@ -63,7 +63,8 @@ export default function VerifyEmailPage() {
     };
 
     verifyEmail();
-  }, [searchParams, router, token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   return (
     <div className="container mx-auto flex min-h-screen items-center justify-center px-4 py-16">

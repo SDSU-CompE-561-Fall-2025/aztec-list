@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import Image from "next/image";
@@ -26,12 +26,17 @@ function ProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const hasRefreshedRef = useRef(false);
 
   const offset = parseInt(searchParams.get("offset") ?? "0", 10) || 0;
   const status = (searchParams.get("status") ?? "all") as "all" | "active" | "inactive";
 
   // Refresh user data on mount to ensure we have latest verification status
   useEffect(() => {
+    if (!user || hasRefreshedRef.current) return;
+
+    hasRefreshedRef.current = true;
+
     const refreshUser = async () => {
       try {
         await refreshCurrentUser();
@@ -40,10 +45,8 @@ function ProfileContent() {
       }
     };
 
-    if (user) {
-      refreshUser();
-    }
-  }, []); // Only run on mount
+    refreshUser();
+  }, [user]);
 
   // Fetch profile data
   const { data: profileData, isLoading: isProfileLoading } = useQuery(
