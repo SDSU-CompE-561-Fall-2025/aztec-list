@@ -869,7 +869,7 @@ export default function SettingsPage() {
                   <div className="flex gap-3 pt-2">
                     <Button
                       type="submit"
-                      className="flex-1 bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={isAccountLoading || !hasAccountChanges}
                     >
                       {isAccountLoading ? "Updating..." : "Update Account"}
