@@ -12,6 +12,7 @@ from app.core.enums import UserRole
 
 if TYPE_CHECKING:
     from app.models.admin import AdminAction
+    from app.models.conversation import Conversation
     from app.models.listing import Listing
     from app.models.profile import Profile
 
@@ -59,4 +60,18 @@ class User(Base):
         "AdminAction",
         foreign_keys="AdminAction.target_user_id",
         back_populates="target_user",
+    )
+
+    # one-to-many -> Conversations where this user is user_1
+    conversations_as_user_1: Mapped[list[Conversation]] = relationship(
+        "Conversation",
+        foreign_keys="Conversation.user_1_id",
+        lazy="select",
+    )
+
+    # one-to-many -> Conversations where this user is user_2
+    conversations_as_user_2: Mapped[list[Conversation]] = relationship(
+        "Conversation",
+        foreign_keys="Conversation.user_2_id",
+        lazy="select",
     )
