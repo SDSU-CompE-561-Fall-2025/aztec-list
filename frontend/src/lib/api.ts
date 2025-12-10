@@ -204,8 +204,16 @@ export const createListing = async (data: {
   });
 
   if (!res.ok) {
-    const errorText = await res.text().catch(() => "Unknown error");
-    throw new Error(`Failed to create listing: ${res.status} ${errorText}`);
+    let errorMessage = `Failed to create listing: ${res.status}`;
+    try {
+      const errorData = await res.json();
+      if (errorData.detail) {
+        errorMessage = errorData.detail;
+      }
+    } catch {
+      // If JSON parsing fails, use the status-based message
+    }
+    throw new Error(errorMessage);
   }
 
   const responseData = await res.json();

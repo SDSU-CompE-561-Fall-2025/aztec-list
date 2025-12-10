@@ -76,7 +76,14 @@ class LogLevel(str, enum.Enum):
 
 
 class TicketStatus(str, enum.Enum):
-    """Enum for support ticket status."""
+    """
+    Enum for support ticket status.
+
+    - OPEN: New ticket, not yet being worked on
+    - IN_PROGRESS: Ticket is being actively worked on
+    - RESOLVED: Issue has been resolved, waiting for user confirmation
+    - CLOSED: Permanently closed, no further action needed
+    """
 
     OPEN = "open"
     IN_PROGRESS = "in_progress"

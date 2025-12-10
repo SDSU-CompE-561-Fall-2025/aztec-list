@@ -5,6 +5,7 @@ import { ReactNode, useState } from "react";
 import { ThemeProvider } from "next-themes";
 import { QUERY_RETRY_COUNT } from "@/lib/constants";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { isBannedError, handleBannedUser } from "@/lib/errorHandling";
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -14,6 +15,15 @@ export function Providers({ children }: { children: ReactNode }) {
           queries: {
             retry: QUERY_RETRY_COUNT,
             refetchOnWindowFocus: false,
+          },
+          mutations: {
+            onError: (error) => {
+              // Automatically handle banned users globally
+              const message = error instanceof Error ? error.message : String(error);
+              if (isBannedError(message)) {
+                handleBannedUser();
+              }
+            },
           },
         },
       })

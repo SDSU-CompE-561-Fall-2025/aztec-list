@@ -24,10 +24,20 @@ import { CATEGORIES, Category } from "@/types/listing/filters/category";
 import { CONDITIONS, Condition } from "@/types/listing/filters/condition";
 import { formatCategoryLabel, formatConditionLabel } from "@/lib/utils";
 import { toast } from "sonner";
+import { showErrorToast } from "@/lib/errorHandling";
+import { ProtectedRoute } from "@/components/custom/ProtectedRoute";
 import { Loader2, ChevronLeft, Check } from "lucide-react";
 import type { ImagePublic, ListingPublic } from "@/types/listing/listing";
 
 export default function EditListingPage() {
+  return (
+    <ProtectedRoute>
+      <EditListingContent />
+    </ProtectedRoute>
+  );
+}
+
+function EditListingContent() {
   const params = useParams();
   const router = useRouter();
   const listingId = params.listing_id as string;
@@ -246,13 +256,7 @@ function EditForm({
       setShowSavedIndicator(true);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update listing", {
-        style: {
-          background: "rgb(153, 27, 27)",
-          color: "white",
-          border: "1px solid rgb(220, 38, 38)",
-        },
-      });
+      showErrorToast(error, "Failed to update listing");
     },
   });
 

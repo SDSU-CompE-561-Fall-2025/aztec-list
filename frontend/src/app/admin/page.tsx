@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/constants";
 import { getAuthToken } from "@/lib/auth";
 import { toast } from "sonner";
+import { showErrorToast } from "@/lib/errorHandling";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -169,9 +170,7 @@ export default function AdminDashboard() {
           style: TOAST_STYLES.warning,
         });
       } else {
-        toast.error(`Failed to issue strike: ${error.message}`, {
-          style: TOAST_STYLES.error,
-        });
+        showErrorToast(error, "Failed to issue strike");
       }
     },
   });
@@ -208,9 +207,7 @@ export default function AdminDashboard() {
           style: TOAST_STYLES.warning,
         });
       } else {
-        toast.error(`Failed to ban user: ${error.message}`, {
-          style: TOAST_STYLES.error,
-        });
+        showErrorToast(error, "Failed to ban user");
       }
     },
   });
@@ -248,9 +245,7 @@ export default function AdminDashboard() {
       });
     },
     onError: (error) => {
-      toast.error(`Failed to remove listing: ${error.message}`, {
-        style: TOAST_STYLES.error,
-      });
+      showErrorToast(error, "Failed to remove listing");
     },
   });
 
@@ -271,9 +266,7 @@ export default function AdminDashboard() {
       });
     },
     onError: (error) => {
-      toast.error(`Failed to revoke action: ${error.message}`, {
-        style: TOAST_STYLES.error,
-      });
+      showErrorToast(error, "Failed to revoke action");
     },
   });
 

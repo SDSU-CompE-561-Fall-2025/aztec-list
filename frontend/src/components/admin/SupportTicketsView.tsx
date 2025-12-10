@@ -1,8 +1,20 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Mail } from "lucide-react";
+import { Mail, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -12,6 +24,8 @@ import {
 } from "@/components/ui/select";
 import { API_BASE_URL } from "@/lib/constants";
 import { getAuthToken } from "@/lib/auth";
+import { toast } from "sonner";
+import { showErrorToast } from "@/lib/errorHandling";
 
 interface SupportTicket {
   id: string;
@@ -79,11 +93,42 @@ export function SupportTicketsView() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["support-tickets"] });
+      toast.success("Ticket status updated");
+    },
+    onError: (error) => {
+      showErrorToast(error, "Failed to update ticket status");
+    },
+  });
+
+  const deleteTicketMutation = useMutation({
+    mutationFn: async (ticketId: string) => {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/support/${ticketId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete ticket");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["support-tickets"] });
+      toast.success("Ticket deleted");
+    },
+    onError: (error) => {
+      showErrorToast(error, "Failed to delete ticket");
     },
   });
 
   const handleStatusChange = (ticketId: string, newStatus: string) => {
     updateStatusMutation.mutate({ ticketId, status: newStatus });
+  };
+
+  const handleDeleteTicket = (ticketId: string) => {
+    deleteTicketMutation.mutate(ticketId);
   };
 
   if (isLoading) {
@@ -135,14 +180,14 @@ export function SupportTicketsView() {
                   <p className="text-sm text-muted-foreground">{ticket.email}</p>
                 </div>
 
-                {/* Status selector */}
-                <div className="flex-shrink-0 w-40">
+                {/* Status selector and delete button */}
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <Select
                     value={ticket.status}
                     onValueChange={(value: string) => handleStatusChange(ticket.id, value)}
-                    disabled={updateStatusMutation.isPending}
+                    disabled={updateStatusMutation.isPending || deleteTicketMutation.isPending}
                   >
-                    <SelectTrigger className="w-full text-sm">
+                    <SelectTrigger className="w-40 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -152,6 +197,37 @@ export function SupportTicketsView() {
                       <SelectItem value="closed">Closed</SelectItem>
                     </SelectContent>
                   </Select>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={deleteTicketMutation.isPending}
+                        className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Ticket</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this support ticket? This action cannot be
+                          undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteTicket(ticket.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
 

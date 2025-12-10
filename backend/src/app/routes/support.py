@@ -192,3 +192,35 @@ async def update_ticket_status(
     db.refresh(ticket)
 
     return ticket
+
+
+@router.delete("/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_support_ticket(
+    ticket_id: uuid.UUID,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[User, Depends(require_admin)],
+) -> None:
+    """
+    Delete a support ticket (admin only).
+
+    Useful for removing test tickets or spam.
+
+    Args:
+        ticket_id: ID of the ticket to delete
+        db: Database session
+        _: Admin user (required)
+
+    Raises:
+        HTTPException: If ticket not found
+    """
+    result = db.execute(select(SupportTicket).where(SupportTicket.id == ticket_id))
+    ticket = result.scalar_one_or_none()
+
+    if not ticket:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Support ticket not found",
+        )
+
+    db.delete(ticket)
+    db.commit()

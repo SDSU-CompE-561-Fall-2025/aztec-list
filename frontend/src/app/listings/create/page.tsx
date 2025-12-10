@@ -13,10 +13,20 @@ import { CATEGORIES, Category } from "@/types/listing/filters/category";
 import { CONDITIONS, Condition } from "@/types/listing/filters/condition";
 import { formatCategoryLabel, formatConditionLabel } from "@/lib/utils";
 import { toast } from "sonner";
+import { showErrorToast } from "@/lib/errorHandling";
+import { ProtectedRoute } from "@/components/custom/ProtectedRoute";
 import { Loader2 } from "lucide-react";
 import type { ImagePublic } from "@/types/listing/listing";
 
 export default function CreateListingPage() {
+  return (
+    <ProtectedRoute>
+      <CreateListingContent />
+    </ProtectedRoute>
+  );
+}
+
+function CreateListingContent() {
   const router = useRouter();
 
   // Form state
@@ -118,13 +128,7 @@ export default function CreateListingPage() {
       });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create listing", {
-        style: {
-          background: "rgb(153, 27, 27)",
-          color: "white",
-          border: "1px solid rgb(220, 38, 38)",
-        },
-      });
+      showErrorToast(error, "Failed to create listing");
     },
   });
 

@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Mail } from "lucide-react";
+import { isBannedError } from "@/lib/errorHandling";
 
 /**
  * Login page component.
@@ -102,7 +103,19 @@ function LoginForm() {
 
             {error && (
               <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3">
-                {error}
+                <div className="mb-2">{error}</div>
+                {isBannedError(error) && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-2 border-destructive/40 hover:bg-destructive/20 hover:text-destructive"
+                    onClick={() => router.push("/support")}
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    Contact Support
+                  </Button>
+                )}
               </div>
             )}
 
