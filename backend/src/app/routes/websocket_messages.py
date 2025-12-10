@@ -11,9 +11,9 @@ from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 
 from app.core.database import SessionLocal
 from app.core.websocket import authenticate_websocket_user
-from app.repository.conversation import ConversationRepository
-from app.repository.message import MessageRepository
 from app.schemas.message import MessagePublic
+from app.services.conversation import conversation_service
+from app.services.message import message_service
 
 websocket_router = APIRouter()
 
@@ -94,10 +94,12 @@ async def verify_conversation_access(conversation_id: uuid.UUID, user_id: uuid.U
     """
     db = SessionLocal()
     try:
-        conversation = ConversationRepository.get_by_id(db, conversation_id)
-        if conversation is None:
-            return False
-        return ConversationRepository.is_participant(db, conversation_id, user_id)
+        conversation_service.get_by_id(db, conversation_id)
+        conversation_service.verify_participant(db, conversation_id, user_id)
+    except (ValueError, LookupError):
+        return False
+    else:
+        return True
     finally:
         db.close()
 
@@ -115,7 +117,7 @@ async def handle_websocket_message(
     """
     db = SessionLocal()
     try:
-        message = MessageRepository.create(db, conversation_id, user_id, content)
+        message = message_service.create(db, conversation_id, user_id, content)
         message_public = MessagePublic.model_validate(message)
         message_json = message_public.model_dump_json()
         await broadcast_message_to_conversation(conversation_id, message_json)

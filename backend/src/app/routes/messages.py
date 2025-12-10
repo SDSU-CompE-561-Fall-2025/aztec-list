@@ -7,7 +7,7 @@ This module contains REST endpoints for conversations and messages.
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -15,12 +15,11 @@ from app.core.dependencies import get_current_user
 from app.models.conversation import Conversation
 from app.models.message import Message
 from app.models.user import User
-from app.repository.conversation import ConversationRepository
-from app.repository.message import MessageRepository
-from app.repository.user import UserRepository
 from app.routes.websocket_messages import websocket_router
 from app.schemas.conversation import ConversationCreate, ConversationPublic
 from app.schemas.message import MessagePublic
+from app.services.conversation import conversation_service
+from app.services.message import message_service
 
 message_router = APIRouter(
     prefix="/messages",
@@ -59,30 +58,7 @@ async def create_conversation(
     Raises:
         HTTPException: 404 if other user not found, 400 if trying to message self
     """
-    # Validate other user exists
-    other_user = UserRepository.get_by_id(db, data.other_user_id)
-    if other_user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
-    # Prevent creating conversation with self
-    if current_user.id == data.other_user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot create conversation with yourself",
-        )
-
-    # Check if conversation already exists
-    existing_conversation = ConversationRepository.get_by_participants(
-        db, current_user.id, data.other_user_id
-    )
-    if existing_conversation is not None:
-        return existing_conversation
-
-    # Create new conversation
-    return ConversationRepository.create(db, current_user.id, data.other_user_id)
+    return conversation_service.get_or_create(db, current_user.id, data.other_user_id)
 
 
 @message_router.get(
@@ -108,7 +84,7 @@ async def get_conversations(
     Returns:
         list[ConversationPublic]: List of user's conversations
     """
-    return ConversationRepository.get_user_conversations(db, current_user.id)
+    return conversation_service.get_user_conversations(db, current_user.id)
 
 
 @message_router.get(
@@ -145,19 +121,8 @@ async def get_conversation_messages(
     Raises:
         HTTPException: 404 if conversation not found, 403 if not a participant
     """
-    # Verify conversation exists
-    conversation = ConversationRepository.get_by_id(db, conversation_id)
-    if conversation is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation not found",
-        )
+    # Verify conversation exists and user is participant
+    conversation_service.get_by_id(db, conversation_id)
+    conversation_service.verify_participant(db, conversation_id, current_user.id)
 
-    # Verify user is participant
-    if not ConversationRepository.is_participant(db, conversation_id, current_user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not a participant in this conversation",
-        )
-
-    return MessageRepository.get_by_conversation(db, conversation_id, limit, skip)
+    return message_service.get_conversation_messages(db, conversation_id, limit, skip)
