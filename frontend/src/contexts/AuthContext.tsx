@@ -113,6 +113,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     removeAuthToken();
     removeStoredUser();
 
+    // Clear banned handler flag to allow it to trigger for a different account
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem("banned_handler_called");
+    }
+
     notifyAuthListeners();
 
     router.push("/");
