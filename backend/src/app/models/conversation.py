@@ -42,16 +42,18 @@ class Conversation(Base):
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
-    # Relationships - eagerly load user data for username display
+    # Relationships
     user_1: Mapped[User] = relationship(
         "User",
         foreign_keys=[user_1_id],
-        lazy="joined",
+        back_populates="conversations_as_user_1",
+        lazy="select",
     )
     user_2: Mapped[User] = relationship(
         "User",
         foreign_keys=[user_2_id],
-        lazy="joined",
+        back_populates="conversations_as_user_2",
+        lazy="select",
     )
 
     messages: Mapped[list[Message]] = relationship(

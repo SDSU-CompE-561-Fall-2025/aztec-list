@@ -66,6 +66,7 @@ class User(Base):
     conversations_as_user_1: Mapped[list[Conversation]] = relationship(
         "Conversation",
         foreign_keys="Conversation.user_1_id",
+        back_populates="user_1",
         lazy="select",
     )
 
@@ -73,5 +74,6 @@ class User(Base):
     conversations_as_user_2: Mapped[list[Conversation]] = relationship(
         "Conversation",
         foreign_keys="Conversation.user_2_id",
+        back_populates="user_2",
         lazy="select",
     )

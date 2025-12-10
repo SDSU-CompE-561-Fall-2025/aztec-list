@@ -22,8 +22,6 @@ class ConversationPublic(BaseModel):
     id: uuid.UUID
     user_1_id: uuid.UUID
     user_2_id: uuid.UUID
-    user_1_username: str
-    user_2_username: str
     created_at: datetime
 
     model_config = {"from_attributes": True}
