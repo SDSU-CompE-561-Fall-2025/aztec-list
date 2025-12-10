@@ -317,7 +317,7 @@ function ProfileContent() {
                   {totalCount > 0 && (
                     <Button
                       asChild
-                      className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white"
+                      className="bg-purple-600 hover:bg-purple-700 text-white"
                     >
                       <Link href="/listings/create">Add Listing</Link>
                     </Button>
