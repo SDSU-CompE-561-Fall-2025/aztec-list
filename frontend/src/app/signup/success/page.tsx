@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Mail, CheckCircle2, Loader2 } from "lucide-react";
+import { Mail, CheckCircle2, Loader2, AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,16 @@ export default function SignupSuccessPage() {
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
   const [resendError, setResendError] = useState("");
+  const [emailSendFailed, setEmailSendFailed] = useState(false);
+
+  useEffect(() => {
+    // Check if email sending failed during signup
+    const failed = sessionStorage.getItem("email_send_failed");
+    if (failed === "true") {
+      setEmailSendFailed(true);
+      sessionStorage.removeItem("email_send_failed");
+    }
+  }, []);
 
   const handleResendEmail = async () => {
     setIsResending(true);
@@ -54,6 +64,23 @@ export default function SignupSuccessPage() {
         </CardHeader>
 
         <CardContent className="space-y-4">
+          {emailSendFailed && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-300">
+                    Verification email failed to send
+                  </p>
+                  <p className="text-sm text-amber-700 dark:text-amber-200/80">
+                    Your account was created successfully, but we couldn&apos;t send the
+                    verification email. Please use the button below to resend it.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="rounded-lg border border-purple-200 bg-purple-50 p-4 dark:border-purple-800 dark:bg-purple-950/30">
             <div className="flex items-start gap-3">
               <Mail className="h-5 w-5 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" />

@@ -94,7 +94,7 @@ class UserService:
             )
         return user
 
-    def create(self, db: Session, user: UserCreate) -> User:
+    def create(self, db: Session, user: UserCreate) -> tuple[User, bool]:
         """
         Create a new user with validation and send verification email.
 
@@ -103,7 +103,7 @@ class UserService:
             user: User creation data
 
         Returns:
-            User: Created user
+            tuple[User, bool]: Created user and email sending status
 
         Raises:
             HTTPException: If email already exists
@@ -130,13 +130,13 @@ class UserService:
         UserRepository.set_verification_token(db, db_user, verification_token, expiry)
 
         # Send verification email (non-blocking - failure doesn't prevent signup)
-        email_service.send_email_verification(
+        email_sent = email_service.send_email_verification(
             email=db_user.email,
             username=db_user.username,
             verification_token=verification_token,
         )
 
-        return db_user
+        return db_user, email_sent
 
     def delete(self, db: Session, user_id: uuid.UUID) -> None:
         """
@@ -190,7 +190,7 @@ class UserService:
 
         return user
 
-    def update(self, db: Session, user_id: uuid.UUID, update_data: UserUpdate) -> User:
+    def update(self, db: Session, user_id: uuid.UUID, update_data: UserUpdate) -> tuple[User, bool]:
         """
         Update user information.
 
@@ -200,12 +200,13 @@ class UserService:
             update_data: New user data
 
         Returns:
-            User: Updated user
+            tuple[User, bool]: Updated user and email sending status (True if email not changed)
 
         Raises:
             HTTPException: 404 if user not found, 400 if username/email taken
         """
         user = self.get_by_id(db, user_id)
+        email_sent = True  # Default to True if no email change
 
         if update_data.username and update_data.username != user.username:
             if UserRepository.get_by_username(db, update_data.username):
@@ -224,7 +225,19 @@ class UserService:
             user.email = update_data.email
             user.is_verified = False
 
-        return UserRepository.update(db, user)
+            # Generate new verification token for new email
+            verification_token = generate_verification_token()
+            expiry = get_verification_token_expiry()
+            UserRepository.set_verification_token(db, user, verification_token, expiry)
+
+            # Send verification email to new address
+            email_sent = email_service.send_email_verification(
+                email=user.email,
+                username=user.username,
+                verification_token=verification_token,
+            )
+
+        return UserRepository.update(db, user), email_sent
 
     def change_password(
         self, db: Session, user_id: uuid.UUID, current_password: str, new_password: str

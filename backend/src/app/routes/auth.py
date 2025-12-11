@@ -11,9 +11,8 @@ from app.core.email import email_service
 from app.core.rate_limiter import limiter
 from app.core.security import generate_verification_token, get_verification_token_expiry
 from app.core.settings import Settings, get_settings
-from app.models.user import User
 from app.repository.user import UserRepository
-from app.schemas.user import Token, UserCreate, UserPublic
+from app.schemas.user import Token, UserCreate, UserPublic, UserPublicWithEmailStatus
 from app.services.user import user_service
 
 auth_router = APIRouter(
@@ -26,14 +25,14 @@ auth_router = APIRouter(
     "/signup",
     summary="Register a new user",
     status_code=status.HTTP_201_CREATED,
-    response_model=UserPublic,
+    response_model=UserPublicWithEmailStatus,
 )
 @limiter.limit("2/minute;5/hour")
 async def signup(
     request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     user: UserCreate,
     db: Annotated[Session, Depends(get_db)],
-) -> User:
+) -> dict:
     """
     Register a new user account.
 
@@ -45,12 +44,16 @@ async def signup(
         db: Database session
 
     Returns:
-        UserPublic: Created user's public information
+        UserPublicWithEmailStatus: Created user's public information with email sending status
 
     Raises:
         HTTPException: 400 if email already exists, 429 if rate limit exceeded
     """
-    return user_service.create(db, user)
+    db_user, email_sent = user_service.create(db, user)
+    return {
+        **UserPublic.model_validate(db_user).model_dump(),
+        "verification_email_sent": email_sent,
+    }
 
 
 @auth_router.post("/login", summary="Authenticate and obtain a JWT access token")

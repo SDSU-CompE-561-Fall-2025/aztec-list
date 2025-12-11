@@ -42,6 +42,33 @@ import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOpti
 import { getProfilePictureUrl } from "@/lib/profile-picture";
 import type { ContactInfo } from "@/types/user";
 
+/**
+ * Calculate password strength score (0-4).
+ */
+function getPasswordStrength(password: string): number {
+  let strength = 0;
+  if (password.length >= 8) strength++;
+  if (password.length >= 12) strength++;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+  if (/\d/.test(password)) strength++;
+  if (/[^a-zA-Z0-9]/.test(password)) strength++;
+  return Math.min(strength, 4);
+}
+
+/**
+ * Get password strength label and color.
+ */
+function getPasswordStrengthInfo(strength: number): { label: string; color: string } {
+  const levels = [
+    { label: "Too weak", color: "bg-red-500" },
+    { label: "Weak", color: "bg-orange-500" },
+    { label: "Fair", color: "bg-yellow-500" },
+    { label: "Good", color: "bg-blue-500" },
+    { label: "Strong", color: "bg-green-500" },
+  ];
+  return levels[strength] || levels[0];
+}
+
 interface ProfileUpdatePayload {
   name?: string | null;
   campus?: string | null;
@@ -100,12 +127,13 @@ function SettingsContent() {
 
   // Account state
   const [username, setUsername] = useState(user?.username ?? "");
+  const [email, setEmail] = useState(user?.email ?? "");
   const [isAccountLoading, setIsAccountLoading] = useState(false);
 
   // Track if account has changes (memoized)
   const hasAccountChanges = useMemo(
-    () => username !== (user?.username ?? ""),
-    [username, user?.username]
+    () => username !== (user?.username ?? "") || email !== (user?.email ?? ""),
+    [username, email, user?.username, user?.email]
   );
 
   // Delete account state
@@ -125,11 +153,16 @@ function SettingsContent() {
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
   const hasInitializedUsernameRef = useRef(false);
 
-  // Initialize username from user data (only once)
+  // Calculate password strength
+  const passwordStrength = getPasswordStrength(newPassword);
+  const strengthInfo = getPasswordStrengthInfo(passwordStrength);
+
+  // Initialize username and email from user data (only once)
   useEffect(() => {
     if (user?.username && !hasInitializedUsernameRef.current) {
       hasInitializedUsernameRef.current = true;
       setUsername(user.username);
+      setEmail(user.email);
     }
   }, [user]);
 
@@ -344,11 +377,28 @@ function SettingsContent() {
       const token = getAuthToken();
       if (!token) throw new Error("Not authenticated");
 
-      if (username === user?.username) {
+      if (username === user?.username && email === user?.email) {
         toast.info("No changes to save");
         setIsAccountLoading(false);
         return;
       }
+
+      // Validate .edu email requirement
+      if (email !== user?.email && !email.toLowerCase().endsWith(".edu")) {
+        toast.error("Email must be from a .edu domain", {
+          style: {
+            background: "rgb(153, 27, 27)",
+            color: "white",
+            border: "1px solid rgb(220, 38, 38)",
+          },
+        });
+        setIsAccountLoading(false);
+        return;
+      }
+
+      const updateData: { username?: string; email?: string } = {};
+      if (username !== user?.username) updateData.username = username;
+      if (email !== user?.email) updateData.email = email;
 
       const response = await fetch(`${API_BASE_URL}/users/me`, {
         method: "PATCH",
@@ -356,7 +406,7 @@ function SettingsContent() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ username }),
+        body: JSON.stringify(updateData),
       });
 
       if (!response.ok) {
@@ -367,6 +417,21 @@ function SettingsContent() {
       // Get updated user data from response
       const updatedUser = await response.json();
 
+      // Check if email sending failed
+      if (updatedUser.verification_email_sent === false) {
+        toast.warning(
+          "Account updated but verification email failed to send. Please try resending it from the settings page.",
+          {
+            style: {
+              background: "rgb(113, 63, 18)",
+              color: "white",
+              border: "1px solid rgb(251, 146, 60)",
+            },
+            duration: 8000,
+          }
+        );
+      }
+
       // Update localStorage - this will automatically sync AuthContext via custom event
       setStoredUser(updatedUser);
 
@@ -374,16 +439,34 @@ function SettingsContent() {
       queryClient.invalidateQueries({ queryKey: ["user"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
 
-      toast.success("Account updated successfully!", {
-        style: {
-          background: "rgb(20, 83, 45)",
-          color: "white",
-          border: "1px solid rgb(34, 197, 94)",
-        },
-      });
+      // Show different message if email was changed
+      if (email !== user?.email) {
+        if (updatedUser.verification_email_sent !== false) {
+          toast.success(
+            "Email updated! Please check your inbox to verify your new email address.",
+            {
+              style: {
+                background: "rgb(20, 83, 45)",
+                color: "white",
+                border: "1px solid rgb(34, 197, 94)",
+              },
+              duration: 6000,
+            }
+          );
+        }
+      } else {
+        toast.success("Account updated successfully!", {
+          style: {
+            background: "rgb(20, 83, 45)",
+            color: "white",
+            border: "1px solid rgb(34, 197, 94)",
+          },
+        });
+      }
     } catch (error) {
-      // Reset username to original value on error
+      // Reset username and email to original values on error
       setUsername(user?.username ?? "");
+      setEmail(user?.email ?? "");
       showErrorToast(error, "Failed to update account");
     } finally {
       setIsAccountLoading(false);
@@ -391,8 +474,9 @@ function SettingsContent() {
   };
 
   const handleCancelAccountChanges = () => {
-    // Reset username to original value
+    // Reset username and email to original values
     setUsername(user?.username ?? "");
+    setEmail(user?.email ?? "");
     setShowAccountCancelDialog(false);
   };
 
@@ -401,13 +485,15 @@ function SettingsContent() {
 
     setIsResendingVerification(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: user.email }),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/auth/resend-verification?email=${encodeURIComponent(user.email)}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.ok) {
         toast.success("Verification email sent! Check your inbox.", {
@@ -422,7 +508,15 @@ function SettingsContent() {
         if (response.status === 429) {
           toast.error("Too many requests. Please try again later.");
         } else {
-          toast.error(data.detail || "Failed to send verification email");
+          // Handle validation errors (array) or string errors
+          let errorMsg = "Failed to send verification email";
+          if (typeof data.detail === "string") {
+            errorMsg = data.detail;
+          } else if (Array.isArray(data.detail)) {
+            // FastAPI validation errors
+            errorMsg = data.detail.map((err: { msg: string }) => err.msg).join(", ");
+          }
+          toast.error(errorMsg);
         }
       }
     } catch (error) {
@@ -589,7 +683,7 @@ function SettingsContent() {
                 <CardTitle className="text-lg sm:text-xl text-foreground">
                   Profile Information
                 </CardTitle>
-                <CardDescription className="text-sm sm:text-base text-muted-foreground">
+                <CardDescription className="text-xs sm:text-sm text-muted-foreground">
                   Add details to help buyers connect with you
                 </CardDescription>
               </CardHeader>
@@ -841,19 +935,40 @@ function SettingsContent() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="email-display" className="text-sm sm:text-base text-foreground">
+                    <Label htmlFor="email" className="text-sm sm:text-base text-foreground">
                       Email
                     </Label>
                     <Input
-                      id="email-display"
+                      id="email"
                       type="email"
-                      value={user?.email ?? ""}
-                      disabled
-                      className="text-sm cursor-not-allowed opacity-60"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isAccountLoading}
+                      className="text-sm"
                     />
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      Email cannot be changed at this time
-                    </p>
+                    {email !== user?.email && (
+                      <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-500/30 dark:bg-blue-900/20">
+                        <div className="flex items-start gap-2">
+                          <svg
+                            className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          <p className="text-xs sm:text-sm text-blue-900 dark:text-blue-200">
+                            Changing your email will require verification. You&apos;ll be logged out
+                            of unverified sessions.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Email Verification Status */}
@@ -1042,6 +1157,26 @@ function SettingsContent() {
                       className="text-sm"
                       placeholder="Enter new password"
                     />
+
+                    {/* Password strength indicator */}
+                    {newPassword.length > 0 && (
+                      <div className="space-y-1">
+                        <div className="flex gap-1">
+                          {[...Array(4)].map((_, i) => (
+                            <div
+                              key={i}
+                              className={`h-1 flex-1 rounded-full transition-colors ${
+                                i < passwordStrength ? strengthInfo.color : "bg-muted"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          Password strength: {strengthInfo.label}
+                        </p>
+                      </div>
+                    )}
+
                     <p className="text-xs sm:text-sm text-muted-foreground">
                       Must be at least 8 characters
                     </p>

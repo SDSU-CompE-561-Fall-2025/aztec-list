@@ -25,34 +25,48 @@ export default function VerifyEmailPage() {
 
     const verifyEmail = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/auth/verify-email`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ token }),
-        });
+        const response = await fetch(
+          `${API_BASE_URL}/auth/verify-email?token=${encodeURIComponent(token)}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         if (response.ok) {
           setState("success");
 
           // Refresh user data if logged in
-          const token = getAuthToken();
-          if (token) {
+          const authToken = getAuthToken();
+          if (authToken) {
             try {
               await refreshCurrentUser();
+              // User is logged in, redirect to home
+              setTimeout(() => {
+                router.push("/?verified=true");
+              }, 2000);
             } catch (error) {
               console.error("Failed to refresh user data:", error);
             }
+          } else {
+            // User is not logged in, redirect to login
+            setTimeout(() => {
+              router.push("/login?verified=true");
+            }, 3000);
           }
-
-          // Redirect to login after 3 seconds
-          setTimeout(() => {
-            router.push("/login?verified=true");
-          }, 3000);
         } else {
           const data = await response.json();
-          setErrorMessage(data.detail || "Verification failed");
+          // Handle validation errors (array) or string errors
+          let errorMsg = "Verification failed";
+          if (typeof data.detail === "string") {
+            errorMsg = data.detail;
+          } else if (Array.isArray(data.detail)) {
+            // FastAPI validation errors
+            errorMsg = data.detail.map((err: { msg: string }) => err.msg).join(", ");
+          }
+          setErrorMessage(errorMsg);
           setState("error");
         }
       } catch (error) {
@@ -96,7 +110,9 @@ export default function VerifyEmailPage() {
           {state === "success" && (
             <div className="rounded-lg bg-green-50 p-4 text-center dark:bg-green-950/30">
               <p className="text-sm text-green-800 dark:text-green-200">
-                Redirecting you to login in 3 seconds...
+                {getAuthToken()
+                  ? "Redirecting you to home in 2 seconds..."
+                  : "Redirecting you to login in 3 seconds..."}
               </p>
             </div>
           )}
@@ -125,8 +141,13 @@ export default function VerifyEmailPage() {
           )}
 
           {state === "success" && (
-            <Button className="w-full" onClick={() => router.push("/login?verified=true")}>
-              Continue to Login
+            <Button
+              className="w-full"
+              onClick={() =>
+                router.push(getAuthToken() ? "/?verified=true" : "/login?verified=true")
+              }
+            >
+              {getAuthToken() ? "Continue to Home" : "Continue to Login"}
             </Button>
           )}
         </CardContent>

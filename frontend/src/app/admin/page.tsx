@@ -100,9 +100,9 @@ export default function AdminDashboard() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<"actions" | "strike" | "ban" | "remove" | "support">(
-    "actions"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "actions" | "strike" | "ban" | "remove" | "verify" | "support"
+  >("actions");
   const [targetUserId, setTargetUserId] = useState("");
   const [listingId, setListingId] = useState("");
   const [reason, setReason] = useState("");
@@ -111,6 +111,7 @@ export default function AdminDashboard() {
   const [strikeErrors, setStrikeErrors] = useState({ userId: "", reason: "" });
   const [banErrors, setBanErrors] = useState({ userId: "", reason: "" });
   const [removeErrors, setRemoveErrors] = useState({ listingId: "", reason: "" });
+  const [verifyErrors, setVerifyErrors] = useState({ userId: "" });
 
   // Fetch admin actions
   const { data: actionsData, isLoading: actionsLoading } = useQuery({
@@ -212,6 +213,43 @@ export default function AdminDashboard() {
     },
   });
 
+  // Verify user mutation
+  const verifyMutation = useMutation({
+    mutationFn: async ({ userId, isVerified }: { userId: string; isVerified: boolean }) => {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/verification`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ is_verified: isVerified }),
+      });
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ detail: "Failed to update verification" }));
+        if (response.status === 404) {
+          throw new Error(`User not found. The user ID may be incorrect.`);
+        }
+        throw new Error(errorData.detail || "Failed to update verification");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["adminActions"] });
+      toast.success(
+        data.is_verified ? "User verified successfully!" : "User unverified successfully!",
+        {
+          style: TOAST_STYLES.success,
+        }
+      );
+    },
+    onError: (error) => {
+      showErrorToast(error, "Failed to update verification");
+    },
+  });
+
   // Remove listing mutation
   const removeMutation = useMutation({
     mutationFn: async ({ listingId, reason }: { listingId: string; reason: string }) => {
@@ -299,7 +337,7 @@ export default function AdminDashboard() {
   return (
     <div className="container mx-auto px-4 py-6 sm:px-6 sm:py-8 max-w-6xl">
       <div className="mb-6 max-w-4xl mx-auto">
-        <h1 className="text-2xl sm:text-3xl font-bold text-white">Admin Dashboard</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Admin Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Manage users, listings, and moderation actions
         </p>
@@ -348,6 +386,16 @@ export default function AdminDashboard() {
           Remove Listing
         </button>
         <button
+          onClick={() => setActiveTab("verify")}
+          className={`px-4 py-2 font-medium text-sm transition-colors ${
+            activeTab === "verify"
+              ? "border-b-2 border-purple-500 text-purple-400"
+              : "text-gray-400 hover:text-gray-200"
+          }`}
+        >
+          Verify Users
+        </button>
+        <button
           onClick={() => setActiveTab("support")}
           className={`px-4 py-2 font-medium text-sm transition-colors ${
             activeTab === "support"
@@ -362,7 +410,9 @@ export default function AdminDashboard() {
       {/* Actions History Tab */}
       {activeTab === "actions" && (
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-white">Recent Admin Actions</h2>
+          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-foreground">
+            Recent Admin Actions
+          </h2>
           {actionsLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
@@ -588,7 +638,7 @@ export default function AdminDashboard() {
               <Button
                 type="submit"
                 disabled={strikeMutation.isPending}
-                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
+                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
               >
                 {strikeMutation.isPending ? "Issuing Strike..." : "Issue Strike"}
               </Button>
@@ -691,8 +741,7 @@ export default function AdminDashboard() {
               <Button
                 type="submit"
                 disabled={banMutation.isPending}
-                variant="destructive"
-                className="w-full"
+                className="w-full bg-red-600 hover:bg-red-700 text-white"
               >
                 {banMutation.isPending ? "Banning User..." : "Ban User (Permanent)"}
               </Button>
@@ -804,10 +853,102 @@ export default function AdminDashboard() {
         </Card>
       )}
 
+      {/* Verify Users Tab */}
+      {activeTab === "verify" && (
+        <Card className="max-w-xl mx-auto bg-card border">
+          <CardHeader>
+            <CardTitle className="text-lg sm:text-xl text-foreground">User Verification</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Manually set a user&apos;s email verification status. Useful for support cases or .edu
+              email issues.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="verify-user-id" className="text-sm font-medium text-foreground">
+                  User ID <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="verify-user-id"
+                  type="text"
+                  value={targetUserId}
+                  onChange={(e) => {
+                    const formatted = formatGuid(e.target.value);
+                    setTargetUserId(formatted);
+                    const error = validateGuid(formatted);
+                    setVerifyErrors({ userId: error });
+                  }}
+                  onBlur={(e) => {
+                    if (!e.target.value.trim()) {
+                      setVerifyErrors({ userId: "User ID is required" });
+                    }
+                  }}
+                  className={`${verifyErrors.userId ? "border-red-500" : ""}`}
+                  placeholder="Enter user UUID"
+                />
+                {verifyErrors.userId && (
+                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {verifyErrors.userId}
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => {
+                    if (!targetUserId.trim()) {
+                      setVerifyErrors({ userId: "User ID is required" });
+                      toast.error("User ID is required", {
+                        style: TOAST_STYLES.error,
+                      });
+                      return;
+                    }
+                    if (verifyErrors.userId) {
+                      toast.error("Please enter a valid UUID", {
+                        style: TOAST_STYLES.error,
+                      });
+                      return;
+                    }
+                    verifyMutation.mutate({ userId: targetUserId, isVerified: true });
+                  }}
+                  disabled={verifyMutation.isPending}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {verifyMutation.isPending ? "Processing..." : "Verify User"}
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (!targetUserId.trim()) {
+                      setVerifyErrors({ userId: "User ID is required" });
+                      toast.error("User ID is required", {
+                        style: TOAST_STYLES.error,
+                      });
+                      return;
+                    }
+                    if (verifyErrors.userId) {
+                      toast.error("Please enter a valid UUID", {
+                        style: TOAST_STYLES.error,
+                      });
+                      return;
+                    }
+                    verifyMutation.mutate({ userId: targetUserId, isVerified: false });
+                  }}
+                  disabled={verifyMutation.isPending}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {verifyMutation.isPending ? "Processing..." : "Unverify User"}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Support Tickets Tab */}
       {activeTab === "support" && (
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-white">Support Tickets</h2>
+          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-foreground">Support Tickets</h2>
           <SupportTicketsView />
         </div>
       )}

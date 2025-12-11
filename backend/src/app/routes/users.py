@@ -15,7 +15,7 @@ from app.schemas.listing import (
     UserListingsParams,
 )
 from app.schemas.profile import ProfilePublic
-from app.schemas.user import PasswordChange, UserPublic, UserUpdate
+from app.schemas.user import PasswordChange, UserPublic, UserPublicWithEmailStatus, UserUpdate
 from app.services.listing import listing_service
 from app.services.profile import profile_service
 from app.services.user import user_service
@@ -142,19 +142,19 @@ async def get_user_listings(
     "/me",
     summary="Update current user",
     status_code=status.HTTP_200_OK,
-    response_model=UserPublic,
+    response_model=UserPublicWithEmailStatus,
 )
-@limiter.limit("10/minute;30/hour")
+@limiter.limit("5/minute;15/hour")
 async def update_current_user(
     request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     update_data: UserUpdate,
     current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
-) -> User:
+) -> dict:
     """
     Update the current user's profile.
 
-    Rate limit: 10 per minute (burst), 30 per hour (sustained).
+    Rate limit: 5 per minute (burst), 15 per hour (sustained).
 
     Args:
         request: FastAPI request object (required for rate limiting)
@@ -163,13 +163,17 @@ async def update_current_user(
         db: Database session
 
     Returns:
-        UserPublic: Updated user information
+        UserPublicWithEmailStatus: Updated user information with email sending status
 
     Raises:
         HTTPException: 401 if not authenticated, 403 if banned
         HTTPException: 400 if username/email already taken
     """
-    return user_service.update(db, current_user.id, update_data)
+    updated_user, email_sent = user_service.update(db, current_user.id, update_data)
+    return {
+        **UserPublic.model_validate(updated_user).model_dump(),
+        "verification_email_sent": email_sent,
+    }
 
 
 @user_router.patch(
