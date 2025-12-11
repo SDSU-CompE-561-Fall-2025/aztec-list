@@ -595,35 +595,34 @@ function SettingsContent() {
               </CardHeader>
               <CardContent>
                 {isInitialLoading ? (
-                  <div className="animate-pulse">
+                  <div className="space-y-6">
                     {/* Profile Picture Skeleton */}
-                    <div className="mb-6 pb-6 border-b">
+                    <div className="pb-6 border-b">
                       <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-muted rounded-full"></div>
+                        <div className="w-16 h-16 bg-muted rounded-full animate-pulse"></div>
                         <div className="flex gap-2">
-                          <div className="h-9 w-[72px] bg-muted rounded"></div>
-                          <div className="h-9 w-[76px] bg-muted rounded"></div>
+                          <div className="h-9 w-[72px] bg-muted rounded animate-pulse"></div>
+                          <div className="h-9 w-[76px] bg-muted rounded animate-pulse"></div>
                         </div>
                       </div>
                     </div>
-                    {/* Form Fields Skeleton - matching exact spacing */}
+                    {/* Form Fields Skeleton */}
                     <div className="space-y-3">
                       <div className="space-y-1.5">
-                        <div className="h-5 w-[70px] bg-muted rounded"></div>
-                        <div className="h-9 bg-muted rounded"></div>
+                        <div className="h-5 w-[70px] bg-muted rounded animate-pulse"></div>
+                        <div className="h-9 bg-muted rounded animate-pulse"></div>
                       </div>
                       <div className="space-y-1.5">
-                        <div className="h-5 w-[52px] bg-muted rounded"></div>
-                        <div className="h-9 bg-muted rounded"></div>
+                        <div className="h-5 w-[52px] bg-muted rounded animate-pulse"></div>
+                        <div className="h-9 bg-muted rounded animate-pulse"></div>
                       </div>
                       <div className="space-y-1.5">
-                        <div className="h-5 w-[104px] bg-muted rounded"></div>
-                        <div className="h-9 bg-muted rounded"></div>
-                        <div className="h-4 w-[172px] bg-muted rounded"></div>
+                        <div className="h-5 w-[104px] bg-muted rounded animate-pulse"></div>
+                        <div className="h-9 bg-muted rounded animate-pulse"></div>
+                        <div className="h-4 w-[172px] bg-muted rounded animate-pulse mt-1.5"></div>
                       </div>
-                      <div className="flex gap-3 pt-2">
-                        <div className="h-9 flex-1 bg-muted rounded"></div>
-                        <div className="h-9 w-[70px] bg-muted rounded"></div>
+                      <div className="pt-2">
+                        <div className="h-9 bg-muted rounded animate-pulse"></div>
                       </div>
                     </div>
                   </div>
@@ -646,7 +645,7 @@ function SettingsContent() {
                                 sizes="64px"
                                 className="object-cover"
                               />
-                            ) : profile?.profile_picture_url ? (
+                            ) : !isProfileFetching && profile?.profile_picture_url ? (
                               <Image
                                 src={
                                   getProfilePictureUrl(

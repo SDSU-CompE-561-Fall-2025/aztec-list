@@ -201,7 +201,9 @@ function ProfileContent() {
             {/* Profile Picture */}
             <div className="flex-shrink-0">
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/20 flex items-center justify-center overflow-hidden relative">
-                {profileData?.profile_picture_url ? (
+                {isProfileLoading ? (
+                  <div className="w-full h-full bg-muted animate-pulse" />
+                ) : profileData?.profile_picture_url ? (
                   <Image
                     src={
                       getProfilePictureUrl(
@@ -227,7 +229,9 @@ function ProfileContent() {
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <h2 className="text-2xl font-bold text-foreground mb-2 text-center sm:text-left">
-                    {profileData?.name ? (
+                    {isProfileLoading ? (
+                      <div className="h-8 bg-muted animate-pulse rounded w-48 mx-auto sm:mx-0" />
+                    ) : profileData?.name ? (
                       <>
                         {profileData.name}
                         <span className="text-lg text-muted-foreground font-normal sm:ml-2 block sm:inline mt-1 sm:mt-0">

@@ -29,7 +29,7 @@ function UserProfileContent() {
   } = useQuery(createUserQueryOptions(userId));
 
   // Fetch user's profile data
-  const { data: profileData } = useQuery({
+  const { data: profileData, isLoading: isProfileDataLoading } = useQuery({
     queryKey: ["profile", userId],
     queryFn: async () => {
       try {
@@ -137,7 +137,9 @@ function UserProfileContent() {
         <div className="bg-card backdrop-blur-sm border rounded-xl p-8">
           <div className="flex items-start gap-6">
             <div className="w-24 h-24 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20 flex-shrink-0 overflow-hidden relative">
-              {profileData?.profile_picture_url ? (
+              {isProfileDataLoading ? (
+                <div className="w-full h-full bg-muted animate-pulse" />
+              ) : profileData?.profile_picture_url ? (
                 <Image
                   src={
                     getProfilePictureUrl(profileData.profile_picture_url, profileData.updated_at) ||
@@ -154,7 +156,9 @@ function UserProfileContent() {
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold text-foreground mb-2">
-                {profileData?.name ? (
+                {isProfileDataLoading ? (
+                  <div className="h-8 bg-muted animate-pulse rounded w-48" />
+                ) : profileData?.name ? (
                   <>
                     {profileData.name}
                     <span className="text-lg text-muted-foreground font-normal ml-2">

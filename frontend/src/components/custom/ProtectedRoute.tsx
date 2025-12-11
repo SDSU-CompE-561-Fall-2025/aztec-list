@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -29,25 +28,9 @@ export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteP
     }
   }, [isAuthenticated, isLoading, requireAuth, router, pathname]);
 
-  // Show loading state while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 p-8">
-        <div className="w-full max-w-4xl space-y-4">
-          <Skeleton className="h-12 w-3/4" />
-          <Skeleton className="h-8 w-1/2" />
-          <div className="grid gap-4 md:grid-cols-2">
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
-          </div>
-          <Skeleton className="h-64" />
-        </div>
-      </div>
-    );
-  }
-
-  // Don't render protected content if auth is required but user is not authenticated
-  if (requireAuth && !isAuthenticated) {
+  // Show nothing while checking authentication (Next.js will handle redirect)
+  // Each page should implement its own loading skeleton
+  if (isLoading || (requireAuth && !isAuthenticated)) {
     return null;
   }
 
