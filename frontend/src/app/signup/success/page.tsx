@@ -29,16 +29,36 @@ export default function SignupSuccessPage() {
     setResendError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
-        method: "POST",
-        credentials: "include",
-      });
+      // Get user email from sessionStorage (set during signup)
+      const userEmail = sessionStorage.getItem("signup_email");
+
+      if (!userEmail) {
+        setResendError("Email not found. Please go to settings to resend verification.");
+        setIsResending(false);
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/auth/resend-verification?email=${encodeURIComponent(userEmail)}`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
 
       if (response.ok) {
         setResendMessage("Verification email sent! Check your inbox.");
       } else {
         const data = await response.json();
-        setResendError(data.detail || "Failed to resend email. Please try again later.");
+        // Handle validation errors (array) or string errors
+        let errorMsg = "Failed to resend email. Please try again later.";
+        if (typeof data.detail === "string") {
+          errorMsg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          // FastAPI validation errors
+          errorMsg = data.detail.map((err: { msg: string }) => err.msg).join(", ");
+        }
+        setResendError(errorMsg);
       }
     } catch (error) {
       console.error("Resend error:", error);
@@ -85,7 +105,7 @@ export default function SignupSuccessPage() {
             <div className="flex items-start gap-3">
               <Mail className="h-5 w-5 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" />
               <div className="flex-1 space-y-2">
-                <p className="text-sm font-semibold font-medium text-purple-900 dark:text-purple-300">
+                <p className="text-sm font-semibold text-purple-900 dark:text-purple-300">
                   Check your email to unlock listing creation
                 </p>
                 <p className="text-sm text-purple-700 dark:text-purple-200/80">
