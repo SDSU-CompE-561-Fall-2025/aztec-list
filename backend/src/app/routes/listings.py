@@ -56,9 +56,6 @@ async def create_listing(
     Raises:
         HTTPException: 401 if not authenticated, 403 if not verified or banned, 400 if validation fails, 429 if rate limit exceeded
     """
-    # Still check ban status
-    require_not_banned(current_user, db)
-
     return listing_service.create(db, current_user.id, listing)
 
 
