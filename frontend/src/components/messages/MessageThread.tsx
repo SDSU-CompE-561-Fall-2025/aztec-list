@@ -32,6 +32,14 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState(0);
   const [allMessages, setAllMessages] = useState<Message[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState(conversationId);
+
+  // Reset pagination and local cache when switching conversations to avoid bleed-over state
+  if (currentConversationId !== conversationId) {
+    setCurrentConversationId(conversationId);
+    setOffset(0);
+    setAllMessages([]);
+  }
 
   const {
     data: messages,
