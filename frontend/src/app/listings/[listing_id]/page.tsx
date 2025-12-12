@@ -546,7 +546,7 @@ export default function ListingDetailPage() {
                 Contact Seller
               </DialogTitle>
               <DialogDescription className="text-muted-foreground text-xs sm:text-sm">
-                Choose how you&apos;d like to contact {seller?.username}
+                Send a message to {seller?.username}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-2 pt-3 sm:pt-4 pb-1 sm:pb-2">
@@ -570,48 +570,10 @@ export default function ListingDetailPage() {
                   <p className="text-muted-foreground text-xs">
                     {createConversationMutation.isPending
                       ? "Starting conversation..."
-                      : "Chat with seller"}
+                      : "Chat with seller through AztecList"}
                   </p>
                 </div>
               </button>
-
-              {/* Email Option */}
-              <a
-                href={`mailto:${seller?.email}?subject=${encodeURIComponent(`Interested in: ${listing.title}`)}&body=${encodeURIComponent(`Hi ${seller?.username},\n\nI'm interested in your listing "${listing.title}" on AztecList.\n\n`)}`}
-                className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-lg bg-muted hover:bg-muted/80 border hover:border-purple-500/50 transition-all group"
-                onClick={() => setShowContactDialog(false)}
-              >
-                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-purple-500/10 rounded-full flex items-center justify-center border border-purple-500/20 shrink-0">
-                  <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-foreground font-semibold text-sm sm:text-base mb-0.5">
-                    Send Email
-                  </p>
-                  <p className="text-muted-foreground text-xs truncate">{seller?.email}</p>
-                </div>
-              </a>
-
-              {/* Phone Option - Only show if available */}
-              {sellerProfile?.contact_info?.phone && (
-                <a
-                  href={`tel:${sellerProfile.contact_info.phone.replace(/\D/g, "")}`}
-                  className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-lg bg-muted hover:bg-muted/80 border hover:border-green-500/50 transition-all group"
-                  onClick={() => setShowContactDialog(false)}
-                >
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 bg-green-500/10 rounded-full flex items-center justify-center border border-green-500/20 shrink-0">
-                    <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-foreground font-semibold text-sm sm:text-base mb-0.5">
-                      Call
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      {sellerProfile.contact_info.phone}
-                    </p>
-                  </div>
-                </a>
-              )}
             </div>
           </DialogContent>
         </Dialog>

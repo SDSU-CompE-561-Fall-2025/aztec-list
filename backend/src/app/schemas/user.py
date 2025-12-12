@@ -48,10 +48,11 @@ class PasswordChange(BaseModel):
     new_password: str
 
 
-class UserPublic(UserBase):
+class UserPublic(BaseModel):
     """Schema for public user data in API responses."""
 
     id: uuid.UUID
+    username: str
     is_verified: bool
     role: UserRole
     created_at: datetime

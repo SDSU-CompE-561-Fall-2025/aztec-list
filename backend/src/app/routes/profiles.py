@@ -12,7 +12,7 @@ from app.schemas.profile import (
     ProfileCreate,
     ProfilePictureResponse,
     ProfilePictureUpdate,
-    ProfilePublic,
+    ProfilePrivate,
     ProfileUpdate,
 )
 from app.services.profile import profile_service
@@ -28,7 +28,7 @@ profile_router = APIRouter(
     "/",
     summary="Create a profile for the authenticated user",
     status_code=status.HTTP_201_CREATED,
-    response_model=ProfilePublic,
+    response_model=ProfilePrivate,
 )
 async def create_profile(
     profile: ProfileCreate,
@@ -47,7 +47,7 @@ async def create_profile(
         db: Database session
 
     Returns:
-        ProfilePublic: Created profile information
+        ProfilePrivate: Created profile information with contact info
 
     Raises:
         HTTPException: 400 if profile already exists, 401 if not authenticated, 403 if banned
@@ -56,7 +56,7 @@ async def create_profile(
 
 
 @profile_router.get(
-    "/", summary="Get the authenticated user's profile", response_model=ProfilePublic
+    "/", summary="Get the authenticated user's profile", response_model=ProfilePrivate
 )
 async def get_my_profile(
     current_user: Annotated[User, Depends(get_current_user)],
@@ -72,7 +72,7 @@ async def get_my_profile(
         db: Database session
 
     Returns:
-        ProfilePublic: User's profile information
+        ProfilePrivate: User's profile information with contact info
 
     Raises:
         HTTPException: 401 if not authenticated, 404 if profile not found
@@ -81,7 +81,7 @@ async def get_my_profile(
 
 
 @profile_router.patch(
-    "/", summary="Update the authenticated user's profile", response_model=ProfilePublic
+    "/", summary="Update the authenticated user's profile", response_model=ProfilePrivate
 )
 async def update_profile(
     profile: ProfileUpdate,
@@ -100,7 +100,7 @@ async def update_profile(
         db: Database session
 
     Returns:
-        ProfilePublic: Updated profile information
+        ProfilePrivate: Updated profile information with contact info
 
     Raises:
         HTTPException: 401 if not authenticated, 403 if banned, 404 if profile not found

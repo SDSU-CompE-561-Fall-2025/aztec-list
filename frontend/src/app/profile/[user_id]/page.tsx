@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { PaginationControls } from "@/components/listings/PaginationControls";
 import { API_BASE_URL, DEFAULT_LIMIT, STATIC_BASE_URL } from "@/lib/constants";
-import { ChevronLeft, User, Mail, Phone, Building2, Calendar } from "lucide-react";
+import { ChevronLeft, User, Building2, Calendar } from "lucide-react";
 import { createUserQueryOptions } from "@/queryOptions/createUserQueryOptions";
 import { createUserListingsQueryOptions } from "@/queryOptions/createUserListingsQueryOptions";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
@@ -170,16 +170,6 @@ function UserProfileContent() {
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Building2 className="w-4 h-4 flex-shrink-0" />
                     <span className="truncate">{profileData.campus}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Mail className="w-4 h-4 flex-shrink-0" />
-                  <span className="truncate">{user.email}</span>
-                </div>
-                {profileData?.contact_info?.phone && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Phone className="w-4 h-4 flex-shrink-0" />
-                    <span className="truncate">{profileData.contact_info.phone}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-muted-foreground">

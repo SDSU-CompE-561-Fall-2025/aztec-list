@@ -159,7 +159,6 @@ export function NewConversationDialog({
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{selectedUser.username}</p>
-                <p className="text-sm text-muted-foreground truncate">{selectedUser.email}</p>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setSelectedUser(null)}>
                 <X className="h-4 w-4" />
@@ -191,7 +190,6 @@ export function NewConversationDialog({
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold truncate">{user.username}</p>
-                    <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                   </div>
                 </button>
               ))}
