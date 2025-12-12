@@ -254,7 +254,7 @@ function CreateListingContent() {
               onChange={(e) => setCategory(e.target.value as Category)}
               onBlur={(e) => handleBlur("category", e.target.value)}
               disabled={!!createdListingId}
-              className={`mt-1 w-full h-9 rounded-md border px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none bg-transparent dark:bg-input/30 border-input focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] ${
+              className={`mt-1 w-full h-9 rounded-md border px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none bg-background text-foreground border-input focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] ${
                 errors.category ? "border-red-500" : ""
               }`}
             >
@@ -279,7 +279,7 @@ function CreateListingContent() {
               onChange={(e) => setCondition(e.target.value as Condition)}
               onBlur={(e) => handleBlur("condition", e.target.value)}
               disabled={!!createdListingId}
-              className={`mt-1 w-full h-9 rounded-md border px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none bg-transparent dark:bg-input/30 border-input focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] ${
+              className={`mt-1 w-full h-9 rounded-md border px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none bg-background text-foreground border-input focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] ${
                 errors.condition ? "border-red-500" : ""
               }`}
             >
