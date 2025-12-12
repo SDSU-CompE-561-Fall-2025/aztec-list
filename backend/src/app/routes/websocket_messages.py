@@ -5,9 +5,10 @@ This module contains WebSocket endpoints for real-time message delivery.
 """
 
 import json
+import logging
 import uuid
 
-from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 
 from app.core.database import SessionLocal
 from app.core.websocket import authenticate_websocket_user
@@ -15,6 +16,7 @@ from app.schemas.message import MessagePublic
 from app.services.conversation import conversation_service
 from app.services.message import message_service
 
+logger = logging.getLogger(__name__)
 websocket_router = APIRouter()
 
 # Active WebSocket connections: {conversation_id: [WebSocket, WebSocket, ...]}
@@ -96,7 +98,7 @@ async def verify_conversation_access(conversation_id: uuid.UUID, user_id: uuid.U
     try:
         conversation_service.get_by_id(db, conversation_id)
         conversation_service.verify_participant(db, conversation_id, user_id)
-    except (ValueError, LookupError):
+    except (ValueError, LookupError, HTTPException):
         return False
     else:
         return True
@@ -166,13 +168,44 @@ async def websocket_endpoint(
 
     try:
         while True:
-            # Receive and parse message
-            data = await websocket.receive_text()
-            message_data = json.loads(data)
-            content = message_data.get("content", "").strip()
+            try:
+                # Receive and parse message
+                data = await websocket.receive_text()
 
-            if content:
-                await handle_websocket_message(conversation_id, user.id, content)
+                # Parse JSON with error handling
+                try:
+                    message_data = json.loads(data)
+                except json.JSONDecodeError as e:
+                    # Send error back to client but don't disconnect
+                    await websocket.send_json({"error": "Invalid JSON format", "detail": str(e)})
+                    continue
 
-    except WebSocketDisconnect:
+                content = message_data.get("content", "").strip()
+
+                if content:
+                    await handle_websocket_message(conversation_id, user.id, content)
+
+            except WebSocketDisconnect:
+                # Client disconnected normally
+                break
+            except (RuntimeError, OSError):
+                # Connection errors that should terminate the loop
+                logger.exception("WebSocket connection error")
+                break
+            except Exception:
+                # Log unexpected errors but don't crash
+                logger.exception("Error processing WebSocket message")
+                try:
+                    await websocket.send_json(
+                        {
+                            "error": "Failed to process message",
+                            "detail": "An internal error occurred",
+                        }
+                    )
+                except (WebSocketDisconnect, RuntimeError, OSError):
+                    # If we can't send error, connection is likely dead
+                    break
+
+    finally:
+        # Always cleanup connection on exit
         remove_websocket_connection(conversation_id, websocket)

@@ -46,7 +46,10 @@ class ConversationRepository:
         db: Session, user_1_id: uuid.UUID, user_2_id: uuid.UUID
     ) -> Conversation | None:
         """
-        Get conversation by two participant IDs, checking both orderings.
+        Get conversation by two participant IDs.
+
+        Uses normalized user ordering (smaller UUID first) to match the
+        unique constraint and ensure consistent lookups.
 
         Args:
             db: Database session
@@ -56,13 +59,15 @@ class ConversationRepository:
         Returns:
             Conversation | None: Conversation if found, None otherwise
         """
+        # Normalize user ordering to match unique constraint
+        normalized_user_1 = min(user_1_id, user_2_id)
+        normalized_user_2 = max(user_1_id, user_2_id)
+
         query = (
             select(Conversation)
             .where(
-                or_(
-                    (Conversation.user_1_id == user_1_id) & (Conversation.user_2_id == user_2_id),
-                    (Conversation.user_1_id == user_2_id) & (Conversation.user_2_id == user_1_id),
-                )
+                (Conversation.user_1_id == normalized_user_1)
+                & (Conversation.user_2_id == normalized_user_2)
             )
             .options(joinedload(Conversation.user_1), joinedload(Conversation.user_2))
         )
@@ -93,6 +98,9 @@ class ConversationRepository:
         """
         Create a new conversation between two users.
 
+        Normalizes user IDs to ensure consistent ordering (smaller UUID first)
+        for unique constraint compatibility.
+
         Args:
             db: Database session
             user_1_id: First user UUID
@@ -101,7 +109,11 @@ class ConversationRepository:
         Returns:
             Conversation: Created conversation
         """
-        conversation = Conversation(user_1_id=user_1_id, user_2_id=user_2_id)
+        # Normalize user ordering for unique constraint
+        normalized_user_1 = min(user_1_id, user_2_id)
+        normalized_user_2 = max(user_1_id, user_2_id)
+
+        conversation = Conversation(user_1_id=normalized_user_1, user_2_id=normalized_user_2)
         db.add(conversation)
         db.commit()
         db.refresh(conversation)

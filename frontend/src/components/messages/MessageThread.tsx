@@ -5,7 +5,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createMessagesQueryOptions } from "@/queryOptions/createMessagingQueryOptions";
 import { Message } from "@/types/message";
 import { useWebSocket } from "@/hooks/useWebSocket";
@@ -27,6 +27,7 @@ interface MessageThreadProps {
 
 export function MessageThread({ conversationId, otherUserId, otherUserName }: MessageThreadProps) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState(0);
@@ -80,12 +81,16 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
         return [...prev, newMessage];
       });
 
+      // Invalidate queries to keep cache fresh across navigation
+      queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+
       // Show notification if message is from other user and window is not focused
       if (newMessage.sender_id !== user?.id && !document.hasFocus()) {
         toast.info(`New message from ${otherUserName}`);
       }
     },
-    [user?.id, otherUserName]
+    [user?.id, otherUserName, conversationId, queryClient]
   );
 
   const handleConnectionError = useCallback((error: Event) => {

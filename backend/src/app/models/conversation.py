@@ -10,7 +10,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Uuid
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -26,10 +26,14 @@ class Conversation(Base):
 
     Represents a conversation between two users. Each conversation has exactly
     two participants (user_1 and user_2). The system prevents duplicate conversations
-    between the same two users through application-level checks.
+    between the same two users through database-level unique constraint.
     """
 
     __tablename__ = "conversations"
+    __table_args__ = (
+        UniqueConstraint("user_1_id", "user_2_id", name="uq_conversations_users"),
+        CheckConstraint("user_1_id != user_2_id", name="ck_conversations_different_users"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4, index=True)
     user_1_id: Mapped[uuid.UUID] = mapped_column(
