@@ -1102,7 +1102,7 @@ function SettingsContent() {
                       <AlertDialogCancel className="text-xs sm:text-sm">Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleDeleteAccount}
-                        className="bg-red-600 hover:bg-red-700 text-xs sm:text-sm"
+                        className="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm"
                       >
                         {isDeleting ? "Deleting..." : "Delete Account"}
                       </AlertDialogAction>
