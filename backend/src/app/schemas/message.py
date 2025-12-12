@@ -13,7 +13,9 @@ from pydantic import BaseModel, Field
 class MessageCreate(BaseModel):
     """Schema for creating a new message (WebSocket only)."""
 
-    content: str = Field(..., min_length=1, description="Text content of the message")
+    content: str = Field(
+        ..., min_length=1, max_length=5000, description="Text content of the message"
+    )
 
 
 class MessagePublic(BaseModel):

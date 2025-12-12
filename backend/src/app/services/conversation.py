@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 
 from app.repository.conversation import ConversationRepository
 from app.repository.user import UserRepository
@@ -88,8 +89,20 @@ class ConversationService:
         if existing_conversation is not None:
             return existing_conversation
 
-        # Create new conversation
-        return ConversationRepository.create(db, current_user_id, other_user_id)
+        # Create new conversation with race condition handling
+        try:
+            return ConversationRepository.create(db, current_user_id, other_user_id)
+        except IntegrityError:
+            # Race condition: another request created it between check and insert
+            # Rollback and re-query
+            db.rollback()
+            existing_conversation = ConversationRepository.get_by_participants(
+                db, current_user_id, other_user_id
+            )
+            if existing_conversation is not None:
+                return existing_conversation
+            # If still not found, something else went wrong
+            raise
 
     def get_user_conversations(self, db: Session, user_id: uuid.UUID) -> list[Conversation]:
         """

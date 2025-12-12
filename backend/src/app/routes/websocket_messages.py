@@ -4,15 +4,16 @@ WebSocket routes for real-time messaging.
 This module contains WebSocket endpoints for real-time message delivery.
 """
 
+import asyncio
 import json
 import logging
 import uuid
 
-from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 
 from app.core.database import SessionLocal
 from app.core.websocket import authenticate_websocket_user
-from app.schemas.message import MessagePublic
+from app.schemas.message import MessageCreate, MessagePublic
 from app.services.conversation import conversation_service
 from app.services.message import message_service
 
@@ -23,6 +24,14 @@ websocket_router = APIRouter()
 # NOTE: For production with multiple backend instances, replace with Redis pub/sub
 # to broadcast messages across all servers. See planning docs for implementation details.
 active_connections: dict[uuid.UUID, list[WebSocket]] = {}
+connection_locks: dict[uuid.UUID, asyncio.Lock] = {}
+
+
+def get_conversation_lock(conversation_id: uuid.UUID) -> asyncio.Lock:
+    """Get or create a lock for a conversation."""
+    if conversation_id not in connection_locks:
+        connection_locks[conversation_id] = asyncio.Lock()
+    return connection_locks[conversation_id]
 
 
 async def broadcast_message_to_conversation(conversation_id: uuid.UUID, message_json: str) -> None:
@@ -35,23 +44,25 @@ async def broadcast_message_to_conversation(conversation_id: uuid.UUID, message_
         conversation_id: Conversation UUID
         message_json: JSON string of MessagePublic to broadcast
     """
-    if conversation_id not in active_connections:
-        return
+    lock = get_conversation_lock(conversation_id)
+    async with lock:
+        if conversation_id not in active_connections:
+            return
 
-    dead_connections = []
-    for connection in active_connections[conversation_id]:
-        try:
-            await connection.send_text(message_json)
-        except (WebSocketDisconnect, RuntimeError):
-            # RuntimeError catches closed connections
-            dead_connections.append(connection)
+        dead_connections = []
+        for connection in active_connections[conversation_id]:
+            try:
+                await connection.send_text(message_json)
+            except (WebSocketDisconnect, RuntimeError):
+                # RuntimeError catches closed connections
+                dead_connections.append(connection)
 
-    # Remove dead connections
-    for dead_conn in dead_connections:
-        active_connections[conversation_id].remove(dead_conn)
+        # Remove dead connections
+        for dead_conn in dead_connections:
+            active_connections[conversation_id].remove(dead_conn)
 
 
-def add_websocket_connection(conversation_id: uuid.UUID, websocket: WebSocket) -> None:
+async def add_websocket_connection(conversation_id: uuid.UUID, websocket: WebSocket) -> None:
     """
     Add a WebSocket connection to the active connections for a conversation.
 
@@ -59,12 +70,14 @@ def add_websocket_connection(conversation_id: uuid.UUID, websocket: WebSocket) -
         conversation_id: Conversation UUID
         websocket: WebSocket connection to add
     """
-    if conversation_id not in active_connections:
-        active_connections[conversation_id] = []
-    active_connections[conversation_id].append(websocket)
+    lock = get_conversation_lock(conversation_id)
+    async with lock:
+        if conversation_id not in active_connections:
+            active_connections[conversation_id] = []
+        active_connections[conversation_id].append(websocket)
 
 
-def remove_websocket_connection(conversation_id: uuid.UUID, websocket: WebSocket) -> None:
+async def remove_websocket_connection(conversation_id: uuid.UUID, websocket: WebSocket) -> None:
     """
     Remove a WebSocket connection from active connections.
 
@@ -72,15 +85,19 @@ def remove_websocket_connection(conversation_id: uuid.UUID, websocket: WebSocket
         conversation_id: Conversation UUID
         websocket: WebSocket connection to remove
     """
-    if conversation_id not in active_connections:
-        return
+    lock = get_conversation_lock(conversation_id)
+    async with lock:
+        if conversation_id not in active_connections:
+            return
 
-    if websocket in active_connections[conversation_id]:
-        active_connections[conversation_id].remove(websocket)
+        if websocket in active_connections[conversation_id]:
+            active_connections[conversation_id].remove(websocket)
 
-    # Clean up empty conversation entries
-    if not active_connections[conversation_id]:
-        del active_connections[conversation_id]
+        # Clean up empty conversation entries
+        if not active_connections[conversation_id]:
+            del active_connections[conversation_id]
+            # Clean up lock too
+            connection_locks.pop(conversation_id, None)
 
 
 async def verify_conversation_access(conversation_id: uuid.UUID, user_id: uuid.UUID) -> bool:
@@ -116,10 +133,21 @@ async def handle_websocket_message(
         conversation_id: Conversation UUID
         user_id: Sender user UUID
         content: Message content
+
+    Raises:
+        ValueError: If content validation fails
     """
+    # Validate message content with schema
+    try:
+        validated_message = MessageCreate(content=content)
+        validated_content = validated_message.content
+    except (ValueError, TypeError) as e:
+        msg = f"Invalid message content: {e}"
+        raise ValueError(msg) from e
+
     db = SessionLocal()
     try:
-        message = message_service.create(db, conversation_id, user_id, content)
+        message = message_service.create(db, conversation_id, user_id, validated_content)
         message_public = MessagePublic.model_validate(message)
         message_json = message_public.model_dump_json()
         await broadcast_message_to_conversation(conversation_id, message_json)
@@ -127,73 +155,128 @@ async def handle_websocket_message(
         db.close()
 
 
+async def authenticate_websocket(
+    websocket: WebSocket, conversation_id: uuid.UUID
+) -> tuple[bool, uuid.UUID | None]:
+    """
+    Authenticate WebSocket connection and verify access.
+
+    Returns:
+        tuple: (success, user_id) - success is True if authenticated, user_id is the authenticated user
+    """
+    result: tuple[bool, uuid.UUID | None] = (False, None)
+    error_reason = ""
+
+    try:
+        # Wait for authentication message with timeout
+        auth_data = await asyncio.wait_for(websocket.receive_text(), timeout=5.0)
+        auth_message = json.loads(auth_data)
+
+        # Validate and authenticate
+        if auth_message.get("type") != "auth":
+            error_reason = "First message must be authentication"
+        elif not auth_message.get("token"):
+            error_reason = "Token missing in auth message"
+        else:
+            user = authenticate_websocket_user(auth_message["token"])
+            if user is None:
+                error_reason = "Authentication failed"
+            elif not await verify_conversation_access(conversation_id, user.id):
+                error_reason = "Conversation not found or access denied"
+            else:
+                # Success
+                await websocket.send_json({"type": "auth_success"})
+                result = (True, user.id)
+
+    except TimeoutError:
+        error_reason = "Authentication timeout"
+    except (json.JSONDecodeError, WebSocketDisconnect):
+        error_reason = "Invalid authentication message"
+
+    # Close with error if authentication failed
+    if error_reason:
+        await websocket.close(code=1008, reason=error_reason)
+
+    return result
+
+
+async def process_websocket_message(
+    websocket: WebSocket, conversation_id: uuid.UUID, user_id: uuid.UUID, data: str
+) -> bool:
+    """
+    Process a single WebSocket message.
+
+    Returns:
+        bool: True to continue loop, False to break
+    """
+    # Parse JSON with error handling
+    try:
+        message_data = json.loads(data)
+    except json.JSONDecodeError as e:
+        await websocket.send_json({"error": "Invalid JSON format", "detail": str(e)})
+        return True
+
+    content = message_data.get("content", "").strip()
+    if not content:
+        return True
+
+    try:
+        await handle_websocket_message(conversation_id, user_id, content)
+    except ValueError as e:
+        await websocket.send_json({"error": "Validation error", "detail": str(e)})
+
+    return True
+
+
 @websocket_router.websocket("/ws/conversations/{conversation_id}")
 async def websocket_endpoint(
     websocket: WebSocket,
     conversation_id: uuid.UUID,
-    token: str = Query(..., description="JWT access token for authentication"),
 ) -> None:
     """
     WebSocket endpoint for real-time messaging in a conversation.
 
-    Authenticates user via token query parameter, verifies they are a participant,
+    Authenticates user via token in first message, verifies they are a participant,
     then maintains persistent connection for sending/receiving messages.
 
+    First message format: {"type": "auth", "token": "JWT_TOKEN"}
     Message format (send): {"content": "message text"}
     Message format (receive): Full MessagePublic JSON object
 
     Args:
         websocket: WebSocket connection
         conversation_id: Conversation UUID
-        token: JWT access token (query parameter)
 
     Raises:
         WebSocket close with code 1008 if authentication fails or user not participant
     """
-    # Authenticate user
-    user = authenticate_websocket_user(token)
-    if user is None:
-        await websocket.close(code=1008, reason="Authentication failed")
-        return
-
-    # Verify conversation access
-    has_access = await verify_conversation_access(conversation_id, user.id)
-    if not has_access:
-        await websocket.close(code=1008, reason="Conversation not found or access denied")
-        return
-
-    # Accept connection and register
+    # Accept connection first
     await websocket.accept()
-    add_websocket_connection(conversation_id, websocket)
+
+    # Authenticate and verify access
+    success, user_id = await authenticate_websocket(websocket, conversation_id)
+    if not success or user_id is None:
+        return
+
+    # Register connection
+    await add_websocket_connection(conversation_id, websocket)
 
     try:
         while True:
             try:
-                # Receive and parse message
                 data = await websocket.receive_text()
-
-                # Parse JSON with error handling
-                try:
-                    message_data = json.loads(data)
-                except json.JSONDecodeError as e:
-                    # Send error back to client but don't disconnect
-                    await websocket.send_json({"error": "Invalid JSON format", "detail": str(e)})
-                    continue
-
-                content = message_data.get("content", "").strip()
-
-                if content:
-                    await handle_websocket_message(conversation_id, user.id, content)
+                should_continue = await process_websocket_message(
+                    websocket, conversation_id, user_id, data
+                )
+                if not should_continue:
+                    break
 
             except WebSocketDisconnect:
-                # Client disconnected normally
                 break
             except (RuntimeError, OSError):
-                # Connection errors that should terminate the loop
                 logger.exception("WebSocket connection error")
                 break
             except Exception:
-                # Log unexpected errors but don't crash
                 logger.exception("Error processing WebSocket message")
                 try:
                     await websocket.send_json(
@@ -203,9 +286,7 @@ async def websocket_endpoint(
                         }
                     )
                 except (WebSocketDisconnect, RuntimeError, OSError):
-                    # If we can't send error, connection is likely dead
                     break
 
     finally:
-        # Always cleanup connection on exit
-        remove_websocket_connection(conversation_id, websocket)
+        await remove_websocket_connection(conversation_id, websocket)

@@ -7,7 +7,7 @@ import { getAuthToken } from "@/lib/auth";
 import { Message } from "@/types/message";
 
 // Determine WebSocket URL based on API URL
-function getWebSocketUrl(conversationId: string, token: string): string {
+function getWebSocketUrl(conversationId: string): string {
   // Get the base URL without /api/v1 if present
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000/api/v1";
   const baseUrl = apiBaseUrl.replace(/\/api\/v1$/, "");
@@ -15,7 +15,7 @@ function getWebSocketUrl(conversationId: string, token: string): string {
   // Convert HTTP(S) URL to WS(S)
   const wsUrl = baseUrl.replace(/^http/, "ws");
 
-  return `${wsUrl}/api/v1/messages/ws/conversations/${conversationId}?token=${token}`;
+  return `${wsUrl}/api/v1/messages/ws/conversations/${conversationId}`;
 }
 
 interface UseWebSocketOptions {
@@ -77,21 +77,32 @@ export function useWebSocket({
     setIsConnecting(true);
 
     try {
-      const url = getWebSocketUrl(conversationId, token);
+      const url = getWebSocketUrl(conversationId);
       const ws = new WebSocket(url);
 
       ws.onopen = () => {
         console.log(`WebSocket connected to conversation ${conversationId}`);
-        setIsConnected(true);
-        setIsConnecting(false);
-        reconnectAttemptsRef.current = 0; // Reset reconnect counter on successful connection
-        hasShownMaxRetriesError.current = false; // Reset error flag
-        onConnectRef.current?.();
+        // Send authentication message immediately after connection
+        ws.send(JSON.stringify({ type: "auth", token }));
       };
 
       ws.onmessage = (event) => {
         try {
-          const message: Message = JSON.parse(event.data);
+          const data = JSON.parse(event.data);
+
+          // Handle authentication response
+          if (data.type === "auth_success") {
+            console.log("WebSocket authenticated successfully");
+            setIsConnected(true);
+            setIsConnecting(false);
+            reconnectAttemptsRef.current = 0;
+            hasShownMaxRetriesError.current = false;
+            onConnectRef.current?.();
+            return;
+          }
+
+          // Handle regular messages
+          const message: Message = data as Message;
           onMessageRef.current(message);
         } catch (error) {
           console.error("Failed to parse WebSocket message:", error);
@@ -109,6 +120,17 @@ export function useWebSocket({
         setIsConnected(false);
         setIsConnecting(false);
         onDisconnectRef.current?.();
+
+        // Handle authentication failures (code 1008)
+        if (event.code === 1008) {
+          console.error("Authentication failed - token may be expired");
+          // Don't auto-reconnect on auth failure
+          if (event.reason?.includes("Authentication failed") || event.reason?.includes("Token")) {
+            hasShownMaxRetriesError.current = true;
+            onErrorRef.current?.(new Event("Authentication failed - please refresh the page"));
+            return;
+          }
+        }
 
         // Auto-reconnect with exponential backoff if not a normal closure
         if (event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts) {
