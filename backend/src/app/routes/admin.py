@@ -18,8 +18,11 @@ from app.schemas.admin import (
     AdminActionStrikeResponse,
     AdminListingRemoval,
     AdminListingRemovalResponse,
+    AdminUserVerification,
+    AdminUserVerificationResponse,
 )
 from app.services.admin import admin_action_service
+from app.services.user import user_service
 
 admin_router = APIRouter(
     prefix="/admin",
@@ -250,4 +253,55 @@ async def remove_listing(
         listing_id=listing_id,
         status="removed",
         admin_action=AdminActionPublic.model_validate(admin_action),
+    )
+
+
+@admin_router.patch(
+    "/users/{user_id}/verification",
+    summary="Manually verify or unverify a user",
+    status_code=status.HTTP_200_OK,
+)
+@limiter.limit("10/minute;50/hour")
+async def update_user_verification(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
+    user_id: uuid.UUID,
+    verification: AdminUserVerification,
+    admin: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> AdminUserVerificationResponse:
+    """
+    Manually set a user's email verification status.
+
+    Rate limit: 10 per minute (burst), 50 per hour (sustained).
+
+    Allows admins to verify users without requiring email verification
+    (useful for support cases, edu email issues, etc.) or to unverify users
+    if verification was obtained fraudulently.
+
+    **Requires:** Admin privileges
+
+    Args:
+        request: FastAPI request object (required for rate limiting)
+        user_id: ID of the user to verify/unverify
+        verification: Verification data with is_verified boolean
+        admin: Authenticated admin user from JWT token
+        db: Database session
+
+    Returns:
+        AdminUserVerificationResponse: Contains user_id, is_verified status, and success message
+
+    Raises:
+        HTTPException: 401 if not authenticated, 403 if not admin, 404 if user not found
+    """
+    if verification.is_verified:
+        user = user_service.verify_user(db, user_id)
+        action = "verified"
+    else:
+        user = user_service.unverify_user(db, user_id)
+        action = "unverified"
+
+    return AdminUserVerificationResponse(
+        user_id=user_id,
+        is_verified=user.is_verified,
+        message=f"User {action} successfully by admin {admin.username}",
     )

@@ -20,23 +20,17 @@ export function HeaderClient() {
 
   if (!mounted) {
     return (
-      <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-gray-950">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 gap-4">
           <div className="flex items-center gap-2">
             <div className="text-2xl font-bold">
               <span className="text-purple-500">Aztec</span>
-              <span className="text-white">List</span>
-            </div>
-            <span className="text-sm text-gray-400">Campus</span>
-          </div>
-          <div className="flex-1 max-w-2xl">
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 bg-gray-700 rounded" />
-              <div className="w-full h-9 bg-gray-900 border border-gray-700 rounded-md pl-10 pr-3" />
+              <span className="text-foreground">List</span>
             </div>
           </div>
+          <div className="flex-1 max-w-2xl" />
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gray-800 rounded-full animate-pulse" />
+            <div className="w-10 h-10 bg-muted rounded-full animate-pulse" />
           </div>
         </div>
       </header>

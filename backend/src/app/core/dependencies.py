@@ -151,3 +151,29 @@ def require_not_banned(
             detail="Account banned. Contact support for assistance.",
         )
     return current_user
+
+
+def require_verified_user(
+    current_user: Annotated[User, Depends(require_not_banned)],
+) -> User:
+    """
+    Require that the current user has verified their email address and is not banned.
+
+    This dependency chains require_not_banned and adds email verification check.
+    Use this on endpoints that require both verification and ban checking.
+
+    Args:
+        current_user: Authenticated and non-banned user from JWT token
+
+    Returns:
+        User: Current authenticated, verified, and non-banned user
+
+    Raises:
+        HTTPException: 403 if user has not verified their email or is banned
+    """
+    if not current_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Please verify your email address to perform this action. Check your inbox for the verification link.",
+        )
+    return current_user

@@ -8,6 +8,8 @@ services, dependencies, and other parts of the application.
 
 from __future__ import annotations
 
+import secrets
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
@@ -18,6 +20,26 @@ if TYPE_CHECKING:
     from uuid import UUID
 
     from app.models.user import User
+
+
+def generate_verification_token() -> str:
+    """
+    Generate a secure random token for email verification.
+
+    Returns:
+        str: URL-safe random token
+    """
+    return secrets.token_urlsafe(32)
+
+
+def get_verification_token_expiry() -> datetime:
+    """
+    Get expiration datetime for verification token (24 hours from now).
+
+    Returns:
+        datetime: Expiration datetime in UTC
+    """
+    return datetime.now(UTC) + timedelta(hours=24)
 
 
 def ensure_admin(user: User) -> None:

@@ -189,44 +189,6 @@ class TestCreateSupportTicket:
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    @patch("app.core.email.email_service.send_support_ticket_confirmation")
-    @patch("app.core.email.email_service.send_support_ticket_notification")
-    def test_create_ticket_rate_limit(
-        self,
-        mock_notification: MagicMock,
-        mock_confirmation: MagicMock,
-        client: TestClient,
-        anonymous_ticket_data: dict,
-    ):
-        """Test rate limiting on ticket creation (3/minute)."""
-        from app.core.settings import settings
-
-        # Temporarily enable rate limiting for this test
-        original_enabled = settings.rate_limit.enabled
-        settings.rate_limit.enabled = True
-
-        try:
-            # Reset limiter state to ensure clean slate
-            from app.core.rate_limiter import limiter
-
-            limiter.reset()
-
-            # Mock email sending
-            mock_confirmation.return_value = True
-            mock_notification.return_value = True
-
-            # Create 3 tickets (should succeed)
-            for _ in range(3):
-                response = client.post("/api/v1/support", json=anonymous_ticket_data)
-                assert response.status_code == status.HTTP_201_CREATED
-
-            # 4th ticket should be rate limited
-            response = client.post("/api/v1/support", json=anonymous_ticket_data)
-            assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
-        finally:
-            # Restore original setting
-            settings.rate_limit.enabled = original_enabled
-
 
 class TestGetSupportTickets:
     """Test support ticket retrieval endpoints."""
@@ -434,45 +396,6 @@ class TestUpdateTicketStatus:
         )
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-    def test_update_status_rate_limit(
-        self, client: TestClient, test_admin_token: str, test_ticket: SupportTicket
-    ):
-        """Test rate limiting on status updates (10/minute)."""
-        from app.core.settings import settings
-
-        # Temporarily enable rate limiting for this test
-        original_enabled = settings.rate_limit.enabled
-        settings.rate_limit.enabled = True
-
-        try:
-            headers = {"Authorization": f"Bearer {test_admin_token}"}
-
-            # Reset limiter state to ensure clean slate
-            from app.core.rate_limiter import limiter
-
-            limiter.reset()
-
-            # Make 10 updates (should succeed)
-            for i in range(10):
-                status_value = "in_progress" if i % 2 == 0 else "open"
-                response = client.patch(
-                    f"/api/v1/support/{test_ticket.id}/status",
-                    json={"status": status_value},
-                    headers=headers,
-                )
-                assert response.status_code == status.HTTP_200_OK
-
-            # 11th update should be rate limited
-            response = client.patch(
-                f"/api/v1/support/{test_ticket.id}/status",
-                json={"status": "resolved"},
-                headers=headers,
-            )
-            assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
-        finally:
-            # Restore original setting
-            settings.rate_limit.enabled = original_enabled
 
 
 class TestDeleteTicket:

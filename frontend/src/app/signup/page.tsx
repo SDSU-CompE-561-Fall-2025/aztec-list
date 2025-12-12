@@ -95,8 +95,10 @@ export default function SignupPage() {
 
     try {
       await signup({ username, email, password });
-      // Redirect to home page after successful signup
-      router.push("/");
+      // Store email for resend verification on success page
+      sessionStorage.setItem("signup_email", email);
+      // Redirect to success page after successful signup
+      router.push("/signup/success");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred during signup");
     } finally {

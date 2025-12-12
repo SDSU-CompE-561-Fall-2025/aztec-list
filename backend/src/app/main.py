@@ -9,7 +9,6 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.api.v1.routes import api_router
-from app.core.database import Base, engine
 from app.core.logging import configure_logging
 from app.core.middleware import RequestLoggingMiddleware, add_cache_headers_middleware
 from app.core.rate_limiter import limiter
@@ -18,9 +17,8 @@ from app.core.settings import settings
 # Configure logging from settings
 configure_logging(settings.logging)
 
-# Create database tables
-# If the tables do not exist, create them
-Base.metadata.create_all(bind=engine)
+# NOTE: Database migrations are now handled by Alembic
+# Run `alembic upgrade head` to apply migrations
 
 # Create upload directory with absolute path before app initialization
 upload_dir = Path(__file__).parent.parent.parent / "uploads"
@@ -55,7 +53,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # ty
 # Add cache headers middleware first (executes last, adds cache headers to responses)
 app.middleware("http")(add_cache_headers_middleware)
 
-# Add CORS middleware second (executes second-to-last, before cache headers)
+# Add CORS middleware second (executes second-to-last)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors.allowed_origins,

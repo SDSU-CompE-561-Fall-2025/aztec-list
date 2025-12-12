@@ -73,7 +73,7 @@ export default function ListingDetailPage() {
   });
 
   // Fetch seller's profile for contact info
-  const { data: sellerProfile } = useQuery({
+  const { data: sellerProfile, isLoading: isSellerProfileLoading } = useQuery({
     queryKey: ["profile", listing?.seller_id],
     queryFn: async () => {
       if (!listing?.seller_id) return null;
@@ -318,7 +318,9 @@ export default function ListingDetailPage() {
                 className="flex items-center gap-3 w-full rounded-lg p-2 group text-left cursor-pointer"
               >
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20 overflow-hidden relative">
-                  {sellerProfile?.profile_picture_url ? (
+                  {isSellerProfileLoading ? (
+                    <div className="w-full h-full bg-muted animate-pulse" />
+                  ) : sellerProfile?.profile_picture_url ? (
                     <Image
                       src={
                         getProfilePictureUrl(
@@ -337,7 +339,11 @@ export default function ListingDetailPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-foreground text-base font-medium truncate">
-                    {sellerProfile?.name || seller?.username || "Loading..."}
+                    {isSellerProfileLoading ? (
+                      <span className="inline-block h-5 bg-muted animate-pulse rounded w-32" />
+                    ) : (
+                      sellerProfile?.name || seller?.username || "Loading..."
+                    )}
                   </p>
                   {seller?.created_at && (
                     <p className="text-muted-foreground text-xs">

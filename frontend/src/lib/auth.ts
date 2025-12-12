@@ -43,10 +43,12 @@ export const login = async (credentials: LoginCredentials): Promise<AuthToken> =
  * Register a new user account.
  *
  * @param signupData - New user registration data
- * @returns Created user's public information
+ * @returns Created user's public information with email sending status
  * @throws Error if registration fails
  */
-export const signup = async (signupData: SignupData): Promise<User> => {
+export const signup = async (
+  signupData: SignupData
+): Promise<User & { verification_email_sent?: boolean }> => {
   const res = await fetch(`${API_BASE_URL}/auth/signup`, {
     method: "POST",
     headers: {
@@ -61,7 +63,7 @@ export const signup = async (signupData: SignupData): Promise<User> => {
   }
 
   const data = await res.json();
-  return data as User;
+  return data;
 };
 
 /**
@@ -169,4 +171,32 @@ export const changePassword = async (
     const errorData = await res.json().catch(() => ({ detail: "Password change failed" }));
     throw new Error(errorData.detail || "Could not change password");
   }
+};
+
+/**
+ * Refresh current user data from the server and update localStorage.
+ * Call this after actions that modify user state (email verification, profile updates, etc.)
+ *
+ * @throws Error if not authenticated or fetch fails
+ */
+export const refreshCurrentUser = async (): Promise<User> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/users/me`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to refresh user data");
+  }
+
+  const user = (await res.json()) as User;
+  setStoredUser(user);
+  return user;
 };

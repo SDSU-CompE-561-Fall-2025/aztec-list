@@ -98,7 +98,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (signupData: SignupData): Promise<void> => {
     try {
-      await apiSignup(signupData);
+      const result = await apiSignup(signupData);
+
+      // Store email sending status in sessionStorage for success page
+      if (result.verification_email_sent === false) {
+        sessionStorage.setItem("email_send_failed", "true");
+      }
 
       await login({
         username: signupData.email,

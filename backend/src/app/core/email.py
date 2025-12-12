@@ -124,6 +124,51 @@ class EmailService:
             logger.info("Notification email sent to support team for ticket %s", ticket_id)
             return True
 
+    def send_email_verification(self, email: str, username: str, verification_token: str) -> bool:
+        """
+        Send email verification link to user.
+
+        Args:
+            email: User's email address
+            username: User's username
+            verification_token: Unique verification token
+
+        Returns:
+            bool: True if email was sent successfully, False otherwise
+        """
+        if not settings.email.enabled or not settings.email.resend_api_key:
+            logger.info("Email service disabled or not configured, skipping verification email")
+            return False
+
+        try:
+            # Construct verification URL
+            verification_url = (
+                f"{settings.cors.frontend_url}/verify-email?token={verification_token}"
+            )
+
+            # Render template with Jinja2 (automatic escaping enabled)
+            template = jinja_env.get_template("email_verification.html")
+            html_content = template.render(
+                username=username,
+                verification_url=verification_url,
+                current_year=datetime.now(UTC).year,
+            )
+
+            resend.Emails.send(
+                {
+                    "from": settings.email.from_email,
+                    "to": email,
+                    "subject": "Verify Your Email - Aztec List",
+                    "html": html_content,
+                }
+            )
+        except Exception:
+            logger.exception("Failed to send verification email to %s", email)
+            return False
+        else:
+            logger.info("Verification email sent to %s", email)
+            return True
+
 
 # Global email service instance
 email_service = EmailService()
