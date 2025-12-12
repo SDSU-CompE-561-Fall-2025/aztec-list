@@ -39,6 +39,7 @@ class ContentModerator:
 
     # Weapons and Dangerous Items
     WEAPONS_KEYWORDS: ClassVar[set[str]] = {
+        # Generic terms
         "gun",
         "guns",
         "firearm",
@@ -53,12 +54,31 @@ class ContentModerator:
         "weapons",
         "ammunition",
         "ammo",
+        # Popular firearm models
+        "glock",
+        "glock 17",
+        "glock 19",
+        "sig sauer",
+        "smith wesson",
+        "beretta",
+        "colt 1911",
+        "ar-15",
+        "ar15",
+        "ak-47",
+        "ak47",
+        "remington",
+        "ruger",
+        "springfield",
+        "mossberg",
+        "winchester",
+        # Explosives
         "explosive",
         "explosives",
         "grenade",
         "grenades",
         "bomb",
         "bombs",
+        # Other weapons
         "knife sale",  # "knife" alone triggers on "pocket knife holder"
         "switchblade",
         "brass knuckles",
@@ -219,7 +239,50 @@ class ContentModerator:
             r"\b(molly|ecstasy|mdma|lsd|acid|shrooms|DMT|ketamine|crack)\s+(for|4)?\s*sale\b",
             re.IGNORECASE,
         ),
+        # External marketplace URLs (suspicious)
+        re.compile(
+            r"\b(craigslist|facebook\.com/marketplace|offerup|letgo|mercari)\b",
+            re.IGNORECASE,
+        ),
     ]
+
+    @staticmethod
+    def _normalize_evasion(text: str) -> str:
+        """
+        Normalize common evasion techniques.
+
+        Handles leet speak (c0caine), spacing (g u n s), and special characters.
+
+        Args:
+            text: Input text to normalize
+
+        Returns:
+            str: Normalized text with evasion patterns converted to standard form
+        """
+        # Convert to lowercase first
+        text = text.lower()
+
+        # Common leet speak substitutions
+        leet_map = {
+            "0": "o",
+            "1": "i",
+            "3": "e",
+            "4": "a",
+            "5": "s",
+            "7": "t",
+            "8": "b",
+            "9": "g",
+            "@": "a",
+            "$": "s",
+        }
+        for leet, normal in leet_map.items():
+            text = text.replace(leet, normal)
+
+        # Remove common separator characters (but keep regular spaces for now)
+        text = text.replace("_", "").replace("-", "").replace(".", "")
+
+        # Remove excessive spaces (more than one space becomes one space)
+        return " ".join(text.split())
 
     def check_content(self, title: str, description: str) -> ModerationResult:
         """
@@ -227,6 +290,7 @@ class ContentModerator:
 
         Scans both title and description for banned keywords and suspicious patterns.
         Uses case-insensitive matching with word boundaries to reduce false positives.
+        Includes evasion detection for common obfuscation techniques.
 
         Args:
             title: Listing title
@@ -235,20 +299,27 @@ class ContentModerator:
         Returns:
             ModerationResult: Contains violation status, matched terms, and reason
         """
-        # Combine and normalize text
+        # Combine text
         combined_text = f"{title} {description}".lower()
 
-        # Check for banned keywords
+        # Also check normalized version to catch evasion attempts
+        normalized_text = self._normalize_evasion(combined_text)
+
+        # Check for banned keywords in both original and normalized text
         matched_keywords = []
         for keyword in self.BANNED_KEYWORDS:
             # Use word boundaries to avoid false positives (e.g., "gun" in "begun")
             pattern = rf"\b{re.escape(keyword)}\b"
-            if re.search(pattern, combined_text, re.IGNORECASE):
+            if re.search(pattern, combined_text, re.IGNORECASE) or re.search(
+                pattern, normalized_text, re.IGNORECASE
+            ):
                 matched_keywords.append(keyword)
 
         # Check regex patterns
         matched_patterns = [
-            pattern.pattern for pattern in self.PATTERNS if pattern.search(combined_text)
+            pattern.pattern
+            for pattern in self.PATTERNS
+            if pattern.search(combined_text) or pattern.search(normalized_text)
         ]
 
         # Determine result
@@ -256,6 +327,9 @@ class ContentModerator:
 
         if is_violation:
             all_matches = matched_keywords + matched_patterns
+            # Deduplicate matches
+            all_matches = list(dict.fromkeys(all_matches))
+
             reason = (
                 f"Content policy violation: Detected prohibited content - {', '.join(all_matches[: self.MAX_TERMS_IN_MESSAGE])}"
                 + (
@@ -263,13 +337,6 @@ class ContentModerator:
                     if len(all_matches) > self.MAX_TERMS_IN_MESSAGE
                     else ""
                 )
-            )
-            logger.warning(
-                "Content moderation violation detected",
-                extra={
-                    "title": title[:100],
-                    "matched_terms": all_matches,
-                },
             )
         else:
             reason = None

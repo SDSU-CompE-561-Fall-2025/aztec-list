@@ -7,8 +7,6 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import require_not_banned, require_verified_user
-from app.core.enums import UserRole
-from app.core.moderation import content_moderator
 from app.core.rate_limiter import limiter
 from app.models.listing import Listing
 from app.models.user import User
@@ -21,6 +19,7 @@ from app.schemas.listing import (
     ListingUpdate,
 )
 from app.services.listing import listing_service
+from app.services.moderation import moderation_service
 
 logger = logging.getLogger(__name__)
 
@@ -69,30 +68,17 @@ async def create_listing(
             - 400 if validation fails
             - 429 if rate limit exceeded
     """
-    # Run automated content moderation
-    moderation_result = content_moderator.check_content(listing.title, listing.description)
+    # Check content moderation
+    moderation_decision = moderation_service.check_listing_content(current_user, listing)
 
-    if moderation_result.is_violation:
-        # Industry best practice: Apply moderation to everyone, but handle admins differently
-        if current_user.role == UserRole.ADMIN:
-            # Log admin violations for audit trail (security best practice)
-            logger.warning(
-                "Admin user %s created listing with policy violation: %s",
-                current_user.id,
-                moderation_result.reason,
-            )
-            # Allow the listing but log it - admins may need to post legitimate content
-            # that triggers false positives. All admin actions should be auditable.
-            return listing_service.create(db, current_user.id, listing)
-
-        # For regular users: block the listing and issue a strike
-        # Don't create the listing first - just reject immediately
+    # Block content if not allowed
+    if not moderation_decision.is_allowed:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=moderation_result.reason
-            or "Content policy violation: This listing contains prohibited content",
+            detail=moderation_decision.reason or "Content policy violation",
         )
 
+    # Create the listing
     return listing_service.create(db, current_user.id, listing)
 
 
