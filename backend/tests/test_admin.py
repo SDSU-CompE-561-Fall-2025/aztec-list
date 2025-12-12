@@ -206,19 +206,22 @@ class TestStrikeUser:
 
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
-        assert data["action_type"] == "strike"
-        assert data["reason"] == "Posted inappropriate content"
-        assert data["target_user_id"] == str(test_user.id)
-        assert data["admin_id"] == str(test_admin.id)
-        assert "id" in data
+        assert "strike_action" in data
+        assert data["strike_action"]["action_type"] == "strike"
+        assert data["strike_action"]["reason"] == "Posted inappropriate content"
+        assert data["strike_action"]["target_user_id"] == str(test_user.id)
+        assert data["strike_action"]["admin_id"] == str(test_admin.id)
+        assert "id" in data["strike_action"]
 
     def test_strike_user_without_reason(self, admin_client: TestClient, test_user: User):
-        """Test striking user without reason (optional field)."""
-        response = admin_client.post(f"/api/v1/admin/users/{test_user.id}/strike", json={})
+        """Test striking user with minimal reason."""
+        response = admin_client.post(
+            f"/api/v1/admin/users/{test_user.id}/strike", json={"reason": "Strike"}
+        )
 
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
-        assert data["action_type"] == "strike"
+        assert data["strike_action"]["action_type"] == "strike"
 
     def test_strike_user_not_found(self, admin_client: TestClient):
         """Test striking non-existent user returns 404."""
@@ -388,10 +391,12 @@ class TestRemoveListing:
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_remove_listing_without_reason(self, admin_client: TestClient, test_listing: Listing):
-        """Test removing listing without reason succeeds (reason is optional)."""
-        response = admin_client.post(f"/api/v1/admin/listings/{test_listing.id}/remove", json={})
+        """Test removing listing with minimal reason."""
+        response = admin_client.post(
+            f"/api/v1/admin/listings/{test_listing.id}/remove", json={"reason": "Removed"}
+        )
 
-        # Reason is optional - should succeed
+        # Should succeed
         assert response.status_code == status.HTTP_200_OK
 
     def test_can_remove_listing_from_banned_user(
@@ -434,7 +439,7 @@ class TestAdminIntegration:
             f"/api/v1/admin/users/{test_user.id}/strike", json={"reason": "First warning"}
         )
         assert strike1_response.status_code == status.HTTP_201_CREATED
-        strike1_id = strike1_response.json()["id"]
+        strike1_id = strike1_response.json()["strike_action"]["id"]
 
         # Step 2: Issue second strike
         strike2_response = admin_client.post(
@@ -496,3 +501,185 @@ class TestAdminIntegration:
             item["target_user_id"] == str(test_user.id) and item["action_type"] == "strike"
             for item in data["items"]
         )
+
+
+class TestAdminUserVerification:
+    """Test PATCH /admin/users/{user_id}/verification endpoint."""
+
+    def test_admin_verify_unverified_user(
+        self, admin_client: TestClient, test_user: User, db_session
+    ):
+        """Test admin can verify an unverified user."""
+        # Set user as unverified
+        test_user.is_verified = False
+        db_session.commit()
+
+        response = admin_client.patch(
+            f"/api/v1/admin/users/{test_user.id}/verification",
+            json={"is_verified": True},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["user_id"] == str(test_user.id)
+        assert data["is_verified"] is True
+        assert "verified successfully" in data["message"].lower()
+
+        # Verify in database
+        db_session.refresh(test_user)
+        assert test_user.is_verified is True
+
+    def test_admin_unverify_verified_user(
+        self, admin_client: TestClient, test_user: User, db_session
+    ):
+        """Test admin can unverify a verified user."""
+        # Set user as verified
+        test_user.is_verified = True
+        db_session.commit()
+
+        response = admin_client.patch(
+            f"/api/v1/admin/users/{test_user.id}/verification",
+            json={"is_verified": False},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["user_id"] == str(test_user.id)
+        assert data["is_verified"] is False
+        assert "unverified successfully" in data["message"].lower()
+
+        # Verify in database
+        db_session.refresh(test_user)
+        assert test_user.is_verified is False
+
+    def test_verify_already_verified_user(
+        self, admin_client: TestClient, test_user: User, db_session
+    ):
+        """Test verifying an already verified user still works."""
+        # Set user as verified
+        test_user.is_verified = True
+        db_session.commit()
+
+        response = admin_client.patch(
+            f"/api/v1/admin/users/{test_user.id}/verification",
+            json={"is_verified": True},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["is_verified"] is True
+
+    def test_unverify_already_unverified_user(
+        self, admin_client: TestClient, test_user: User, db_session
+    ):
+        """Test unverifying an already unverified user still works."""
+        # Set user as unverified
+        test_user.is_verified = False
+        db_session.commit()
+
+        response = admin_client.patch(
+            f"/api/v1/admin/users/{test_user.id}/verification",
+            json={"is_verified": False},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["is_verified"] is False
+
+    def test_verify_user_not_found_raises_404(self, admin_client: TestClient):
+        """Test verifying non-existent user raises 404."""
+        fake_user_id = uuid.uuid4()
+        response = admin_client.patch(
+            f"/api/v1/admin/users/{fake_user_id}/verification",
+            json={"is_verified": True},
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_verify_user_requires_admin(self, authenticated_client: TestClient, test_user: User):
+        """Test regular users cannot verify users."""
+        response = authenticated_client.patch(
+            f"/api/v1/admin/users/{test_user.id}/verification",
+            json={"is_verified": True},
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_verify_user_requires_auth(self, client: TestClient, test_user: User):
+        """Test unauthenticated requests cannot verify users."""
+        response = client.patch(
+            f"/api/v1/admin/users/{test_user.id}/verification",
+            json={"is_verified": True},
+        )
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_verify_user_invalid_uuid_raises_422(self, admin_client: TestClient):
+        """Test verifying with invalid UUID raises 422."""
+        response = admin_client.patch(
+            "/api/v1/admin/users/not-a-uuid/verification",
+            json={"is_verified": True},
+        )
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+    def test_verify_user_missing_is_verified_raises_422(
+        self, admin_client: TestClient, test_user: User
+    ):
+        """Test verifying without is_verified field raises 422."""
+        response = admin_client.patch(
+            f"/api/v1/admin/users/{test_user.id}/verification",
+            json={},
+        )
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+    def test_verify_user_invalid_is_verified_type_raises_422(
+        self, admin_client: TestClient, test_user: User
+    ):
+        """Test verifying with invalid is_verified type raises 422."""
+        response = admin_client.patch(
+            f"/api/v1/admin/users/{test_user.id}/verification",
+            json={"is_verified": "not a boolean"},
+        )
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+    def test_verify_clears_verification_token(
+        self, admin_client: TestClient, test_user: User, db_session
+    ):
+        """Test that verifying a user clears verification token and expiry."""
+        # Set user with verification token
+        test_user.is_verified = False
+        test_user.verification_token = "some_token_123"
+        test_user.verification_token_expires = datetime.now(UTC) + timedelta(days=1)
+        db_session.commit()
+
+        response = admin_client.patch(
+            f"/api/v1/admin/users/{test_user.id}/verification",
+            json={"is_verified": True},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+
+        # Verify token and expiry are cleared
+        db_session.refresh(test_user)
+        assert test_user.is_verified is True
+        assert test_user.verification_token is None
+        assert test_user.verification_token_expires is None
+
+    def test_verify_user_response_includes_admin_name(
+        self, admin_client: TestClient, test_user: User, test_admin: User, db_session
+    ):
+        """Test that verification response includes admin username."""
+        test_user.is_verified = False
+        db_session.commit()
+
+        response = admin_client.patch(
+            f"/api/v1/admin/users/{test_user.id}/verification",
+            json={"is_verified": True},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert test_admin.username in data["message"]

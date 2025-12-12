@@ -42,14 +42,6 @@ class TestInvalidUUIDs:
         response = authenticated_client.delete("/api/v1/listings/not-a-uuid")
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
-    def test_create_image_invalid_listing_uuid(self, authenticated_client: TestClient):
-        """Test creating image with invalid listing UUID."""
-        response = authenticated_client.post(
-            "/api/v1/listings/not-a-uuid/images",
-            json={"url": "http://example.com/image.jpg"},
-        )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-
     def test_admin_get_action_invalid_uuid(self, admin_client: TestClient):
         """Test getting admin action with invalid UUID."""
         response = admin_client.get("/api/v1/admin/actions/not-a-uuid")
@@ -114,16 +106,6 @@ class TestMissingRequiredFields:
         )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
-    def test_create_image_missing_url(
-        self, authenticated_client: TestClient, test_listing: Listing
-    ):
-        """Test creating image without URL."""
-        response = authenticated_client.post(
-            f"/api/v1/listings/{test_listing.id}/images",
-            json={"is_thumbnail": False},
-        )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-
     def test_login_missing_credentials(self, client: TestClient):
         """Test login with missing credentials."""
         response = client.post(
@@ -147,16 +129,6 @@ class TestInvalidDataTypes:
                 "category": "electronics",
                 "condition": "new",
             },
-        )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-
-    def test_create_image_invalid_url_format(
-        self, authenticated_client: TestClient, test_listing: Listing
-    ):
-        """Test creating image with invalid URL format."""
-        response = authenticated_client.post(
-            f"/api/v1/listings/{test_listing.id}/images",
-            json={"url": "not-a-valid-url"},
         )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 

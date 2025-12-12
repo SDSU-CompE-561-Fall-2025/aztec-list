@@ -17,6 +17,7 @@ from sqlalchemy.pool import StaticPool
 from app.core.auth import create_access_token, get_password_hash
 from app.core.database import Base, get_db
 from app.core.enums import Condition, UserRole
+from app.core.rate_limiter import limiter
 from app.core.settings import settings
 from app.main import app
 from app.models.listing import Listing
@@ -26,6 +27,7 @@ from app.models.user import User
 
 # Disable rate limiting for all tests by default (can be enabled in specific tests)
 settings.rate_limit.enabled = False
+limiter.enabled = False
 
 # Use in-memory SQLite for tests
 TEST_DATABASE_URL = "sqlite:///:memory:"

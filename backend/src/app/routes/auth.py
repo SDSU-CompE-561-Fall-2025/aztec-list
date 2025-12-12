@@ -150,7 +150,7 @@ async def verify_email(
     summary="Resend verification email",
     status_code=status.HTTP_200_OK,
 )
-@limiter.limit("2/hour")
+@limiter.limit("3/hour")
 async def resend_verification(
     request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     email: str,
@@ -159,7 +159,7 @@ async def resend_verification(
     """
     Resend verification email to user.
 
-    Rate limit: 2 per hour to prevent email spam.
+    Rate limit: 3 per hour to prevent email spam.
 
     Args:
         request: FastAPI request object (required for rate limiting)

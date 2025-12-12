@@ -6,6 +6,7 @@ This module contains business logic for user operations.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
@@ -23,6 +24,9 @@ if TYPE_CHECKING:
 
     from app.models.user import User
     from app.schemas.user import UserCreate, UserUpdate
+
+
+logger = logging.getLogger(__name__)
 
 
 class UserService:
@@ -136,6 +140,12 @@ class UserService:
             verification_token=verification_token,
         )
 
+        if not email_sent:
+            logger.warning(
+                "Failed to send verification email during user creation",
+                extra={"user_id": str(db_user.id), "email": db_user.email},
+            )
+
         return db_user, email_sent
 
     def delete(self, db: Session, user_id: uuid.UUID) -> None:
@@ -236,6 +246,16 @@ class UserService:
                 username=user.username,
                 verification_token=verification_token,
             )
+
+            if not email_sent:
+                logger.warning(
+                    "Failed to send verification email during email change",
+                    extra={
+                        "user_id": str(user.id),
+                        "old_email": user.email,
+                        "new_email": update_data.email,
+                    },
+                )
 
         return UserRepository.update(db, user), email_sent
 
