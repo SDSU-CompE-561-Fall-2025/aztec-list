@@ -165,3 +165,13 @@ export function useAuth() {
 
   return context;
 }
+
+/**
+ * Reset auth state for testing
+ * @internal
+ */
+export function resetAuthState() {
+  cachedAuthSnapshot = null;
+  isSnapshotInitialized = false;
+  authListeners = [];
+}

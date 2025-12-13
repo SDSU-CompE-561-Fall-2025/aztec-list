@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, User, Mail, Phone, Edit, MessageSquare, Loader2 } from "lucide-react";
+import { ChevronLeft, User, Mail, Edit, MessageSquare, Loader2 } from "lucide-react";
 import { cn, getConditionColor } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import { createListingDetailQueryOptions } from "@/queryOptions/createListingDetailQueryOptions";

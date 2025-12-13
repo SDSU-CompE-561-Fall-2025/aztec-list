@@ -33,4 +33,4 @@ export interface ConversationPublic extends Conversation {
   unread_count?: number;
 }
 
-export interface MessagePublic extends Message {}
+export type MessagePublic = Message;
