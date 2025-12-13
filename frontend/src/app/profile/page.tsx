@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ProfileListingCard } from "@/components/listings/ProfileListingCard";
 import { PaginationControls } from "@/components/listings/PaginationControls";
 import { DEFAULT_LIMIT } from "@/lib/constants";
-import { Plus } from "lucide-react";
+import { Plus, Mail, Phone, Eye } from "lucide-react";
 import { deleteListing, toggleListingActive } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { refreshCurrentUser } from "@/lib/auth";
@@ -261,6 +261,21 @@ function ProfileContent() {
                         <span className="truncate">{profileData.campus}</span>
                       </div>
                     )}
+
+                    {user?.email && (
+                      <div className="flex items-center gap-2 text-muted-foreground justify-center sm:justify-start">
+                        <Mail className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{user.email}</span>
+                      </div>
+                    )}
+
+                    {profileData?.contact_info?.phone && (
+                      <div className="flex items-center gap-2 text-muted-foreground justify-center sm:justify-start">
+                        <Phone className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{profileData.contact_info.phone}</span>
+                      </div>
+                    )}
+
                     <div className="flex items-center gap-2 text-muted-foreground justify-center sm:justify-start">
                       <svg
                         className="w-4 h-4 flex-shrink-0"
@@ -287,14 +302,39 @@ function ProfileContent() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col gap-2 sm:gap-5 w-full sm:w-30 shrink-0">
-                  <Button asChild variant="outline">
-                    <Link href="/settings">Edit Profile</Link>
-                  </Button>
+                <div className="flex flex-col gap-2 sm:gap-3 w-full sm:w-auto shrink-0">
+                  <div className="flex gap-2">
+                    <Button asChild variant="outline" className="flex-1 justify-center">
+                      <Link href="/settings" className="w-full flex items-center justify-center">
+                        Edit Profile
+                      </Link>
+                    </Button>
+
+                    {user?.id && (
+                      <Button asChild variant="outline" className="px-3 justify-center">
+                        <Link
+                          href={`/profile/${user.id}`}
+                          className="flex items-center justify-center"
+                          title="View Public Profile"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
 
                   {totalCount > 0 && (
-                    <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white">
-                      <Link href="/listings/create">Add Listing</Link>
+                    <Button
+                      asChild
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white justify-center"
+                    >
+                      <Link
+                        href="/listings/create"
+                        className="w-full flex items-center justify-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Add Listing</span>
+                      </Link>
                     </Button>
                   )}
                 </div>
