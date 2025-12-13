@@ -1,6 +1,5 @@
 """Integration tests for automated content moderation in listing creation."""
 
-import uuid
 
 import pytest
 from fastapi import status
