@@ -1,7 +1,8 @@
+import logging
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -18,6 +19,9 @@ from app.schemas.listing import (
     ListingUpdate,
 )
 from app.services.listing import listing_service
+from app.services.moderation import moderation_service
+
+logger = logging.getLogger(__name__)
 
 listing_router = APIRouter(
     prefix="/listings",
@@ -44,6 +48,10 @@ async def create_listing(
     Requires email verification to prevent spam and ensure accountability.
     Rate limit: 3 per minute (burst), 10 per hour (sustained) to prevent spam.
 
+    Content is automatically scanned for prohibited items. Listings containing
+    illegal goods, weapons, drugs, counterfeit items, or other policy violations
+    will be rejected and may result in account penalties.
+
     Args:
         request: FastAPI request object (required for rate limiting)
         listing: Listing creation data (title, description, price, category, condition)
@@ -54,8 +62,23 @@ async def create_listing(
         ListingPublic: Created listing information
 
     Raises:
-        HTTPException: 401 if not authenticated, 403 if not verified or banned, 400 if validation fails, 429 if rate limit exceeded
+        HTTPException:
+            - 401 if not authenticated
+            - 403 if not verified, banned, or content violates policy
+            - 400 if validation fails
+            - 429 if rate limit exceeded
     """
+    # Check content moderation
+    moderation_decision = moderation_service.check_listing_content(current_user, listing)
+
+    # Block content if not allowed
+    if not moderation_decision.is_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=moderation_decision.reason or "Content policy violation",
+        )
+
+    # Create the listing
     return listing_service.create(db, current_user.id, listing)
 
 
