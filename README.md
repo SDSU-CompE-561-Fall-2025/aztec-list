@@ -123,7 +123,7 @@ For detailed backend/frontend commands, see their respective READMEs.
 For detailed testing documentation, see:
 
 - Backend: [backend/tests/README.md](backend/tests/README.md)
-- Frontend: Coming soon
+- Frontend: [frontend/README.md#testing](frontend/README.md#testing)
 
 ## Environment Configuration
 

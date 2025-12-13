@@ -55,6 +55,107 @@ bun run lint:fix
 
 **Note:** Pre-commit hooks automatically run ESLint and Prettier on staged files when you commit. See the main [README.md](../README.md#code-quality--pre-commit-hooks) for details.
 
+## Testing
+
+### E2E Tests with Playwright
+
+End-to-end tests are located in `tests/e2e/` and use [Playwright](https://playwright.dev/) for browser automation.
+
+#### Running Tests
+
+```bash
+# Run all E2E tests
+npx playwright test
+
+# Run specific test file
+npx playwright test tests/e2e/auth-login.spec.ts
+
+# Run tests sequentially (useful for debugging)
+npx playwright test --workers=1
+
+# Run tests in headed mode (see the browser)
+npx playwright test --headed
+
+# Run tests in UI mode (interactive debugging)
+npx playwright test --ui
+
+# View last test report
+npx playwright show-report
+```
+
+#### Test Structure
+
+E2E tests are organized by feature:
+
+**Authentication:**
+
+- `auth-login.spec.ts` - Login functionality
+- `auth-signup.spec.ts` - User registration
+- `auth-logout.spec.ts` - Logout functionality
+
+**Listings:**
+
+- `listings-browse.spec.ts` - Browse and search listings
+- `listings-create.spec.ts` - Create new listings
+- `listings-detail.spec.ts` - View listing details
+- `listings-edit-delete.spec.ts` - Edit and delete listings
+
+**User Profile:**
+
+- `profile-management.spec.ts` - User profile and settings
+
+**Admin Dashboard:**
+
+- `admin-actions.spec.ts` - View admin actions history, revoke actions
+- `admin-moderation.spec.ts` - Issue strikes, ban users, remove listings
+- `admin-access-control.spec.ts` - Admin route protection and authorization
+
+**Utilities:**
+
+- `helpers/test-helpers.ts` - Shared test utilities
+
+> **Note:** Many admin tests are currently skipped (marked with `test.skip()`) as they require the ability to create admin users in the test environment. These serve as templates for future implementation when admin user test infrastructure is available.
+
+#### Test Helpers
+
+The `helpers/test-helpers.ts` file provides utilities for:
+
+- **Test Data Generation**: `generateTestEmail()`, `generateUsername()`, `generatePassword()`
+- **Authentication**: `isUserLoggedIn()`, `isUserLoggedOut()`, `logout()`
+- **State Verification**: `hasAuthToken()`
+
+Example usage:
+
+```typescript
+import { generateTestEmail, generatePassword } from "./helpers/test-helpers";
+
+const email = generateTestEmail();
+const password = generatePassword();
+```
+
+#### Configuration
+
+Tests are configured in `playwright.config.ts`:
+
+- **Automatic Server Startup**: Both backend (FastAPI) and frontend (Next.js) start automatically before tests run
+- **Base URL**: `http://localhost:3000` (configurable via `PLAYWRIGHT_BASE_URL`)
+- **Test Directory**: `./tests/e2e`
+- **Browser**: Chromium (Firefox and WebKit available but commented out)
+- **Retries**: 2 retries on CI, 0 locally
+- **Screenshots/Videos**: Captured on failure for debugging
+
+#### CI vs Local Behavior
+
+- **CI**: Runs sequentially (`workers: 1`), includes GitHub reporter
+- **Local**: Runs in parallel for speed, reuses existing dev servers
+
+#### Best Practices
+
+- Each test should be independent and not rely on other tests
+- Use test helpers for common operations (login, data generation)
+- Tests automatically clean up by creating unique users/data per test
+- Use descriptive test names that explain what is being tested
+
 ## Build
 
 ```bash
