@@ -23,7 +23,7 @@ class MessageRepository:
 
     @staticmethod
     def get_by_conversation(
-        db: Session, conversation_id: uuid.UUID, limit: int = 20, skip: int = 0
+        db: Session, conversation_id: uuid.UUID, limit: int = 20, offset: int = 0
     ) -> list[Message]:
         """
         Get messages for a conversation with pagination.
@@ -34,7 +34,7 @@ class MessageRepository:
             db: Database session
             conversation_id: Conversation UUID
             limit: Maximum number of messages to return
-            skip: Number of messages to skip (for pagination)
+            offset: Number of messages to skip (for pagination)
 
         Returns:
             list[Message]: List of messages
@@ -44,7 +44,7 @@ class MessageRepository:
             .where(Message.conversation_id == conversation_id)
             .order_by(Message.created_at.asc(), Message.id.asc())
             .limit(limit)
-            .offset(skip)
+            .offset(offset)
         )
         return list(db.scalars(query).all())
 

@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Dialog,
@@ -44,7 +44,7 @@ export function NewConversationDialog({
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
       setHasSearched(false);
@@ -81,7 +81,7 @@ export function NewConversationDialog({
     } finally {
       setIsSearching(false);
     }
-  };
+  }, [searchQuery, currentUser?.id]);
 
   // Debounced search effect - automatically search as user types
   useEffect(() => {
@@ -96,7 +96,7 @@ export function NewConversationDialog({
     }, 400); // Wait 400ms after user stops typing
 
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery]);
+  }, [searchQuery, handleSearch]);
 
   const createConversationMutation = useMutation({
     mutationFn: (otherUserId: string) => createOrGetConversation(otherUserId),

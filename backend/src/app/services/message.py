@@ -22,7 +22,7 @@ class MessageService:
     """Service for message business logic."""
 
     def get_conversation_messages(
-        self, db: Session, conversation_id: uuid.UUID, limit: int = 20, skip: int = 0
+        self, db: Session, conversation_id: uuid.UUID, limit: int = 20, offset: int = 0
     ) -> list[Message]:
         """
         Get messages for a conversation with pagination.
@@ -33,12 +33,12 @@ class MessageService:
             db: Database session
             conversation_id: Conversation UUID
             limit: Maximum number of messages to return
-            skip: Number of messages to skip for pagination
+            offset: Number of messages to skip for pagination
 
         Returns:
             list[Message]: List of messages
         """
-        return MessageRepository.get_by_conversation(db, conversation_id, limit, skip)
+        return MessageRepository.get_by_conversation(db, conversation_id, limit, offset)
 
     def create(
         self, db: Session, conversation_id: uuid.UUID, sender_id: uuid.UUID, content: str
