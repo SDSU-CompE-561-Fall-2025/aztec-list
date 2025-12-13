@@ -31,9 +31,7 @@ connection_locks: dict[uuid.UUID, asyncio.Lock] = {}
 
 def get_conversation_lock(conversation_id: uuid.UUID) -> asyncio.Lock:
     """Get or create a lock for a conversation."""
-    if conversation_id not in connection_locks:
-        connection_locks[conversation_id] = asyncio.Lock()
-    return connection_locks[conversation_id]
+    return connection_locks.setdefault(conversation_id, asyncio.Lock())
 
 
 async def broadcast_message_to_conversation(conversation_id: uuid.UUID, message_json: str) -> None:

@@ -12,7 +12,6 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.models.conversation import Conversation
-from app.models.message import Message
 from app.models.user import User
 from app.repository.conversation import ConversationRepository
 from app.repository.message import MessageRepository

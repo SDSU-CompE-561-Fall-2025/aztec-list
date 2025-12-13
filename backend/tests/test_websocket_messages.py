@@ -5,9 +5,7 @@ Tests cover WebSocket connection, authentication, message sending/receiving,
 error handling, and disconnection scenarios.
 """
 
-import json
 import uuid
-from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient

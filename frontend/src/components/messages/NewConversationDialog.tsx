@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Search, X } from "lucide-react";
 import { createOrGetConversation } from "@/lib/messaging-api";
-import { API_BASE_URL, STATIC_BASE_URL } from "@/lib/constants";
+import { API_BASE_URL } from "@/lib/constants";
 import { getAuthToken } from "@/lib/auth";
 import { UserPublic } from "@/types/user";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
