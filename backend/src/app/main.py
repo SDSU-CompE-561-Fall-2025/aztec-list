@@ -19,21 +19,16 @@ from app.routes.websocket_messages import websocket_router
 # Configure logging from settings
 configure_logging(settings.logging)
 
-# NOTE: Database migrations are now handled by Alembic
-# Run `alembic upgrade head` to apply migrations
-
-# Create upload directory with absolute path before app initialization
+# Create upload directory with absolute path
 upload_dir = Path(__file__).parent.parent.parent / "uploads"
-upload_dir.mkdir(parents=True, exist_ok=True)
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
     """Application lifespan manager - runs on startup and shutdown."""
-    # Startup: Verify upload directory exists
+    # Startup: Create database tables and upload directory
     Base.metadata.create_all(bind=engine)
-    if not upload_dir.exists():
-        upload_dir.mkdir(parents=True, exist_ok=True)
+    upload_dir.mkdir(parents=True, exist_ok=True)
     yield
     # Shutdown: cleanup tasks can go here if needed
 

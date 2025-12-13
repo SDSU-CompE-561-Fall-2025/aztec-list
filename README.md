@@ -125,6 +125,47 @@ For detailed testing documentation, see:
 - Backend: [backend/tests/README.md](backend/tests/README.md)
 - Frontend: [frontend/README.md#testing](frontend/README.md#testing)
 
+## Docker Deployment
+
+Run the entire stack (backend + frontend) with Docker Compose:
+
+```bash
+# 1. Copy the example .env file
+cp .env.example .env
+
+# 2. Generate a secure JWT secret key
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+
+# 3. Edit .env and paste the generated key into JWT__SECRET_KEY
+# Optional: Configure email by adding your Resend API key to EMAIL__RESEND_API_KEY
+
+# 4. Start all services
+docker-compose up --build
+```
+
+**Access:**
+
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+
+**Configuration:**
+All settings can be customized in `.env` (see `.env.example` for available options):
+
+- `JWT__SECRET_KEY` - **Required**: JWT signing key
+- `EMAIL__RESEND_API_KEY` - Optional: Enable email verification (leave empty to disable)
+- `DB__DATABASE_URL` - Optional: Switch to PostgreSQL for production
+- `CORS__ALLOWED_ORIGINS` - Update for production domain
+- See `.env.example` for all available settings
+
+**Useful commands:**
+
+```bash
+docker-compose logs -f          # View logs
+docker-compose down             # Stop and remove containers
+docker-compose restart          # Restart services
+```
+
 ## Environment Configuration
 
 Environment variables are configured separately in each workspace:
