@@ -127,7 +127,7 @@ For detailed testing documentation, see:
 
 ## Docker Deployment
 
-Run the entire stack (backend + frontend) with Docker Compose:
+Run the entire stack (backend + frontend + PostgreSQL) with Docker Compose:
 
 ```bash
 # 1. Copy the example .env file
@@ -136,10 +136,12 @@ cp .env.example .env
 # 2. Generate a secure JWT secret key
 python -c "import secrets; print(secrets.token_urlsafe(32))"
 
-# 3. Edit .env and paste the generated key into JWT__SECRET_KEY
-# Optional: Configure email by adding your Resend API key to EMAIL__RESEND_API_KEY
+# 3. Edit .env and update:
+#    - JWT__SECRET_KEY: Paste the generated key
+#    - POSTGRES_PASSWORD: Set a secure database password
+#    - Optional: EMAIL__RESEND_API_KEY for email verification
 
-# 4. Start all services
+# 4. Start all services (PostgreSQL + Backend + Frontend)
 docker-compose up --build
 ```
 
@@ -150,21 +152,25 @@ docker-compose up --build
 - API Docs: http://localhost:8000/docs
 
 **Configuration:**
-All settings can be customized in `.env` (see `.env.example` for available options):
+All settings in `.env` (see `.env.example` for details):
 
 - `JWT__SECRET_KEY` - **Required**: JWT signing key
-- `EMAIL__RESEND_API_KEY` - Optional: Enable email verification (leave empty to disable)
-- `DB__DATABASE_URL` - Optional: Switch to PostgreSQL for production
+- `POSTGRES_PASSWORD` - **Required**: Database password
+- `EMAIL__RESEND_API_KEY` - Optional: Email verification (leave empty to disable)
 - `CORS__ALLOWED_ORIGINS` - Update for production domain
-- See `.env.example` for all available settings
 
 **Useful commands:**
 
 ```bash
 docker-compose logs -f          # View logs
+docker-compose logs -f postgres # View database logs
 docker-compose down             # Stop and remove containers
+docker-compose down -v          # Stop and remove containers + database volume
 docker-compose restart          # Restart services
 ```
+
+**Database:**
+PostgreSQL data is persisted in a Docker volume. Tables are created automatically on first startup.
 
 ## Environment Configuration
 
