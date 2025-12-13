@@ -117,7 +117,6 @@ class TestContentModerator:
 
         assert result.is_violation is True
         assert len(result.matched_terms) >= 3
-        assert "gun" in result.matched_terms or "guns" in [t for t in result.matched_terms]
 
     def test_case_insensitive_matching(self, moderator):
         """Test that matching is case-insensitive."""

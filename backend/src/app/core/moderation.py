@@ -208,7 +208,6 @@ class ContentModerator:
         "escort",
         "prostitution",
         "sex work",
-        # "massage parlor",  # Removed: Context-dependent, can flag legitimate businesses
         "happy ending",
         "adult services",
     }
@@ -246,9 +245,14 @@ class ContentModerator:
             r"\b(molly|ecstasy|mdma|lsd|acid|shrooms|DMT|ketamine|crack)\s+(for|4)?\s*sale\b",
             re.IGNORECASE,
         ),
-        # External marketplace URLs (suspicious)
+        # External marketplace URLs and mentions (suspicious)
         re.compile(
             r"(https?://|www\.)?(craigslist\.org|facebook\.com/marketplace|offerup\.com|letgo\.com|mercari\.com)(/[^\s]*)?",
+            re.IGNORECASE,
+        ),
+        # External marketplace brand mentions (without full URLs)
+        re.compile(
+            r"\b(craigslist|offerup|letgo|mercari)\b",
             re.IGNORECASE,
         ),
     ]
