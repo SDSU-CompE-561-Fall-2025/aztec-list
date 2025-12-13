@@ -123,7 +123,7 @@ class TestGetUser:
         data = response.json()
         assert data["id"] == str(test_user.id)
         assert data["username"] == test_user.username
-        assert data["email"] == test_user.email
+        assert "email" not in data  # Email should not be exposed for other users
         assert "hashed_password" not in data
 
     def test_get_user_not_found(self, client: TestClient):
@@ -192,6 +192,7 @@ class TestUpdateCurrentUser:
         assert data["username"] == "updated_username"
         assert data["email"] == "updated@example.edu"
         assert data["id"] == str(test_user.id)
+        assert "verification_email_sent" in data
 
     def test_update_current_user_partial(self, authenticated_client: TestClient, test_user: User):
         """Test partially updating current user (only some fields)."""
@@ -201,7 +202,8 @@ class TestUpdateCurrentUser:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["username"] == "new_username"
-        assert data["email"] == test_user.email  # Should remain unchanged
+        assert data["email"] == test_user.email
+        assert "verification_email_sent" in data
 
     def test_update_current_user_without_authentication(self, client: TestClient):
         """Test updating user without authentication fails."""
@@ -271,6 +273,7 @@ class TestUpdateCurrentUser:
         data = response.json()
         assert data["username"] == test_user.username
         assert data["email"] == test_user.email
+        assert "verification_email_sent" in data
 
     def test_update_username_case_insensitive_uniqueness(
         self, authenticated_client: TestClient, test_user: User, db_session
@@ -304,6 +307,7 @@ class TestUpdateCurrentUser:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["email"] == test_user.email
+        assert "verification_email_sent" in data
 
     def test_update_username_to_same_succeeds(
         self, authenticated_client: TestClient, test_user: User
