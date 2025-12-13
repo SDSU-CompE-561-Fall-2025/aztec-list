@@ -100,7 +100,7 @@ async def get_conversation_messages(
     limit: Annotated[
         int, Query(ge=1, le=100, description="Maximum number of messages to return")
     ] = 20,
-    skip: Annotated[int, Query(ge=0, description="Number of messages to skip")] = 0,
+    offset: Annotated[int, Query(ge=0, description="Number of messages to skip")] = 0,
 ) -> list[Message]:
     """
     Get messages from a conversation with pagination.
@@ -113,7 +113,7 @@ async def get_conversation_messages(
         current_user: Authenticated user
         db: Database session
         limit: Maximum number of messages (default 20, max 100)
-        skip: Number of messages to skip for pagination
+        offset: Number of messages to skip for pagination
 
     Returns:
         list[MessagePublic]: List of messages
@@ -125,4 +125,4 @@ async def get_conversation_messages(
     conversation_service.get_by_id(db, conversation_id)
     conversation_service.verify_participant(db, conversation_id, current_user.id)
 
-    return message_service.get_conversation_messages(db, conversation_id, limit, skip)
+    return message_service.get_conversation_messages(db, conversation_id, limit, offset)
