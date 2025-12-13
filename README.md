@@ -179,5 +179,5 @@ Environment variables are configured separately in each workspace:
 - **Backend**: See [backend/README.md](backend/README.md) for `.env` setup
 - **Frontend**: See [frontend/README.md](frontend/README.md) for `.env.local` setup
 
-# Figma Designs
+## Figma Designs
 https://www.figma.com/design/xxKB8iGQkeVq52bCpRLhr4/AztecListDesign?m=auto&t=arGCKyiwbzpnVzJp-1
