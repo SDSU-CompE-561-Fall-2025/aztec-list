@@ -114,13 +114,13 @@ E2E tests are organized by feature:
 
 - `helpers/test-helpers.ts` - Shared test utilities
 
-> **Note:** Many admin tests are currently skipped (marked with `test.skip()`) as they require the ability to create admin users in the test environment. These serve as templates for future implementation when admin user test infrastructure is available.
-
 #### Test Helpers
 
 The `helpers/test-helpers.ts` file provides utilities for:
 
 - **Test Data Generation**: `generateTestEmail()`, `generateUsername()`, `generatePassword()`
+- **User Creation**: `createTestUser()`, `createAdminUser()`
+- **Admin Promotion**: `promoteToAdmin(userId)` - Promotes a user to admin role using test-only endpoint
 - **Authentication**: `isUserLoggedIn()`, `isUserLoggedOut()`, `logout()`
 - **State Verification**: `hasAuthToken()`
 
@@ -133,11 +133,23 @@ const email = generateTestEmail();
 const password = generatePassword();
 ```
 
+#### Admin Test Infrastructure
+
+Admin tests use a test-only backend endpoint to promote users to admin role:
+
+- **Backend Endpoint**: `/api/v1/test/promote-to-admin/{user_id}`
+- **Security**: Only available when `TEST__TEST_MODE=true` in backend environment
+- **Playwright Config**: Automatically enables test mode when running E2E tests
+- **Helper Function**: Use `createAdminUser()` or `promoteToAdmin(userId)` in tests
+
+The test endpoint is automatically enabled during E2E test runs via `playwright.config.ts` and returns 404 in production or when test mode is disabled.
+
 #### Configuration
 
 Tests are configured in `playwright.config.ts`:
 
 - **Automatic Server Startup**: Both backend (FastAPI) and frontend (Next.js) start automatically before tests run
+- **Test Mode**: Backend runs with `TEST__TEST_MODE=true` to enable test-only endpoints
 - **Base URL**: `http://localhost:3000` (configurable via `PLAYWRIGHT_BASE_URL`)
 - **Test Directory**: `./tests/e2e`
 - **Browser**: Chromium (Firefox and WebKit available but commented out)

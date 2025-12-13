@@ -201,6 +201,15 @@ class RateLimitSettings(BaseModel):
     )
 
 
+class TestSettings(BaseModel):
+    """Test mode configuration."""
+
+    test_mode: bool = Field(
+        default=False,
+        description="Enable test-only endpoints (NEVER enable in production)",
+    )
+
+
 class Settings(BaseSettings):
     """
     Application settings loaded from environment variables.
@@ -228,6 +237,7 @@ class Settings(BaseSettings):
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
     email: EmailSettings = Field(default_factory=EmailSettings)
     rate_limit: RateLimitSettings = Field(default_factory=RateLimitSettings)
+    test: TestSettings = Field(default_factory=TestSettings)
 
 
 @lru_cache

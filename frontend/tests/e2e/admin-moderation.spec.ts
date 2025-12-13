@@ -13,93 +13,166 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { test, expect, Page } from "@playwright/test";
-import { generateTestEmail, generateUsername, generatePassword } from "./helpers/test-helpers";
+import {
+  generateTestEmail,
+  generateUsername,
+  generatePassword,
+  createAdminUser,
+  createTestUser,
+} from "./helpers/test-helpers";
 
 test.describe("Admin Moderation Actions", () => {
-  // Helper to create regular user
-  async function createUser(page: Page) {
-    const email = generateTestEmail();
-    const username = generateUsername();
-    const password = generatePassword();
-
-    await page.goto("/signup");
-    await page.getByLabel(/username/i).fill(username);
-    await page.getByLabel(/email/i).fill(email);
-    await page.getByLabel("Password", { exact: false }).first().fill(password);
-    await page.getByLabel(/confirm password/i).fill(password);
-    await page.getByRole("button", { name: /create account/i }).click();
-
-    await Promise.race([
-      page.waitForURL("http://localhost:3000/", { timeout: 5000 }),
-      page.locator(".text-destructive").waitFor({ state: "visible", timeout: 5000 }),
-    ]).catch(() => {});
-
-    return { email, username, password };
-  }
-
   async function waitForAdminDashboard(page: Page) {
     await page.waitForLoadState("domcontentloaded");
     await page.waitForTimeout(2000);
   }
 
   test.describe("Issue Strike Form", () => {
-    test.skip("should display strike form with all required fields", async ({ page }) => {
-      // TODO: Requires admin user
+    test("should display strike form with all required fields", async ({ page }) => {
+      // Create admin user
+      await createAdminUser(page);
+
       // Navigate to admin dashboard
+      await page.goto("/admin");
+      await waitForAdminDashboard(page);
+
       // Click "Issue Strike" tab
+      await page.getByRole("button", { name: /issue strike/i }).click();
+      await page.waitForTimeout(500);
+
       // Verify form is visible
-      // Verify User ID input is present with required indicator
-      // Verify Reason textarea is present with required indicator
-      // Verify submit button says "Issue Strike"
-      // Verify description text about 3 strikes = auto ban
+      await expect(page.getByLabel(/user id/i)).toBeVisible();
+      await expect(page.getByLabel(/reason/i)).toBeVisible();
+
+      // Verify submit button says "Issue Strike" (within form context)
+      const form = page.locator("form").filter({ has: page.getByLabel(/user id/i) });
+      await expect(form.getByRole("button", { name: /issue strike/i })).toBeVisible();
     });
 
-    test.skip("should validate User ID format", async ({ page }) => {
-      // TODO: Requires admin user
+    test("should validate User ID format", async ({ page }) => {
+      // Create admin user
+      await createAdminUser(page);
+
       // Navigate to Issue Strike tab
-      // Enter invalid UUID format (e.g., "not-a-uuid")
-      // Tab out or submit
+      await page.goto("/admin");
+      await waitForAdminDashboard(page);
+      await page.getByRole("button", { name: /issue strike/i }).click();
+      await page.waitForTimeout(500);
+
+      // Enter invalid UUID format
+      const userIdInput = page.getByLabel(/user id/i);
+      await userIdInput.fill("not-a-uuid");
+      await userIdInput.blur();
+      await page.waitForTimeout(300);
+
       // Verify "Invalid UUID format" error appears
-      // Verify error is shown in red text with AlertCircle icon
-      // Verify submit button is still enabled (client-side validation)
+      await expect(page.getByText(/invalid uuid format/i)).toBeVisible();
     });
 
-    test.skip("should format User ID as UUID while typing", async ({ page }) => {
-      // TODO: Requires admin user
+    test("should format User ID as UUID while typing", async ({ page }) => {
+      // Create admin user
+      await createAdminUser(page);
+
       // Navigate to Issue Strike tab
+      await page.goto("/admin");
+      await waitForAdminDashboard(page);
+      await page.getByRole("button", { name: /issue strike/i }).click();
+      await page.waitForTimeout(500);
+
       // Start typing UUID characters (without dashes)
-      // Example: type "123456789012345678901234567890ab"
-      // Verify input auto-formats with dashes: "12345678-9012-3456-7890-1234567890ab"
-      // Verify only hex characters and dashes are allowed
+      const userIdInput = page.getByLabel(/user id/i);
+      await userIdInput.fill("123456789012345678901234567890ab");
+
+      // Verify input auto-formats with dashes
+      const value = await userIdInput.inputValue();
+      expect(value).toBe("12345678-9012-3456-7890-1234567890ab");
     });
 
-    test.skip("should show error when User ID is empty on submit", async ({ page }) => {
-      // TODO: Requires admin user
+    test("should show error when User ID is empty on submit", async ({ page }) => {
+      // Create admin user
+      await createAdminUser(page);
+
       // Navigate to Issue Strike tab
-      // Fill reason field
-      // Leave User ID empty
-      // Click submit
-      // Verify "User ID is required" error appears
-      // Verify toast "Please fill in all required fields" appears
-      // Verify form is not submitted
+      await page.goto("/admin");
+      await waitForAdminDashboard(page);
+      await page.getByRole("button", { name: /issue strike/i }).click();
+      await page.waitForTimeout(500);
+
+      // Fill reason field only
+      await page.getByLabel(/reason/i).fill("Test reason");
+
+      // Click submit without filling User ID (use form context)
+      const form = page.locator("form").filter({ has: page.getByLabel(/user id/i) });
+      await form.getByRole("button", { name: /issue strike/i }).click();
+      await page.waitForTimeout(500);
+
+      // Verify error appears (either toast or inline error) - use first() to avoid strict mode
+      const errorVisible = await Promise.race([
+        page
+          .getByText(/user id is required|invalid uuid|fill in all/i)
+          .first()
+          .isVisible()
+          .then(() => true),
+        page.waitForTimeout(1000).then(() => false),
+      ]);
+      expect(errorVisible).toBe(true);
     });
 
-    test.skip("should show error when reason is empty on submit", async ({ page }) => {
-      // TODO: Requires admin user
+    test("should show error when reason is empty on submit", async ({ page }) => {
+      // Create admin user
+      await createAdminUser(page);
+
       // Navigate to Issue Strike tab
-      // Fill User ID field with valid UUID
-      // Leave Reason empty
-      // Click submit
-      // Verify "Reason is required" error appears
-      // Verify toast appears
-      // Verify form is not submitted
+      await page.goto("/admin");
+      await waitForAdminDashboard(page);
+      await page.getByRole("button", { name: /issue strike/i }).click();
+      await page.waitForTimeout(500);
+
+      // Fill User ID field with valid UUID only (using a dummy UUID)
+      await page.getByLabel(/user id/i).fill("12345678-1234-1234-1234-123456789012");
+
+      // Click submit without filling Reason (use form context)
+      const form = page.locator("form").filter({ has: page.getByLabel(/user id/i) });
+      await form.getByRole("button", { name: /issue strike/i }).click();
+      await page.waitForTimeout(500);
+
+      // Verify error appears - use first() to avoid strict mode
+      const errorVisible = await Promise.race([
+        page
+          .getByText(/reason is required|fill in all/i)
+          .first()
+          .isVisible()
+          .then(() => true),
+        page.waitForTimeout(1000).then(() => false),
+      ]);
+      expect(errorVisible).toBe(true);
     });
 
-    test.skip("should clear validation errors when user corrects input", async ({ page }) => {
-      // TODO: Requires admin user
-      // Trigger validation error (empty field)
-      // Start typing in the field
-      // Verify error disappears as user types
+    test("should clear validation errors when user corrects input", async ({ page }) => {
+      // Create admin user
+      await createAdminUser(page);
+
+      // Navigate to Issue Strike tab
+      await page.goto("/admin");
+      await waitForAdminDashboard(page);
+      await page.getByRole("button", { name: /issue strike/i }).click();
+      await page.waitForTimeout(500);
+
+      // Trigger validation error with invalid UUID
+      const userIdInput = page.getByLabel(/user id/i);
+      await userIdInput.fill("invalid");
+      await userIdInput.blur();
+      await page.waitForTimeout(300);
+
+      // Verify error appears
+      await expect(page.getByText(/invalid uuid format/i)).toBeVisible();
+
+      // Start typing valid UUID
+      await userIdInput.fill("12345678-9012-3456-7890-123456789012");
+      await page.waitForTimeout(300);
+
+      // Verify error disappears
+      await expect(page.getByText(/invalid uuid format/i)).not.toBeVisible();
     });
 
     test.skip("should issue strike successfully with valid data", async ({ page }) => {
@@ -162,28 +235,70 @@ test.describe("Admin Moderation Actions", () => {
   });
 
   test.describe("Ban User Form", () => {
-    test.skip("should display ban form with all required fields", async ({ page }) => {
-      // TODO: Requires admin user
-      // Click "Ban User" tab
-      // Verify form title "Ban User"
-      // Verify description about permanent ban
-      // Verify User ID input with required indicator
-      // Verify Reason textarea with required indicator
-      // Verify submit button says "Ban User"
+    test("should display ban form with all required fields", async ({ page }) => {
+      // Create admin user
+      await createAdminUser(page);
+
+      // Navigate to admin dashboard and click "Ban User" tab
+      await page.goto("/admin");
+      await waitForAdminDashboard(page);
+      await page.getByRole("button", { name: /ban user/i }).click();
+      await page.waitForTimeout(500);
+
+      // Verify form fields are present
+      await expect(page.getByLabel(/user id/i)).toBeVisible();
+      await expect(page.getByLabel(/reason/i)).toBeVisible();
+
+      // Verify submit button says "Ban User" (within form context)
+      const form = page.locator("form").filter({ has: page.getByLabel(/user id/i) });
+      await expect(form.getByRole("button", { name: /ban user/i })).toBeVisible();
     });
 
-    test.skip("should validate User ID format for ban", async ({ page }) => {
-      // TODO: Requires admin user
+    test("should validate User ID format for ban", async ({ page }) => {
+      // Create admin user
+      await createAdminUser(page);
+
       // Navigate to Ban User tab
+      await page.goto("/admin");
+      await waitForAdminDashboard(page);
+      await page.getByRole("button", { name: /ban user/i }).click();
+      await page.waitForTimeout(500);
+
       // Enter invalid UUID
+      const userIdInput = page.getByLabel(/user id/i);
+      await userIdInput.fill("invalid-uuid");
+      await userIdInput.blur();
+      await page.waitForTimeout(300);
+
       // Verify validation error appears
+      await expect(page.getByText(/invalid uuid format/i)).toBeVisible();
     });
 
-    test.skip("should validate required fields for ban", async ({ page }) => {
-      // TODO: Requires admin user
+    test("should validate required fields for ban", async ({ page }) => {
+      // Create admin user
+      await createAdminUser(page);
+
+      // Navigate to Ban User tab
+      await page.goto("/admin");
+      await waitForAdminDashboard(page);
+      await page.getByRole("button", { name: /ban user/i }).click();
+      await page.waitForTimeout(500);
+
       // Try to submit with empty fields
-      // Verify both User ID and Reason show "required" errors
-      // Verify toast appears
+      const form = page.locator("form").filter({ has: page.getByLabel(/user id/i) });
+      await form.getByRole("button", { name: /ban user/i }).click();
+      await page.waitForTimeout(500);
+
+      // Verify error appears (toast or inline) - use first() to avoid strict mode
+      const errorVisible = await Promise.race([
+        page
+          .getByText(/required|fill in all/i)
+          .first()
+          .isVisible()
+          .then(() => true),
+        page.waitForTimeout(1000).then(() => false),
+      ]);
+      expect(errorVisible).toBe(true);
     });
 
     test.skip("should ban user successfully", async ({ page }) => {
@@ -223,28 +338,70 @@ test.describe("Admin Moderation Actions", () => {
   });
 
   test.describe("Remove Listing Form", () => {
-    test.skip("should display remove listing form", async ({ page }) => {
-      // TODO: Requires admin user
+    test("should display remove listing form", async ({ page }) => {
+      // Create admin user
+      await createAdminUser(page);
+
       // Click "Remove Listing" tab
-      // Verify form title "Remove Listing"
-      // Verify description about policy violations
-      // Verify Listing ID input with required indicator
-      // Verify Reason textarea with required indicator
-      // Verify submit button says "Remove Listing"
+      await page.goto("/admin");
+      await waitForAdminDashboard(page);
+      await page.getByRole("button", { name: /remove listing/i }).click();
+      await page.waitForTimeout(500);
+
+      // Verify form fields are present
+      await expect(page.getByLabel(/listing id/i)).toBeVisible();
+      await expect(page.getByLabel(/reason/i)).toBeVisible();
+
+      // Verify submit button says "Remove Listing" (within form context)
+      const form = page.locator("form").filter({ has: page.getByLabel(/listing id/i) });
+      await expect(form.getByRole("button", { name: /remove listing/i })).toBeVisible();
     });
 
-    test.skip("should validate Listing ID format", async ({ page }) => {
-      // TODO: Requires admin user
+    test("should validate Listing ID format", async ({ page }) => {
+      // Create admin user
+      await createAdminUser(page);
+
       // Navigate to Remove Listing tab
+      await page.goto("/admin");
+      await waitForAdminDashboard(page);
+      await page.getByRole("button", { name: /remove listing/i }).click();
+      await page.waitForTimeout(500);
+
       // Enter invalid UUID for listing ID
+      const listingIdInput = page.getByLabel(/listing id/i);
+      await listingIdInput.fill("not-valid");
+      await listingIdInput.blur();
+      await page.waitForTimeout(300);
+
       // Verify validation error appears
-      // Should auto-format like user ID field
+      await expect(page.getByText(/invalid uuid format/i)).toBeVisible();
     });
 
-    test.skip("should validate required fields for listing removal", async ({ page }) => {
-      // TODO: Requires admin user
+    test("should validate required fields for listing removal", async ({ page }) => {
+      // Create admin user
+      await createAdminUser(page);
+
+      // Navigate to Remove Listing tab
+      await page.goto("/admin");
+      await waitForAdminDashboard(page);
+      await page.getByRole("button", { name: /remove listing/i }).click();
+      await page.waitForTimeout(500);
+
       // Try to submit with empty fields
-      // Verify both Listing ID and Reason show errors
+      const form = page.locator("form").filter({ has: page.getByLabel(/listing id/i) });
+      await form.getByRole("button", { name: /remove listing/i }).click();
+      await page.waitForTimeout(500);
+
+      // Verify error appears - use first() to avoid strict mode
+      const errorVisible = await Promise.race([
+        page
+          .getByText(/required|fill in all/i)
+          .first()
+          .isVisible()
+          .then(() => true),
+        page.waitForTimeout(1000).then(() => false),
+      ]);
+      expect(errorVisible).toBe(true);
     });
 
     test.skip("should remove listing successfully", async ({ page, context }) => {

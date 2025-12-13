@@ -58,7 +58,11 @@ export default defineConfig({
   /* Run local dev servers before starting tests */
   webServer: [
     {
-      command: "cd ../backend && uv run fastapi dev src/app/main.py",
+      // Set TEST__TEST_MODE in the command for Windows compatibility
+      command:
+        process.platform === "win32"
+          ? "powershell -Command \"$env:TEST__TEST_MODE='true'; cd ../backend; uv run fastapi dev src/app/main.py\""
+          : "cd ../backend && TEST__TEST_MODE=true uv run fastapi dev src/app/main.py",
       url: "http://127.0.0.1:8000/docs",
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,

@@ -12,17 +12,21 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { test, expect, Page } from "@playwright/test";
-import { generateTestEmail, generateUsername, generatePassword } from "./helpers/test-helpers";
+import {
+  generateTestEmail,
+  generateUsername,
+  generatePassword,
+  createAdminUser,
+  createTestUser,
+} from "./helpers/test-helpers";
 
 test.describe("Admin Actions History", () => {
-  // Helper to create admin user via direct backend call
-  async function createAdminUser(page: Page) {
+  // Helper to create regular (non-admin) user
+  async function createRegularUser(page: Page) {
     const email = generateTestEmail();
     const username = generateUsername();
     const password = generatePassword();
 
-    // For now, we'll create a regular user and manually promote them
-    // In a real test env, you'd have a test data seeder or admin endpoint
     await page.goto("/signup");
     await page.getByLabel(/username/i).fill(username);
     await page.getByLabel(/email/i).fill(email);
@@ -30,7 +34,6 @@ test.describe("Admin Actions History", () => {
     await page.getByLabel(/confirm password/i).fill(password);
     await page.getByRole("button", { name: /create account/i }).click();
 
-    // Wait for successful signup
     await Promise.race([
       page.waitForURL("http://localhost:3000/", { timeout: 5000 }),
       page.locator(".text-destructive").waitFor({ state: "visible", timeout: 5000 }),
@@ -39,16 +42,10 @@ test.describe("Admin Actions History", () => {
     return { email, username, password };
   }
 
-  // Helper to wait for admin dashboard to load (unused - for future implementation)
-  // async function waitForAdminDashboard(page: Page) {
-  //   await page.waitForLoadState('domcontentloaded');
-  //   await page.waitForTimeout(2000); // Give React Query time to fetch
-  // }
-
   test.describe("Non-Admin Access Control", () => {
     test("should redirect non-admin users away from admin dashboard", async ({ page }) => {
       // Create regular user and login
-      await createAdminUser(page);
+      await createRegularUser(page);
 
       // Try to access admin page
       await page.goto("/admin");
@@ -61,7 +58,7 @@ test.describe("Admin Actions History", () => {
     });
 
     test("should not show admin dashboard to regular users", async ({ page }) => {
-      await createAdminUser(page);
+      await createRegularUser(page);
 
       await page.goto("/admin");
       await page.waitForTimeout(1500);
@@ -73,43 +70,75 @@ test.describe("Admin Actions History", () => {
   });
 
   test.describe("Admin Dashboard Access", () => {
-    test.skip("should display admin dashboard for admin users", async ({ page: _page }) => {
-      // TODO: Need backend support to create admin users or promote users to admin role
-      // This test requires either:
-      // 1. A test admin account that's seeded in the test database
-      // 2. An endpoint to promote users to admin (backend test utility)
-      // 3. Direct database access to update user role
-      // Placeholder test structure:
-      // 1. Create/login as admin user
-      // 2. Navigate to /admin
-      // 3. Verify dashboard loads
-      // 4. Check for "Admin Dashboard" heading
-      // 5. Verify tabs are visible (Actions History, Issue Strike, etc.)
+    test("should display admin dashboard for admin users", async ({ page }) => {
+      // Create admin user
+      await createAdminUser(page);
+
+      // Navigate to /admin
+      await page.goto("/admin");
+      await page.waitForLoadState("domcontentloaded");
+      await page.waitForTimeout(1000);
+
+      // Verify dashboard loads
+      expect(page.url()).toContain("/admin");
+
+      // Check for "Admin Dashboard" heading
+      const adminHeading = page.getByRole("heading", { name: /admin dashboard/i });
+      await expect(adminHeading).toBeVisible();
+
+      // Verify tabs are visible
+      await expect(page.getByRole("button", { name: /actions history/i })).toBeVisible();
+      await expect(page.getByRole("button", { name: /issue strike/i })).toBeVisible();
     });
 
-    test.skip("should show actions history tab by default", async ({ page: _page }) => {
-      // TODO: Requires admin user
-      // Verify "Actions History" tab is active on load
+    test("should show actions history tab by default", async ({ page }) => {
+      // Create admin user
+      await createAdminUser(page);
+
+      // Navigate to admin dashboard
+      await page.goto("/admin");
+      await page.waitForLoadState("domcontentloaded");
+      await page.waitForTimeout(1000);
+
+      // Verify "Actions History" tab has active styling
+      const actionsTab = page.getByRole("button", { name: /actions history/i });
+      await expect(actionsTab).toHaveClass(/border-purple-500/);
+
       // Verify actions list or empty state is visible
+      const emptyState = page.getByText(/no actions recorded/i);
+      await expect(emptyState).toBeVisible();
     });
 
-    test.skip("should display all navigation tabs", async ({ page: _page }) => {
-      // TODO: Requires admin user
-      // Verify all tabs are present:
-      // - Actions History
-      // - Issue Strike
-      // - Ban User
-      // - Remove Listing
-      // - Support Tickets
+    test("should display all navigation tabs", async ({ page }) => {
+      // Create admin user
+      await createAdminUser(page);
+
+      // Navigate to admin dashboard
+      await page.goto("/admin");
+      await page.waitForLoadState("domcontentloaded");
+      await page.waitForTimeout(1000);
+
+      // Verify all tabs are present
+      await expect(page.getByRole("button", { name: /^actions history$/i })).toBeVisible();
+      await expect(page.getByRole("button", { name: /^issue strike$/i })).toBeVisible();
+      await expect(page.getByRole("button", { name: /^ban user$/i })).toBeVisible();
+      await expect(page.getByRole("button", { name: /^remove listing$/i })).toBeVisible();
+      await expect(page.getByRole("button", { name: /^support tickets$/i })).toBeVisible();
     });
   });
 
   test.describe("Actions List Display", () => {
-    test.skip("should show empty state when no actions exist", async ({ page: _page }) => {
-      // TODO: Requires admin user with fresh database
+    test("should show empty state when no actions exist", async ({ page }) => {
+      // Create admin user (fresh user has no actions)
+      await createAdminUser(page);
+
       // Navigate to admin dashboard
+      await page.goto("/admin");
+      await page.waitForLoadState("domcontentloaded");
+      await page.waitForTimeout(1000);
+
       // Verify "No actions recorded yet" message is visible
-      // Verify AlertCircle icon is present
+      await expect(page.getByText(/no actions recorded/i)).toBeVisible();
     });
 
     test.skip("should display list of admin actions", async ({ page: _page }) => {

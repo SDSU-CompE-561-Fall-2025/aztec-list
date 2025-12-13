@@ -16,6 +16,7 @@ import {
   generateTestEmail,
   generateUsername,
   generatePassword,
+  createAdminUser,
   logout,
 } from "./helpers/test-helpers";
 
@@ -216,29 +217,66 @@ test.describe("Admin Access Control", () => {
   });
 
   test.describe("Admin Role Verification", () => {
-    test.skip("should allow admin users to access admin dashboard", async ({ page }) => {
-      // TODO: Requires ability to create admin users
-      // Create admin user (via test utility or seed data)
-      // Login as admin
+    test("should allow admin users to access admin dashboard", async ({ page }) => {
+      // Create admin user using test helper
+      await createAdminUser(page);
+
       // Navigate to /admin
+      await page.goto("/admin");
+      await page.waitForLoadState("domcontentloaded");
+      await page.waitForTimeout(1000);
+
       // Verify dashboard loads successfully
+      expect(page.url()).toContain("/admin");
+
       // Verify "Admin Dashboard" heading is visible
-      // Verify all tabs are accessible
+      const adminHeading = page.getByRole("heading", { name: /admin dashboard/i });
+      await expect(adminHeading).toBeVisible();
+
+      // Verify tabs are accessible (they're custom buttons, not role="tab")
+      await expect(page.getByRole("button", { name: /actions history/i })).toBeVisible();
+      await expect(page.getByRole("button", { name: /issue strike/i })).toBeVisible();
+      await expect(page.getByRole("button", { name: /ban user/i })).toBeVisible();
     });
 
-    test.skip("should verify admin role via user.role property", async ({ page }) => {
-      // TODO: Requires admin user
-      // Login as admin
-      // Check that user object in auth context has role === "admin"
-      // This might require checking localStorage or auth state
+    test("should verify admin role via user.role property", async ({ page }) => {
+      // Create admin user and login
+      await createAdminUser(page);
+
+      // Navigate to admin dashboard
+      await page.goto("/admin");
+      await page.waitForLoadState("domcontentloaded");
+
+      // Verify we're on the admin page (admin role is verified server-side)
+      expect(page.url()).toContain("/admin");
+
+      // If we can access /admin, the role check passed
+      // The backend ensure_admin() dependency validates the role
+      const adminHeading = page.getByRole("heading", { name: /admin dashboard/i });
+      await expect(adminHeading).toBeVisible();
     });
 
-    test.skip("should show admin-only UI elements for admins", async ({ page }) => {
-      // TODO: Requires admin user
-      // Login as admin
+    test("should show admin-only UI elements for admins", async ({ page }) => {
+      // Create admin user (this logs in as admin at the end)
+      await createAdminUser(page);
+
       // Go to home page
-      // Verify admin navigation links are visible in header
-      // Might see "Admin Dashboard" or "Moderation" link
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(500);
+
+      // Open user dropdown in header by clicking the avatar
+      // Avatar is the second .cursor-pointer element (first is theme switcher)
+      const cursorPointers = page.locator("header .cursor-pointer");
+      const avatarElement = cursorPointers.nth(1);
+      await avatarElement.click();
+
+      // Wait for dropdown menu to be visible
+      await page.getByText("Profile").waitFor({ state: "visible" });
+      await page.waitForTimeout(300);
+
+      // Verify admin navigation link is visible in dropdown
+      await expect(page.getByText("Admin Dashboard")).toBeVisible();
     });
   });
 

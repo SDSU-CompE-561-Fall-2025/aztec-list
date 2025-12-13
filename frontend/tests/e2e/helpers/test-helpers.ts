@@ -120,3 +120,90 @@ export async function logout(page: Page): Promise<void> {
   // Wait for logout to complete
   await page.waitForTimeout(1500);
 }
+
+/**
+ * Create a test user with the given credentials
+ * Returns the user ID and auth token
+ */
+export async function createTestUser(page: Page): Promise<{
+  username: string;
+  email: string;
+  password: string;
+  userId: string;
+  token: string;
+}> {
+  const username = generateUsername();
+  const email = generateTestEmail();
+  const password = generatePassword();
+
+  // Sign up the user
+  await page.goto("/signup");
+  await page.getByLabel(/username/i).fill(username);
+  await page.getByLabel(/email/i).fill(email);
+  await page.getByLabel("Password", { exact: false }).first().fill(password);
+  await page.getByLabel(/confirm password/i).fill(password);
+  await page.getByRole("button", { name: /create account/i }).click();
+
+  // Wait for successful signup and redirect
+  await waitForNavigation(page);
+
+  // Get auth token from localStorage
+  const token = await getAuthToken(page);
+  if (!token) {
+    throw new Error("Failed to get auth token after signup");
+  }
+
+  // Decode JWT to get user ID (JWT payload is base64 encoded)
+  const payload = JSON.parse(atob(token.split(".")[1]));
+  const userId = payload.sub;
+
+  return { username, email, password, userId, token };
+}
+
+/**
+ * Promote a user to admin role using the test-only endpoint
+ * Requires TEST__TEST_MODE=true in backend .env
+ */
+export async function promoteToAdmin(page: Page, userId: string): Promise<void> {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const response = await page.request.post(`${baseUrl}/api/v1/test/promote-to-admin/${userId}`);
+
+  if (!response.ok()) {
+    const text = await response.text();
+    throw new Error(`Failed to promote user to admin: ${response.status()} ${text}`);
+  }
+}
+
+/**
+ * Create a test admin user
+ * Requires TEST__TEST_MODE=true in backend .env
+ */
+export async function createAdminUser(page: Page): Promise<{
+  username: string;
+  email: string;
+  password: string;
+  userId: string;
+  token: string;
+}> {
+  const user = await createTestUser(page);
+  await promoteToAdmin(page, user.userId);
+
+  // Log out and log back in to get new token with admin role
+  await page.goto("/listings"); // Go to listings page where dropdown is visible
+  await logout(page);
+
+  // Log back in
+  await page.goto("/login");
+  await page.getByLabel(/email/i).fill(user.email);
+  await page.getByLabel(/password/i).fill(user.password);
+  await page.getByRole("button", { name: /^login$/i }).click();
+  await waitForNavigation(page);
+
+  // Get new token
+  const newToken = await getAuthToken(page);
+  if (!newToken) {
+    throw new Error("Failed to get auth token after re-login");
+  }
+
+  return { ...user, token: newToken };
+}
