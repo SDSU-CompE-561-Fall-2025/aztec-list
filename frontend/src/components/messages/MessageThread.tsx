@@ -31,23 +31,9 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Use conversationId as a key for state to automatically reset on change
-  const [messagesState, setMessagesState] = useState(() => ({
-    conversationId,
-    offset: 0,
-    allMessages: [] as Message[],
-  }));
-
-  // Derive current values, resetting if conversation changed
-  const { offset, allMessages } =
-    messagesState.conversationId === conversationId
-      ? messagesState
-      : { offset: 0, allMessages: [] as Message[] };
-
-  // Update state if conversation changed
-  if (messagesState.conversationId !== conversationId) {
-    setMessagesState({ conversationId, offset: 0, allMessages: [] });
-  }
+  // State is automatically reset when component remounts (via key prop)
+  const [offset, setOffset] = useState(0);
+  const [allMessages, setAllMessages] = useState<Message[]>([]);
 
   const {
     data: messages,
@@ -89,21 +75,16 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
   // Memoize WebSocket callbacks to prevent reconnections
   const handleNewMessage = useCallback(
     (newMessage: Message) => {
-      let currentConversationId: string;
-      setMessagesState((prev) => {
-        currentConversationId = prev.conversationId;
+      setAllMessages((prev) => {
         // Avoid duplicates
-        if (prev.allMessages.some((m) => m.id === newMessage.id)) {
+        if (prev.some((m) => m.id === newMessage.id)) {
           return prev;
         }
-        return {
-          ...prev,
-          allMessages: [...prev.allMessages, newMessage],
-        };
+        return [...prev, newMessage];
       });
 
       // Invalidate queries to keep cache fresh across navigation
-      queryClient.invalidateQueries({ queryKey: ["messages", currentConversationId!] });
+      queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
 
       // Show notification if message is from other user and window is not focused
@@ -111,7 +92,7 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
         toast.info(`New message from ${otherUserName}`);
       }
     },
-    [user?.id, otherUserName, queryClient]
+    [user?.id, otherUserName, conversationId, queryClient]
   );
 
   const handleConnectionError = useCallback((error: Event) => {
@@ -167,7 +148,7 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
   );
 
   const loadMoreMessages = () => {
-    setMessagesState((prev) => ({ ...prev, offset: prev.offset + 50 }));
+    setOffset((prev) => prev + 50);
   };
 
   if (isLoading && allMessages.length === 0) {

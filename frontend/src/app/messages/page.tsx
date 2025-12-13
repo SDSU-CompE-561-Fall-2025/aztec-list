@@ -110,6 +110,7 @@ export default function MessagesPage() {
               </div>
 
               <MessageThread
+                key={selectedConversationId}
                 conversationId={selectedConversationId}
                 otherUserId={selectedOtherUserId}
                 otherUserName={otherUser.username}
