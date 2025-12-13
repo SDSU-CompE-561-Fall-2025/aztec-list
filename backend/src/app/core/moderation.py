@@ -192,7 +192,6 @@ class ContentModerator:
         "money laundering",
         "tax evasion",
         "fake degree",
-        "essay writing service",  # Academic dishonesty
         "paper mill",
     }
 
