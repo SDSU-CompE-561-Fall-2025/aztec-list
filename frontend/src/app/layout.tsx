@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import { HeaderClient } from "@/components/custom/header-client";
+import { Footer } from "@/components/custom/footer";
 import { ToasterClient } from "@/components/ui/toaster-client";
 
 export const metadata: Metadata = {
@@ -19,10 +20,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning className="flex flex-col min-h-screen">
         <Providers>
           <HeaderClient />
-          {children}
+          <main className="flex-1">{children}</main>
+          <Footer />
           <ToasterClient />
         </Providers>
       </body>

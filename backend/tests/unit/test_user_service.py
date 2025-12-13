@@ -158,9 +158,10 @@ class TestUserServiceCreate:
             mock_create.return_value = mock_user
             db = MagicMock(spec=Session)
 
-            result = user_service.create(db, user_data)
+            result, email_sent = user_service.create(db, user_data)
 
             assert result == mock_user
+            assert isinstance(email_sent, bool)
             mock_get_email.assert_called_once_with(db, "new@example.edu")
             mock_get_username.assert_called_once_with(db, "newuser")
             mock_hash.assert_called_once_with("password123")
@@ -309,9 +310,10 @@ class TestUserServiceUpdate:
             mock_update.return_value = mock_user
             db = MagicMock(spec=Session)
 
-            result = user_service.update(db, mock_user.id, update_data)
+            result, email_sent = user_service.update(db, mock_user.id, update_data)
 
             assert result == mock_user
+            assert email_sent is True  # No email change
             mock_get.assert_called_once_with(db, mock_user.id)
             mock_update.assert_called_once()
 

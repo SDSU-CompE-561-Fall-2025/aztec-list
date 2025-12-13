@@ -1,11 +1,12 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_not_banned
+from app.core.rate_limiter import limiter
 from app.models.profile import Profile
 from app.models.user import User
 from app.schemas.listing import (
@@ -14,7 +15,13 @@ from app.schemas.listing import (
     UserListingsParams,
 )
 from app.schemas.profile import ProfilePublic
-from app.schemas.user import PasswordChange, UserPrivate, UserPublic, UserUpdate
+from app.schemas.user import (
+    PasswordChange,
+    UserPrivate,
+    UserPublic,
+    UserPublicWithEmailStatus,
+    UserUpdate,
+)
 from app.services.listing import listing_service
 from app.services.profile import profile_service
 from app.services.user import user_service
@@ -173,29 +180,38 @@ async def get_user_listings(
     "/me",
     summary="Update current user",
     status_code=status.HTTP_200_OK,
-    response_model=UserPublic,
+    response_model=UserPublicWithEmailStatus,
 )
+@limiter.limit("5/minute;15/hour")
 async def update_current_user(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     update_data: UserUpdate,
     current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
-) -> User:
+) -> dict:
     """
     Update the current user's profile.
 
+    Rate limit: 5 per minute (burst), 15 per hour (sustained).
+
     Args:
+        request: FastAPI request object (required for rate limiting)
         update_data: Fields to update
         current_user: The authenticated user
         db: Database session
 
     Returns:
-        UserPublic: Updated user information
+        UserPublicWithEmailStatus: Updated user information with email sending status
 
     Raises:
         HTTPException: 401 if not authenticated, 403 if banned
         HTTPException: 400 if username/email already taken
     """
-    return user_service.update(db, current_user.id, update_data)
+    updated_user, email_sent = user_service.update(db, current_user.id, update_data)
+    return {
+        **UserPublic.model_validate(updated_user).model_dump(),
+        "verification_email_sent": email_sent,
+    }
 
 
 @user_router.patch(
@@ -203,7 +219,9 @@ async def update_current_user(
     summary="Change current user password",
     status_code=status.HTTP_200_OK,
 )
+@limiter.limit("3/minute;5/hour")
 async def change_password(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     password_data: PasswordChange,
     current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
@@ -211,7 +229,10 @@ async def change_password(
     """
     Change the current user's password.
 
+    Rate limit: 3 per minute (burst), 5 per hour (sustained) - strict for security.
+
     Args:
+        request: FastAPI request object (required for rate limiting)
         password_data: Current and new password
         current_user: The authenticated user
         db: Database session
@@ -237,16 +258,21 @@ async def change_password(
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
 )
+@limiter.limit("1/minute;2/hour")
 async def delete_user(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     """
     Delete the current user's account.
 
+    Rate limit: 1 per minute (burst), 2 per hour (sustained) - very strict for safety.
+
     Args:
-        db: Database session
+        request: FastAPI request object (required for rate limiting)
         current_user: The authenticated user (must not be banned)
+        db: Database session
 
     Returns:
         None

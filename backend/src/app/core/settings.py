@@ -114,6 +114,10 @@ class CORSSettings(BaseModel):
         default=["*"],
         description="HTTP headers allowed in CORS requests (* allows all)",
     )
+    frontend_url: str = Field(
+        default="http://localhost:3000",
+        description="Primary frontend URL for email links and redirects. Should match production frontend domain.",
+    )
 
     @model_validator(mode="after")
     def validate_credentials_with_wildcard(self) -> "CORSSettings":
@@ -167,6 +171,36 @@ class LoggingSettings(BaseModel):
     )
 
 
+class EmailSettings(BaseModel):
+    """Email service configuration using Resend."""
+
+    resend_api_key: str = Field(
+        default="",
+        description="Resend API key (configure via RESEND_API_KEY environment variable)",
+    )
+    from_email: str = Field(
+        default="support@yourdomain.com",
+        description="From email address for outgoing emails",
+    )
+    support_email: str = Field(
+        default="support@yourdomain.com",
+        description="Email address where support tickets are sent",
+    )
+    enabled: bool = Field(
+        default=True,
+        description="Enable/disable email sending (useful for testing)",
+    )
+
+
+class RateLimitSettings(BaseModel):
+    """Rate limiting configuration."""
+
+    enabled: bool = Field(
+        default=True,
+        description="Master switch to enable/disable all rate limiting (useful for emergencies or testing)",
+    )
+
+
 class Settings(BaseSettings):
     """
     Application settings loaded from environment variables.
@@ -192,6 +226,8 @@ class Settings(BaseSettings):
     storage: StorageSettings = Field(default_factory=StorageSettings)
     cors: CORSSettings = Field(default_factory=CORSSettings)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
+    email: EmailSettings = Field(default_factory=EmailSettings)
+    rate_limit: RateLimitSettings = Field(default_factory=RateLimitSettings)
 
 
 @lru_cache

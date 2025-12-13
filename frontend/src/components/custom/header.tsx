@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LISTINGS_BASE_URL, DEFAULT_SORT } from "@/lib/constants";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, Settings, User, Search, Shield, MessageSquare } from "lucide-react";
+import { LogOut, Settings, User, Search, Shield, Mail, MessageSquare } from "lucide-react";
 import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOptions";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
 import { ThemeSwitcher } from "@/components/custom/theme-switcher";
@@ -29,7 +29,9 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch profile data using React Query
-  const { data: profileData } = useQuery(createProfileQueryOptions(user?.id));
+  const { data: profileData, isLoading: isProfileLoading } = useQuery(
+    createProfileQueryOptions(user?.id)
+  );
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,11 +90,17 @@ export function Header() {
         {/* Auth Buttons / User Menu */}
         <div className="flex items-center gap-3">
           <ThemeSwitcher />
-          {isLoading ? (
-            // Show placeholder while checking auth to avoid hydration mismatch
+          {isLoading || (isAuthenticated && isProfileLoading) ? (
+            // Show placeholder while checking auth or loading profile to avoid flash
             <div className="flex items-center gap-3">
-              <div className="h-9 w-16 bg-muted rounded animate-pulse" />
-              <div className="h-9 w-20 bg-muted rounded animate-pulse" />
+              {isLoading ? (
+                <>
+                  <div className="h-9 w-16 bg-muted rounded animate-pulse" />
+                  <div className="h-9 w-20 bg-muted rounded animate-pulse" />
+                </>
+              ) : (
+                <div className="w-10 h-10 bg-muted rounded-full animate-pulse" />
+              )}
             </div>
           ) : !isAuthenticated ? (
             <>
@@ -107,15 +115,17 @@ export function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Avatar className="cursor-pointer">
-                  <AvatarImage
-                    src={
-                      getProfilePictureUrl(
-                        profileData?.profile_picture_url,
-                        profileData?.updated_at
-                      ) || undefined
-                    }
-                    alt={user?.username || "User"}
-                  />
+                  {!isProfileLoading && profileData?.profile_picture_url ? (
+                    <AvatarImage
+                      src={
+                        getProfilePictureUrl(
+                          profileData.profile_picture_url,
+                          profileData.updated_at
+                        ) || undefined
+                      }
+                      alt={user?.username || "User"}
+                    />
+                  ) : null}
                   <AvatarFallback className="bg-purple-600 text-white">
                     {user?.username ? user.username.charAt(0).toUpperCase() : "U"}
                   </AvatarFallback>
@@ -147,6 +157,12 @@ export function Header() {
                     <span className="text-sm">Settings</span>
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/support" className="cursor-pointer py-2">
+                    <Mail className="mr-2 h-4 w-4" />
+                    <span className="text-sm">Contact Support</span>
+                  </Link>
+                </DropdownMenuItem>
                 {user?.role === "admin" && (
                   <>
                     <DropdownMenuSeparator />
@@ -160,8 +176,8 @@ export function Header() {
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout} className="cursor-pointer py-2">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span className="text-sm">Log out</span>
+                  <LogOut className="mr-2 h-4 w-4 text-red-600 dark:text-red-400" />
+                  <span className="text-sm text-red-600 dark:text-red-400">Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

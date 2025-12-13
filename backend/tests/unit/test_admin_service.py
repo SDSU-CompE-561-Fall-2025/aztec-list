@@ -416,6 +416,30 @@ class TestAdminServiceStrike:
             assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
             assert "already banned" in exc_info.value.detail.lower()
 
+    def test_create_strike_rollback_on_exception(
+        self, admin_service: AdminActionService, mock_admin: User, mock_user: User
+    ):
+        """Test that create_strike rolls back transaction on exception."""
+        strike_data = AdminActionStrike(reason="Test violation")
+
+        with (
+            patch("app.services.admin.UserRepository.get_by_id") as mock_get_user,
+            patch("app.services.admin.ensure_can_moderate_user"),
+            patch("app.services.admin.AdminActionRepository.has_active_ban") as mock_has_ban,
+            patch("app.services.admin.AdminActionRepository.create_no_commit") as mock_create,
+        ):
+            mock_get_user.side_effect = [mock_user, mock_admin]
+            mock_has_ban.return_value = None  # No existing ban
+            mock_create.side_effect = Exception("Database error")
+            db = MagicMock(spec=Session)
+
+            with pytest.raises(Exception) as exc_info:
+                admin_service.create_strike(db, mock_admin.id, mock_user.id, strike_data)
+
+            assert "Database error" in str(exc_info.value)
+            db.rollback.assert_called_once()
+            db.commit.assert_not_called()
+
 
 class TestAdminServiceBan:
     """Test AdminActionService ban creation."""
@@ -511,6 +535,101 @@ class TestAdminServiceDelete:
                 admin_service.delete(db, action_id, uuid.uuid4())
 
             assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_delete_auto_ban_removes_most_recent_strike(
+        self, admin_service: AdminActionService, mock_user: User, mock_admin: User
+    ):
+        """Test that deleting an auto-ban also removes the most recent strike."""
+        # Create an auto-ban action with the specific reason pattern
+        auto_ban = AdminAction(
+            id=uuid.uuid4(),
+            admin_id=mock_admin.id,
+            target_user_id=mock_user.id,
+            action_type=AdminActionType.BAN,
+            reason="Automatic permanent ban: 3 strikes accumulated. Latest: Spam",
+        )
+
+        # Create mock strikes
+        strike1 = AdminAction(
+            id=uuid.uuid4(),
+            admin_id=mock_admin.id,
+            target_user_id=mock_user.id,
+            action_type=AdminActionType.STRIKE,
+            reason="Strike 1",
+        )
+        strike2 = AdminAction(
+            id=uuid.uuid4(),
+            admin_id=mock_admin.id,
+            target_user_id=mock_user.id,
+            action_type=AdminActionType.STRIKE,
+            reason="Strike 2",
+        )
+
+        with (
+            patch("app.services.admin.AdminActionRepository.get_by_id") as mock_get,
+            patch(
+                "app.services.admin.AdminActionRepository.get_by_target_user_id"
+            ) as mock_get_user_actions,
+            patch("app.services.admin.AdminActionRepository.delete_no_commit") as mock_delete,
+        ):
+            mock_get.return_value = auto_ban
+            mock_get_user_actions.return_value = [strike1, strike2]
+            db = MagicMock(spec=Session)
+
+            admin_service.delete(db, auto_ban.id, uuid.uuid4())
+
+            # Should delete both the auto-ban and the most recent strike
+            assert mock_delete.call_count == 2
+            calls = mock_delete.call_args_list
+            # First call should delete the most recent strike
+            assert calls[0][0][1] == strike1
+            # Second call should delete the ban itself
+            assert calls[1][0][1] == auto_ban
+            db.commit.assert_called_once()
+
+    def test_delete_regular_ban_does_not_remove_strikes(
+        self, admin_service: AdminActionService, mock_user: User, mock_admin: User
+    ):
+        """Test that deleting a regular (non-auto) ban does not remove strikes."""
+        regular_ban = AdminAction(
+            id=uuid.uuid4(),
+            admin_id=mock_admin.id,
+            target_user_id=mock_user.id,
+            action_type=AdminActionType.BAN,
+            reason="Manual ban for harassment",
+        )
+
+        with (
+            patch("app.services.admin.AdminActionRepository.get_by_id") as mock_get,
+            patch("app.services.admin.AdminActionRepository.delete_no_commit") as mock_delete,
+        ):
+            mock_get.return_value = regular_ban
+            db = MagicMock(spec=Session)
+
+            admin_service.delete(db, regular_ban.id, uuid.uuid4())
+
+            # Should only delete the ban, not check for strikes
+            mock_delete.assert_called_once_with(db, regular_ban)
+            db.commit.assert_called_once()
+
+    def test_delete_action_rollback_on_exception(
+        self, admin_service: AdminActionService, mock_action: AdminAction
+    ):
+        """Test that delete rolls back transaction on exception."""
+        with (
+            patch("app.services.admin.AdminActionRepository.get_by_id") as mock_get,
+            patch("app.services.admin.AdminActionRepository.delete_no_commit") as mock_delete,
+        ):
+            mock_get.return_value = mock_action
+            mock_delete.side_effect = Exception("Database error")
+            db = MagicMock(spec=Session)
+
+            with pytest.raises(Exception) as exc_info:
+                admin_service.delete(db, mock_action.id, uuid.uuid4())
+
+            assert "Database error" in str(exc_info.value)
+            db.rollback.assert_called_once()
+            db.commit.assert_not_called()
 
 
 class TestAdminServiceListingRemoval:

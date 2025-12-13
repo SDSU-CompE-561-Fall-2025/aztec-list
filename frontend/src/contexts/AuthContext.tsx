@@ -103,7 +103,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (signupData: SignupData): Promise<void> => {
     try {
-      await apiSignup(signupData);
+      setIsLoading(true);
+      const result = await apiSignup(signupData);
+
+      // Store email sending status in sessionStorage for success page
+      if (result.verification_email_sent === false) {
+        sessionStorage.setItem("email_send_failed", "true");
+      }
 
       await login({
         username: signupData.email,
@@ -111,6 +117,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     } catch (error) {
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -118,8 +126,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     removeAuthToken();
     removeStoredUser();
 
-    // Clear all cached queries to prevent data leakage between users
+    // Stop inflight queries, then clear cache to prevent leakage between users
+    queryClient.cancelQueries();
     queryClient.clear();
+
+    // Clear banned handler flag to allow it to trigger for a different account
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem("banned_handler_called");
+    }
 
     notifyAuthListeners();
 

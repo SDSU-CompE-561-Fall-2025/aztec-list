@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from app.models.conversation import Conversation
     from app.models.listing import Listing
     from app.models.profile import Profile
+    from app.models.support_ticket import SupportTicket
 
 
 class User(Base):
@@ -32,6 +33,10 @@ class User(Base):
     email: Mapped[str] = mapped_column(String, unique=True, index=True)
     hashed_password: Mapped[str] = mapped_column(String)
     is_verified: Mapped[bool] = mapped_column(default=False)
+    verification_token: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    verification_token_expires: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.USER, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
@@ -76,4 +81,9 @@ class User(Base):
         foreign_keys="Conversation.user_2_id",
         back_populates="user_2",
         lazy="select",
+    )
+
+    # one-to-many -> Support tickets submitted by this user
+    support_tickets: Mapped[list[SupportTicket]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
     )

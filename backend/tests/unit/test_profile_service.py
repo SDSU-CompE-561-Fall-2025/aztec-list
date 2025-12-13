@@ -149,17 +149,26 @@ class TestProfileServiceUpdate:
             mock_update.assert_called_once()
 
     def test_update_profile_not_found_raises_404(self, profile_service: ProfileService):
-        """Test updating non-existent profile raises 404."""
+        """Test updating non-existent profile creates it (upsert)."""
         update_data = ProfileUpdate(name="New Name")
+        new_profile = Profile(
+            id=uuid.uuid4(),
+            user_id=uuid.uuid4(),
+            name="New Name",
+        )
 
-        with patch("app.services.profile.ProfileRepository.get_by_user_id") as mock_get:
+        with (
+            patch("app.services.profile.ProfileRepository.get_by_user_id") as mock_get,
+            patch("app.services.profile.ProfileRepository.create") as mock_create,
+        ):
             mock_get.return_value = None
+            mock_create.return_value = new_profile
             db = MagicMock(spec=Session)
 
-            with pytest.raises(HTTPException) as exc_info:
-                profile_service.update(db, uuid.uuid4(), update_data)
+            result = profile_service.update(db, new_profile.user_id, update_data)
 
-            assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+            assert result == new_profile
+            mock_create.assert_called_once()
 
     def test_update_profile_picture_success(
         self, profile_service: ProfileService, mock_profile: Profile
@@ -181,17 +190,25 @@ class TestProfileServiceUpdate:
             mock_update.assert_called_once()
 
     def test_update_profile_picture_not_found_raises_404(self, profile_service: ProfileService):
-        """Test updating profile picture when profile doesn't exist raises 404."""
+        """Test updating profile picture when profile doesn't exist creates it."""
         picture_data = ProfilePictureUpdate(picture_url="https://example.com/pic.jpg")
+        new_profile = Profile(id=uuid.uuid4(), user_id=uuid.uuid4())
 
-        with patch("app.services.profile.ProfileRepository.get_by_user_id") as mock_get:
+        with (
+            patch("app.services.profile.ProfileRepository.get_by_user_id") as mock_get,
+            patch("app.services.profile.ProfileRepository.create") as mock_create,
+            patch("app.services.profile.ProfileRepository.update_profile_picture") as mock_update,
+        ):
             mock_get.return_value = None
+            mock_create.return_value = new_profile
+            mock_update.return_value = new_profile
             db = MagicMock(spec=Session)
 
-            with pytest.raises(HTTPException) as exc_info:
-                profile_service.update_profile_picture(db, uuid.uuid4(), picture_data)
+            result = profile_service.update_profile_picture(db, new_profile.user_id, picture_data)
 
-            assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+            assert result == new_profile
+            mock_create.assert_called_once()
+            mock_update.assert_called_once()
 
 
 class TestProfileServiceDelete:

@@ -5,9 +5,18 @@ import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { toast } from "sonner";
-import { ChevronLeft, Trash2, AlertTriangle, Upload } from "lucide-react";
+import {
+  ChevronLeft,
+  Trash2,
+  AlertTriangle,
+  Upload,
+  Mail,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/custom/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,10 +35,39 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { API_BASE_URL } from "@/lib/constants";
-import { getAuthToken, setStoredUser, changePassword } from "@/lib/auth";
+import { getAuthToken, setStoredUser, changePassword, refreshCurrentUser } from "@/lib/auth";
+import { updateProfile, updateProfilePicture, removeProfilePicture, getMyProfile } from "@/lib/api";
+import { showErrorToast } from "@/lib/errorHandling";
 import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOptions";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
 import type { ContactInfo } from "@/types/user";
+
+/**
+ * Calculate password strength score (0-4).
+ */
+function getPasswordStrength(password: string): number {
+  let strength = 0;
+  if (password.length >= 8) strength++;
+  if (password.length >= 12) strength++;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+  if (/\d/.test(password)) strength++;
+  if (/[^a-zA-Z0-9]/.test(password)) strength++;
+  return Math.min(strength, 4);
+}
+
+/**
+ * Get password strength label and color.
+ */
+function getPasswordStrengthInfo(strength: number): { label: string; color: string } {
+  const levels = [
+    { label: "Too weak", color: "bg-red-500" },
+    { label: "Weak", color: "bg-orange-500" },
+    { label: "Fair", color: "bg-yellow-500" },
+    { label: "Good", color: "bg-blue-500" },
+    { label: "Strong", color: "bg-green-500" },
+  ];
+  return levels[strength] || levels[0];
+}
 
 interface ProfileUpdatePayload {
   name?: string | null;
@@ -37,7 +75,7 @@ interface ProfileUpdatePayload {
   contact_info?: ContactInfo;
 }
 
-export default function SettingsPage() {
+function SettingsContent() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -53,6 +91,7 @@ export default function SettingsPage() {
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const isInitializedRef = useRef(false);
+  const hasRefreshedRef = useRef(false);
 
   // Fetch existing profile data using React Query
   const { data: profile, isLoading: isProfileFetching } = useQuery(
@@ -88,16 +127,20 @@ export default function SettingsPage() {
 
   // Account state
   const [username, setUsername] = useState(user?.username ?? "");
+  const [email, setEmail] = useState(user?.email ?? "");
   const [isAccountLoading, setIsAccountLoading] = useState(false);
 
   // Track if account has changes (memoized)
   const hasAccountChanges = useMemo(
-    () => username !== (user?.username ?? ""),
-    [username, user?.username]
+    () => username !== (user?.username ?? "") || email !== (user?.email ?? ""),
+    [username, email, user?.username, user?.email]
   );
 
   // Delete account state
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Email verification state
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
 
   // Cancel confirmation dialogs
   const [showProfileCancelDialog, setShowProfileCancelDialog] = useState(false);
@@ -108,12 +151,36 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
+  const hasInitializedUsernameRef = useRef(false);
 
-  // Initialize username from user data
+  // Calculate password strength
+  const passwordStrength = getPasswordStrength(newPassword);
+  const strengthInfo = getPasswordStrengthInfo(passwordStrength);
+
+  // Initialize username and email from user data (only once)
   useEffect(() => {
-    if (user?.username) {
+    if (user?.username && !hasInitializedUsernameRef.current) {
+      hasInitializedUsernameRef.current = true;
       setUsername(user.username);
+      setEmail(user.email);
     }
+  }, [user]);
+
+  // Refresh user data on mount to ensure we have latest verification status
+  useEffect(() => {
+    if (!user || hasRefreshedRef.current) return;
+
+    hasRefreshedRef.current = true;
+
+    const refreshUser = async () => {
+      try {
+        await refreshCurrentUser();
+      } catch (error) {
+        console.error("Failed to refresh user data:", error);
+      }
+    };
+
+    refreshUser();
   }, [user]);
 
   // Format and validate phone number
@@ -169,56 +236,25 @@ export default function SettingsPage() {
     setIsProfileLoading(true);
 
     try {
-      const token = getAuthToken();
-      if (!token) throw new Error("Not authenticated");
-
       // Step 1: Handle profile picture upload if staged
       if (stagedPictureFile) {
-        const formData = new FormData();
-        formData.append("file", stagedPictureFile);
-
-        const pictureResponse = await fetch(`${API_BASE_URL}/users/profile/picture`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        });
-
-        if (!pictureResponse.ok) {
-          const errorData = await pictureResponse.json().catch(() => ({}));
-          throw new Error(errorData.detail || "Failed to upload profile picture");
-        }
+        await updateProfilePicture(stagedPictureFile);
       }
 
       // Step 2: Handle profile picture removal if staged
       if (isPictureRemovalStaged) {
-        const removeResponse = await fetch(`${API_BASE_URL}/users/profile/`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            profile_picture_url: null,
-          }),
-        });
-
-        if (!removeResponse.ok) {
-          const errorData = await removeResponse.json().catch(() => ({}));
-          throw new Error(errorData.detail || "Failed to remove profile picture");
-        }
+        await removeProfilePicture();
       }
 
       // Step 3: Update other profile fields
       const updates: ProfileUpdatePayload = {};
 
       if (formName !== (profile?.name || "")) {
-        updates.name = formName.trim() || null;
+        updates.name = formName.trim() || null; // null clears the field
       }
 
       if (formCampus !== (profile?.campus || "")) {
-        updates.campus = formCampus.trim() || null;
+        updates.campus = formCampus.trim() || null; // null clears the field
       }
 
       const originalPhone = profile?.contact_info?.phone || "";
@@ -234,41 +270,21 @@ export default function SettingsPage() {
 
       // Update profile fields if there are changes
       if (Object.keys(updates).length > 0) {
-        const response = await fetch(`${API_BASE_URL}/users/profile/`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(updates),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.detail || "Failed to save profile");
-        }
+        await updateProfile(updates);
       }
 
       // Fetch updated profile to get latest data with fresh updated_at timestamp
       // This is done regardless of whether fields were updated, since picture changes also need refresh
-      const profileResponse = await fetch(`${API_BASE_URL}/users/profile/`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const updatedProfile = await getMyProfile();
 
-      if (profileResponse.ok) {
-        const updatedProfile = await profileResponse.json();
+      // Update the React Query cache with fresh data from server
+      // This triggers all components using this query to re-render with new updated_at
+      queryClient.setQueryData(["profile", user?.id], updatedProfile);
 
-        // Update the React Query cache with fresh data from server
-        // This triggers all components using this query to re-render with new updated_at
-        queryClient.setQueryData(["profile", user?.id], updatedProfile);
-
-        // Update form fields to match the saved data
-        setFormName(updatedProfile.name || "");
-        setFormCampus(updatedProfile.campus || "");
-        setFormPhone(updatedProfile.contact_info?.phone || "");
-      }
+      // Update form fields to match the saved data
+      setFormName(updatedProfile.name || "");
+      setFormCampus(updatedProfile.campus || "");
+      setFormPhone(updatedProfile.contact_info?.phone || "");
 
       // Clear staged changes
       setPreviewUrl(null);
@@ -283,14 +299,7 @@ export default function SettingsPage() {
         },
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to save profile";
-      toast.error(message, {
-        style: {
-          background: "rgb(153, 27, 27)",
-          color: "white",
-          border: "1px solid rgb(220, 38, 38)",
-        },
-      });
+      showErrorToast(error, "Failed to save profile");
     } finally {
       setIsProfileLoading(false);
     }
@@ -368,11 +377,28 @@ export default function SettingsPage() {
       const token = getAuthToken();
       if (!token) throw new Error("Not authenticated");
 
-      if (username === user?.username) {
+      if (username === user?.username && email === user?.email) {
         toast.info("No changes to save");
         setIsAccountLoading(false);
         return;
       }
+
+      // Validate .edu email requirement
+      if (email !== user?.email && !email.toLowerCase().endsWith(".edu")) {
+        toast.error("Email must be from a .edu domain", {
+          style: {
+            background: "rgb(153, 27, 27)",
+            color: "white",
+            border: "1px solid rgb(220, 38, 38)",
+          },
+        });
+        setIsAccountLoading(false);
+        return;
+      }
+
+      const updateData: { username?: string; email?: string } = {};
+      if (username !== user?.username) updateData.username = username;
+      if (email !== user?.email) updateData.email = email;
 
       const response = await fetch(`${API_BASE_URL}/users/me`, {
         method: "PATCH",
@@ -380,7 +406,7 @@ export default function SettingsPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ username }),
+        body: JSON.stringify(updateData),
       });
 
       if (!response.ok) {
@@ -391,6 +417,21 @@ export default function SettingsPage() {
       // Get updated user data from response
       const updatedUser = await response.json();
 
+      // Check if email sending failed
+      if (updatedUser.verification_email_sent === false) {
+        toast.warning(
+          "Account updated but verification email failed to send. Please try resending it from the settings page.",
+          {
+            style: {
+              background: "rgb(113, 63, 18)",
+              color: "white",
+              border: "1px solid rgb(251, 146, 60)",
+            },
+            duration: 8000,
+          }
+        );
+      }
+
       // Update localStorage - this will automatically sync AuthContext via custom event
       setStoredUser(updatedUser);
 
@@ -398,34 +439,91 @@ export default function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["user"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
 
-      toast.success("Account updated successfully!", {
-        style: {
-          background: "rgb(20, 83, 45)",
-          color: "white",
-          border: "1px solid rgb(34, 197, 94)",
-        },
-      });
+      // Show different message if email was changed
+      if (email !== user?.email) {
+        if (updatedUser.verification_email_sent !== false) {
+          toast.success(
+            "Email updated! Please check your inbox to verify your new email address.",
+            {
+              style: {
+                background: "rgb(20, 83, 45)",
+                color: "white",
+                border: "1px solid rgb(34, 197, 94)",
+              },
+              duration: 6000,
+            }
+          );
+        }
+      } else {
+        toast.success("Account updated successfully!", {
+          style: {
+            background: "rgb(20, 83, 45)",
+            color: "white",
+            border: "1px solid rgb(34, 197, 94)",
+          },
+        });
+      }
     } catch (error) {
-      // Reset username to original value on error
+      // Reset username and email to original values on error
       setUsername(user?.username ?? "");
-      const message = error instanceof Error ? error.message : "Failed to update account";
-      toast.error(message, {
-        duration: 5000,
-        style: {
-          background: "rgb(153, 27, 27)", // red-900
-          color: "white",
-          border: "1px solid rgb(220, 38, 38)", // red-600
-        },
-      });
+      setEmail(user?.email ?? "");
+      showErrorToast(error, "Failed to update account");
     } finally {
       setIsAccountLoading(false);
     }
   };
 
   const handleCancelAccountChanges = () => {
-    // Reset username to original value
+    // Reset username and email to original values
     setUsername(user?.username ?? "");
+    setEmail(user?.email ?? "");
     setShowAccountCancelDialog(false);
+  };
+
+  const handleResendVerification = async () => {
+    if (!user?.email) return;
+
+    setIsResendingVerification(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/auth/resend-verification?email=${encodeURIComponent(user.email)}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        toast.success("Verification email sent! Check your inbox.", {
+          style: {
+            background: "rgb(20, 83, 45)",
+            color: "white",
+            border: "1px solid rgb(34, 197, 94)",
+          },
+        });
+      } else {
+        const data = await response.json();
+        if (response.status === 429) {
+          toast.error("Too many requests. Please try again later.");
+        } else {
+          // Handle validation errors (array) or string errors
+          let errorMsg = "Failed to send verification email";
+          if (typeof data.detail === "string") {
+            errorMsg = data.detail;
+          } else if (Array.isArray(data.detail)) {
+            // FastAPI validation errors
+            errorMsg = data.detail.map((err: { msg: string }) => err.msg).join(", ");
+          }
+          toast.error(errorMsg);
+        }
+      }
+    } catch (error) {
+      showErrorToast(error, "Failed to resend verification email");
+    } finally {
+      setIsResendingVerification(false);
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -459,14 +557,7 @@ export default function SettingsPage() {
       });
       router.push("/");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to delete account";
-      toast.error(message, {
-        style: {
-          background: "rgb(153, 27, 27)",
-          color: "white",
-          border: "1px solid rgb(220, 38, 38)",
-        },
-      });
+      showErrorToast(error, "Failed to delete account");
       setIsDeleting(false);
     }
   };
@@ -537,15 +628,7 @@ export default function SettingsPage() {
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to change password";
-      toast.error(message, {
-        duration: 5000,
-        style: {
-          background: "rgb(153, 27, 27)",
-          color: "white",
-          border: "1px solid rgb(220, 38, 38)",
-        },
-      });
+      showErrorToast(error, "Failed to change password");
     } finally {
       setIsPasswordLoading(false);
     }
@@ -600,40 +683,41 @@ export default function SettingsPage() {
                 <CardTitle className="text-lg sm:text-xl text-foreground">
                   Profile Information
                 </CardTitle>
-                <CardDescription className="text-sm sm:text-base text-muted-foreground">
+                <CardDescription className="text-xs sm:text-sm text-muted-foreground">
                   Add details to help buyers connect with you
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {isInitialLoading ? (
-                  <div className="animate-pulse">
+                  <div className="space-y-6">
                     {/* Profile Picture Skeleton */}
-                    <div className="mb-6 pb-6 border-b">
+                    <div className="pb-6 border-b">
                       <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-muted rounded-full"></div>
+                        <div className="w-16 h-16 bg-muted rounded-full animate-pulse"></div>
                         <div className="flex gap-2">
-                          <div className="h-8 w-24 bg-muted rounded"></div>
-                          <div className="h-8 w-24 bg-muted rounded"></div>
+                          <div className="h-9 w-[72px] bg-muted rounded animate-pulse"></div>
+                          <div className="h-9 w-[76px] bg-muted rounded animate-pulse"></div>
                         </div>
                       </div>
                     </div>
-                    {/* Form Fields Skeleton - wrapped in space-y-4 to match form */}
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="h-6 w-24 bg-muted rounded"></div>
-                        <div className="h-9 bg-muted rounded"></div>
+                    {/* Form Fields Skeleton */}
+                    <div className="space-y-3">
+                      <div className="space-y-1.5">
+                        <div className="h-5 w-[70px] bg-muted rounded animate-pulse"></div>
+                        <div className="h-9 bg-muted rounded animate-pulse"></div>
                       </div>
-                      <div className="space-y-2">
-                        <div className="h-6 w-16 bg-muted rounded"></div>
-                        <div className="h-9 bg-muted rounded"></div>
-                        <div className="h-5 w-20 bg-muted rounded"></div>
+                      <div className="space-y-1.5">
+                        <div className="h-5 w-[52px] bg-muted rounded animate-pulse"></div>
+                        <div className="h-9 bg-muted rounded animate-pulse"></div>
                       </div>
-                      <div className="space-y-2">
-                        <div className="h-6 w-28 bg-muted rounded"></div>
-                        <div className="h-9 bg-muted rounded"></div>
-                        <div className="h-5 w-52 bg-muted rounded"></div>
+                      <div className="space-y-1.5">
+                        <div className="h-5 w-[104px] bg-muted rounded animate-pulse"></div>
+                        <div className="h-9 bg-muted rounded animate-pulse"></div>
+                        <div className="h-4 w-[172px] bg-muted rounded animate-pulse mt-1.5"></div>
                       </div>
-                      <div className="h-9 w-full bg-muted rounded"></div>
+                      <div className="pt-2">
+                        <div className="h-9 bg-muted rounded animate-pulse"></div>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -655,7 +739,7 @@ export default function SettingsPage() {
                                 sizes="64px"
                                 className="object-cover"
                               />
-                            ) : profile?.profile_picture_url ? (
+                            ) : !isProfileFetching && profile?.profile_picture_url ? (
                               <Image
                                 src={
                                   getProfilePictureUrl(
@@ -851,19 +935,82 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="email-display" className="text-sm sm:text-base text-foreground">
+                    <Label htmlFor="email" className="text-sm sm:text-base text-foreground">
                       Email
                     </Label>
                     <Input
-                      id="email-display"
+                      id="email"
                       type="email"
-                      value={user?.email ?? ""}
-                      disabled
-                      className="text-sm cursor-not-allowed opacity-60"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isAccountLoading}
+                      className="text-sm"
                     />
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      Email cannot be changed at this time
-                    </p>
+                    {email !== user?.email && (
+                      <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-500/30 dark:bg-blue-900/20">
+                        <div className="flex items-start gap-2">
+                          <svg
+                            className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          <p className="text-xs sm:text-sm text-blue-900 dark:text-blue-200">
+                            Changing your email will require verification. You&apos;ll be logged out
+                            of unverified sessions.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Email Verification Status */}
+                  <div className="rounded-lg border p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        {user?.is_verified ? (
+                          <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                        ) : (
+                          <Mail className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                        )}
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium">
+                            {user?.is_verified ? "Email Verified" : "Email Not Verified"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {user?.is_verified
+                              ? "Your email address has been verified"
+                              : "Please verify your email address to access all features"}
+                          </p>
+                        </div>
+                      </div>
+                      {!user?.is_verified && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={handleResendVerification}
+                          disabled={isResendingVerification}
+                          className="flex-shrink-0"
+                        >
+                          {isResendingVerification ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Sending...
+                            </>
+                          ) : (
+                            "Resend Email"
+                          )}
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex gap-3 pt-2">
@@ -955,7 +1102,7 @@ export default function SettingsPage() {
                       <AlertDialogCancel className="text-xs sm:text-sm">Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleDeleteAccount}
-                        className="bg-red-600 hover:bg-red-700 text-xs sm:text-sm"
+                        className="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm"
                       >
                         {isDeleting ? "Deleting..." : "Delete Account"}
                       </AlertDialogAction>
@@ -1010,6 +1157,26 @@ export default function SettingsPage() {
                       className="text-sm"
                       placeholder="Enter new password"
                     />
+
+                    {/* Password strength indicator */}
+                    {newPassword.length > 0 && (
+                      <div className="space-y-1">
+                        <div className="flex gap-1">
+                          {[...Array(4)].map((_, i) => (
+                            <div
+                              key={i}
+                              className={`h-1 flex-1 rounded-full transition-colors ${
+                                i < passwordStrength ? strengthInfo.color : "bg-muted"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          Password strength: {strengthInfo.label}
+                        </p>
+                      </div>
+                    )}
+
                     <p className="text-xs sm:text-sm text-muted-foreground">
                       Must be at least 8 characters
                     </p>
@@ -1049,5 +1216,13 @@ export default function SettingsPage() {
         </Tabs>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <ProtectedRoute>
+      <SettingsContent />
+    </ProtectedRoute>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import Image from "next/image";
@@ -12,10 +12,12 @@ import { DEFAULT_LIMIT } from "@/lib/constants";
 import { Plus } from "lucide-react";
 import { deleteListing, toggleListingActive } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { refreshCurrentUser } from "@/lib/auth";
 import { createOwnListingsQueryOptions } from "@/queryOptions/createOwnListingsQueryOptions";
 import { createProfileQueryOptions } from "@/queryOptions/createProfileQueryOptions";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
 import { toast } from "sonner";
+import { showErrorToast } from "@/lib/errorHandling";
 import { ProtectedRoute } from "@/components/custom/ProtectedRoute";
 import type { ListingSummary, ListingSearchResponse } from "@/types/listing/listing";
 
@@ -24,9 +26,27 @@ function ProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const hasRefreshedRef = useRef(false);
 
   const offset = parseInt(searchParams.get("offset") ?? "0", 10) || 0;
   const status = (searchParams.get("status") ?? "all") as "all" | "active" | "inactive";
+
+  // Refresh user data on mount to ensure we have latest verification status
+  useEffect(() => {
+    if (!user || hasRefreshedRef.current) return;
+
+    hasRefreshedRef.current = true;
+
+    const refreshUser = async () => {
+      try {
+        await refreshCurrentUser();
+      } catch (error) {
+        console.error("Failed to refresh user data:", error);
+      }
+    };
+
+    refreshUser();
+  }, [user]);
 
   // Fetch profile data
   const { data: profileData, isLoading: isProfileLoading } = useQuery(
@@ -109,13 +129,7 @@ function ProfileContent() {
           context.previousData
         );
       }
-      toast.error("Failed to update listing visibility", {
-        style: {
-          background: "rgb(153, 27, 27)",
-          color: "white",
-          border: "1px solid rgb(220, 38, 38)",
-        },
-      });
+      showErrorToast(err, "Failed to update listing visibility");
     },
     onSuccess: (updatedListing, { isActive }) => {
       // Update the cache with the actual server response
@@ -162,14 +176,8 @@ function ProfileContent() {
         },
       });
     },
-    onError: () => {
-      toast.error("Failed to delete listing", {
-        style: {
-          background: "rgb(153, 27, 27)",
-          color: "white",
-          border: "1px solid rgb(220, 38, 38)",
-        },
-      });
+    onError: (error) => {
+      showErrorToast(error, "Failed to delete listing");
     },
   });
 
@@ -193,7 +201,9 @@ function ProfileContent() {
             {/* Profile Picture */}
             <div className="flex-shrink-0">
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/20 flex items-center justify-center overflow-hidden relative">
-                {profileData?.profile_picture_url ? (
+                {isProfileLoading ? (
+                  <div className="w-full h-full bg-muted animate-pulse" />
+                ) : profileData?.profile_picture_url ? (
                   <Image
                     src={
                       getProfilePictureUrl(
@@ -219,7 +229,9 @@ function ProfileContent() {
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <h2 className="text-2xl font-bold text-foreground mb-2 text-center sm:text-left">
-                    {profileData?.name ? (
+                    {isProfileLoading ? (
+                      <div className="h-8 bg-muted animate-pulse rounded w-48 mx-auto sm:mx-0" />
+                    ) : profileData?.name ? (
                       <>
                         {profileData.name}
                         <span className="text-lg text-muted-foreground font-normal sm:ml-2 block sm:inline mt-1 sm:mt-0">
@@ -290,6 +302,47 @@ function ProfileContent() {
             </div>
           </div>
         </div>
+
+        {/* Email Verification Banner - Only show if email is not verified */}
+        {!user?.is_verified && (
+          <div className="mb-4 sm:mb-6">
+            <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-500/30 rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <svg
+                  className="w-5 h-5 text-purple-600 dark:text-purple-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-purple-900 dark:text-purple-300 font-semibold text-sm mb-1.5">
+                  Please verify your email to create listings.
+                </h3>
+                <p className="text-purple-800 dark:text-purple-200/70 text-xs sm:text-sm">
+                  Check your inbox for the verification link or resend from your account settings.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="border-purple-300 dark:border-purple-500/50 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:text-purple-800 dark:hover:text-purple-200 flex-1 sm:flex-initial shrink-0"
+                >
+                  <Link href="/settings">Verify Email</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Incomplete Profile Banner - Only show if profile is incomplete */}
         {isProfileIncomplete && showIncompleteBanner && (
@@ -388,7 +441,7 @@ function ProfileContent() {
 
           {/* Empty state with CTA */}
           {data && totalCount === 0 ? (
-            <div className="bg-muted rounded-lg p-12 text-center">
+            <div className="bg-card/50 backdrop-blur-sm border rounded-lg p-12 text-center">
               <div className="max-w-md mx-auto">
                 <h3 className="text-xl font-semibold text-foreground mb-2">No listings yet</h3>
                 <p className="text-muted-foreground mb-6 text-base">

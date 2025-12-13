@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
@@ -24,10 +25,20 @@ import { CATEGORIES, Category } from "@/types/listing/filters/category";
 import { CONDITIONS, Condition } from "@/types/listing/filters/condition";
 import { formatCategoryLabel, formatConditionLabel } from "@/lib/utils";
 import { toast } from "sonner";
+import { showErrorToast } from "@/lib/errorHandling";
+import { ProtectedRoute } from "@/components/custom/ProtectedRoute";
 import { Loader2, ChevronLeft, Check } from "lucide-react";
 import type { ImagePublic, ListingPublic } from "@/types/listing/listing";
 
 export default function EditListingPage() {
+  return (
+    <ProtectedRoute>
+      <EditListingContent />
+    </ProtectedRoute>
+  );
+}
+
+function EditListingContent() {
   const params = useParams();
   const router = useRouter();
   const listingId = params.listing_id as string;
@@ -246,13 +257,7 @@ function EditForm({
       setShowSavedIndicator(true);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update listing", {
-        style: {
-          background: "rgb(153, 27, 27)",
-          color: "white",
-          border: "1px solid rgb(220, 38, 38)",
-        },
-      });
+      showErrorToast(error, "Failed to update listing");
     },
   });
 
@@ -283,7 +288,7 @@ function EditForm({
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 p-8">
+    <div className="min-h-screen bg-background p-8">
       <div className="max-w-3xl mx-auto">
         {/* Breadcrumb Navigation */}
         <button
@@ -298,8 +303,8 @@ function EditForm({
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white mb-2">Edit Listing</h1>
-              <p className="text-gray-400 text-sm">Update your listing details</p>
+              <h1 className="text-2xl font-bold text-foreground mb-2">Edit Listing</h1>
+              <p className="text-muted-foreground text-sm">Update your listing details</p>
             </div>
             {showSavedIndicator && (
               <div className="flex items-center gap-2 text-green-400 bg-green-950/50 px-4 py-2 rounded-md border border-green-800 animate-in fade-in slide-in-from-right-5">
@@ -314,7 +319,7 @@ function EditForm({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
           <div>
-            <Label htmlFor="title" className="text-gray-200">
+            <Label htmlFor="title" className="text-foreground">
               Title <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -323,56 +328,63 @@ function EditForm({
               onChange={(e) => setTitle(e.target.value)}
               onBlur={(e) => handleBlur("title", e.target.value)}
               maxLength={100}
-              className="mt-1 bg-gray-900 border-gray-700 text-white"
+              className="mt-1"
               placeholder="e.g., MacBook Pro 2020"
             />
             {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-            <p className="text-gray-500 text-xs mt-1">{title.length}/100 characters</p>
+            <p className="text-muted-foreground text-xs mt-1">{title.length}/100 characters</p>
           </div>
 
           {/* Description */}
           <div>
-            <Label htmlFor="description" className="text-gray-200">
+            <Label htmlFor="description" className="text-foreground">
               Description <span className="text-red-500">*</span>
             </Label>
-            <textarea
+            <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               onBlur={(e) => handleBlur("description", e.target.value)}
               maxLength={500}
               rows={4}
-              className="mt-1 w-full rounded-md bg-gray-900 border border-gray-700 text-base md:text-sm text-white p-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="mt-1 resize-none"
               placeholder="Describe your item..."
             />
             {errors.description && (
               <p className="text-red-500 text-sm mt-1">{errors.description}</p>
             )}
-            <p className="text-gray-500 text-xs mt-1">{description.length}/500 characters</p>
+            <p className="text-muted-foreground text-xs mt-1">
+              {description.length}/500 characters
+            </p>
           </div>
 
           {/* Price */}
           <div>
-            <Label htmlFor="price" className="text-gray-200">
+            <Label htmlFor="price" className="text-foreground">
               Price <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="price"
-              type="number"
-              step="0.01"
-              min="0.01"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              onBlur={handlePriceBlur}
-              className="mt-1 bg-gray-900 border-gray-700 text-white"
-              placeholder="0.00"
-            />
+            <div className="relative mt-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-lg">
+                $
+              </span>
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                onBlur={handlePriceBlur}
+                className="text-lg h-12 pl-8"
+                placeholder="0.00"
+              />
+            </div>
             {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
           </div>
 
           {/* Category */}
           <div>
-            <Label htmlFor="category" className="text-gray-200">
+            <Label htmlFor="category" className="text-foreground">
               Category <span className="text-red-500">*</span>
             </Label>
             <select
@@ -380,7 +392,7 @@ function EditForm({
               value={category}
               onChange={(e) => setCategory(e.target.value as Category)}
               onBlur={(e) => handleBlur("category", e.target.value)}
-              className="mt-1 w-full rounded-md bg-gray-900 border border-gray-700 text-base md:text-sm text-white p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="mt-1 w-full h-9 rounded-md border px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none bg-transparent dark:bg-input/30 border-input focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             >
               <option value="">Select a category</option>
               {CATEGORIES.map((cat) => (
@@ -394,7 +406,7 @@ function EditForm({
 
           {/* Condition */}
           <div>
-            <Label htmlFor="condition" className="text-gray-200">
+            <Label htmlFor="condition" className="text-foreground">
               Condition <span className="text-red-500">*</span>
             </Label>
             <select
@@ -402,7 +414,7 @@ function EditForm({
               value={condition}
               onChange={(e) => setCondition(e.target.value as Condition)}
               onBlur={(e) => handleBlur("condition", e.target.value)}
-              className="mt-1 w-full rounded-md bg-gray-900 border border-gray-700 text-base md:text-sm text-white p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="mt-1 w-full h-9 rounded-md border px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none bg-transparent dark:bg-input/30 border-input focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             >
               <option value="">Select a condition</option>
               {CONDITIONS.map((cond) => (
@@ -415,11 +427,11 @@ function EditForm({
           </div>
 
           {/* Active Toggle */}
-          <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
+          <div className="bg-card border border-border rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-gray-200 font-medium">Listing Status</Label>
-                <p className="text-gray-500 text-sm mt-1">
+                <Label className="text-foreground font-medium">Listing Status</Label>
+                <p className="text-muted-foreground text-sm mt-1">
                   {isActive ? "Visible to buyers" : "Hidden from buyers"}
                 </p>
               </div>
@@ -436,7 +448,7 @@ function EditForm({
           </div>
 
           {/* Image Upload */}
-          <div className="bg-gray-900 rounded-lg p-6">
+          <div className="bg-card border border-border rounded-lg p-6">
             <ImageUpload
               listingId={listingId}
               existingImages={images}
@@ -449,7 +461,7 @@ function EditForm({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-4 border-t border-gray-800">
+          <div className="flex items-center justify-between pt-4">
             <div className="flex gap-3">
               <Button
                 type="submit"
@@ -466,8 +478,8 @@ function EditForm({
                 )}
               </Button>
               {isDirty && !updateMutation.isPending && (
-                <span className="flex items-center text-sm text-blue-300">
-                  <span className="inline-block w-2 h-2 bg-blue-300 rounded-full mr-2 animate-pulse" />
+                <span className="flex items-center text-sm text-blue-600 dark:text-blue-300">
+                  <span className="inline-block w-2 h-2 bg-blue-600 dark:bg-blue-300 rounded-full mr-2 animate-pulse" />
                   Unsaved changes
                 </span>
               )}
@@ -477,7 +489,7 @@ function EditForm({
                 type="button"
                 variant="ghost"
                 onClick={() => router.push("/profile")}
-                className="text-gray-400 hover:text-white"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 Done
@@ -497,10 +509,10 @@ function EditForm({
 
         {/* Discard changes dialog */}
         <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
-          <AlertDialogContent className="bg-gray-900 border-gray-800">
+          <AlertDialogContent className="bg-card border-border">
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-white">Leave without saving?</AlertDialogTitle>
-              <AlertDialogDescription className="text-gray-400">
+              <AlertDialogTitle className="text-foreground">Leave without saving?</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground">
                 You have unsaved changes that will be lost if you leave now.
                 {newImageUploads.length > 0 && (
                   <>
@@ -515,7 +527,7 @@ function EditForm({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel className="bg-gray-800 text-gray-100 hover:bg-gray-700">
+              <AlertDialogCancel className="bg-muted text-foreground hover:bg-muted/80">
                 Stay and Save
               </AlertDialogCancel>
               <AlertDialogAction
@@ -535,10 +547,10 @@ function EditForm({
 // Error view component
 function ErrorView({ error }: { error: Error }) {
   return (
-    <div className="min-h-screen bg-gray-950 p-8 flex items-center justify-center">
+    <div className="min-h-screen bg-background p-8 flex items-center justify-center">
       <div className="text-center max-w-md">
-        <h1 className="text-2xl font-bold text-white mb-2">Error Loading Listing</h1>
-        <p className="text-gray-400 mb-6">
+        <h1 className="text-2xl font-bold text-foreground mb-2">Error Loading Listing</h1>
+        <p className="text-muted-foreground mb-6">
           {error.message || "Listing not found or you don't have permission to edit it."}
         </p>
         <Button asChild variant="outline">
@@ -552,7 +564,7 @@ function ErrorView({ error }: { error: Error }) {
 // Loading skeleton component
 function LoadingView() {
   return (
-    <div className="min-h-screen bg-gray-950 p-8">
+    <div className="min-h-screen bg-background p-8">
       <div className="max-w-3xl mx-auto space-y-6">
         <Skeleton className="h-10 w-48" />
         <Skeleton className="h-6 w-96" />

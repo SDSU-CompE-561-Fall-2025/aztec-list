@@ -1,11 +1,12 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from pydantic import HttpUrl
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_not_banned
+from app.core.rate_limiter import limiter
 from app.models.profile import Profile
 from app.models.user import User
 from app.schemas.profile import (
@@ -25,7 +26,7 @@ profile_router = APIRouter(
 
 
 @profile_router.post(
-    "/",
+    "",
     summary="Create a profile for the authenticated user",
     status_code=status.HTTP_201_CREATED,
     response_model=ProfilePrivate,
@@ -56,7 +57,7 @@ async def create_profile(
 
 
 @profile_router.get(
-    "/", summary="Get the authenticated user's profile", response_model=ProfilePrivate
+    "", summary="Get the authenticated user's profile", response_model=ProfilePrivate
 )
 async def get_my_profile(
     current_user: Annotated[User, Depends(get_current_user)],
@@ -81,9 +82,11 @@ async def get_my_profile(
 
 
 @profile_router.patch(
-    "/", summary="Update the authenticated user's profile", response_model=ProfilePrivate
+    "", summary="Update the authenticated user's profile", response_model=ProfilePrivate
 )
+@limiter.limit("10/minute;30/hour")
 async def update_profile(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     profile: ProfileUpdate,
     current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
@@ -91,10 +94,13 @@ async def update_profile(
     """
     Update fields of the authenticated user's own profile.
 
+    Rate limit: 10 per minute (burst), 30 per hour (sustained).
+
     All fields are optional; only provided ones are updated.
     This endpoint is for authenticated users to update their own profile.
 
     Args:
+        request: FastAPI request object (required for rate limiting)
         profile: Profile update data (name, campus, contact_info)
         current_user: Authenticated user from the JWT token
         db: Database session
@@ -114,7 +120,9 @@ async def update_profile(
     status_code=status.HTTP_201_CREATED,
     response_model=ProfilePictureResponse,
 )
+@limiter.limit("5/minute;20/hour")
 async def update_profile_picture(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
     file: Annotated[UploadFile | None, File(description="Profile picture file")] = None,
@@ -123,6 +131,8 @@ async def update_profile_picture(
     """
     Upload or replace the authenticated user's profile picture.
 
+    Rate limit: 5 per minute (burst), 20 per hour (sustained).
+
     Accepts either:
     - File upload (multipart/form-data with 'file' field) - recommended
     - URL string (form field 'picture_url') - for external images
@@ -130,6 +140,7 @@ async def update_profile_picture(
     Only one method should be provided. File upload takes precedence if both are provided.
 
     Args:
+        request: FastAPI request object (required for rate limiting)
         current_user: Authenticated user from the JWT token
         db: Database session
         file: Image file to upload (jpg, png, webp, gif - max 5MB)
@@ -170,21 +181,26 @@ async def update_profile_picture(
 
 
 @profile_router.delete(
-    "/",
+    "",
     summary="Delete a user profile",
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
 )
+@limiter.limit("1/minute;2/hour")
 async def delete_profile(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
     current_user: Annotated[User, Depends(require_not_banned)],
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     """
     Delete the authenticated user's own profile.
 
+    Rate limit: 1 per minute (burst), 2 per hour (sustained) - very strict for safety.
+
     This endpoint is for authenticated users to delete their own profile.
 
     Args:
+        request: FastAPI request object (required for rate limiting)
         current_user: Authenticated user from the JWT token (must not be banned)
         db: Database session
 

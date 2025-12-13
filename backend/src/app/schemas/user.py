@@ -40,6 +40,15 @@ class UserUpdate(BaseModel):
     username: str | None = None
     email: EmailStr | None = None
 
+    @field_validator("email")
+    @classmethod
+    def validate_edu_email(cls, v: str | None) -> str | None:
+        """Validate that email ends with .edu domain."""
+        if v is not None and not v.lower().endswith(".edu"):
+            msg = "Email must be from a .edu domain"
+            raise ValueError(msg)
+        return v
+
 
 class PasswordChange(BaseModel):
     """Schema for changing user password."""
@@ -64,6 +73,12 @@ class UserPrivate(UserPublic):
     """Schema for private user data - includes email for authenticated user's own data."""
 
     email: EmailStr
+
+
+class UserPublicWithEmailStatus(UserPublic):
+    """Schema for user data with email sending status."""
+
+    verification_email_sent: bool = True
 
 
 class Token(BaseModel):
