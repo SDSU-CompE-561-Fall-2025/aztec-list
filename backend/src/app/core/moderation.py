@@ -201,7 +201,7 @@ class ContentModerator:
         "escort",
         "prostitution",
         "sex work",
-        "massage parlor",  # Context-dependent
+        # "massage parlor",  # Removed: Context-dependent, can flag legitimate businesses
         "happy ending",
         "adult services",
     }
