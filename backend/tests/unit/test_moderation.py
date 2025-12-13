@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.core.moderation import ContentModerator, ModerationResult
+from app.core.moderation import ContentModerator
 
 
 class TestContentModerator:
