@@ -64,7 +64,7 @@ export default function ListingDetailPage() {
   const params = useParams();
   const router = useRouter();
   const listingId = params.listing_id as string;
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: listing, isLoading, error } = useQuery(createListingDetailQueryOptions(listingId));
@@ -112,8 +112,7 @@ export default function ListingDetailPage() {
       if (error instanceof Error && error.message === "SESSION_EXPIRED") {
         toast.error("Your session has expired. Please log in again.");
         // Clear auth state
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("user");
+        logout();
         router.push(`/login?redirect=/listings/${listingId}`);
       } else {
         toast.error(error instanceof Error ? error.message : "Failed to start conversation");

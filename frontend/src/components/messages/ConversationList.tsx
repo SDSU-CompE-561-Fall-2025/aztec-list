@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
 import { API_BASE_URL } from "@/lib/constants";
+import { getAuthToken } from "@/lib/auth";
 import { NewConversationDialog } from "./NewConversationDialog";
 
 interface ConversationListProps {
@@ -28,7 +29,7 @@ export function ConversationList({
   selectedConversationId,
   onSelectConversation,
 }: ConversationListProps) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const [showNewConversationDialog, setShowNewConversationDialog] = useState(false);
 
@@ -42,11 +43,10 @@ export function ConversationList({
   // Handle session expiration
   useEffect(() => {
     if (error instanceof Error && error.message === "SESSION_EXPIRED") {
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("user");
+      logout();
       router.push("/login?redirect=/messages");
     }
-  }, [error, router]);
+  }, [error, router, logout]);
 
   // Get the other user ID for each conversation
   const getOtherUserId = (conversation: ConversationPublic): string => {
@@ -179,7 +179,7 @@ function ConversationListItem({
     queryKey: ["conversationHasMessages", conversation.id],
     queryFn: async () => {
       try {
-        const token = localStorage.getItem("auth_token");
+        const token = getAuthToken();
         if (!token) return false;
 
         const response = await fetch(
