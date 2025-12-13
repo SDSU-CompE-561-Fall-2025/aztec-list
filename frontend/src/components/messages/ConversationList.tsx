@@ -4,6 +4,7 @@
 
 "use client";
 
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { createConversationsQueryOptions } from "@/queryOptions/createMessagingQueryOptions";
@@ -11,12 +12,12 @@ import { createUserQueryOptions } from "@/queryOptions/createUserQueryOptions";
 import { ConversationPublic } from "@/types/message";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertCircle, MessageSquare } from "lucide-react";
+import { Loader2, AlertCircle, MessageSquare, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
 import { API_BASE_URL } from "@/lib/constants";
-import { useEffect } from "react";
+import { NewConversationDialog } from "./NewConversationDialog";
 
 interface ConversationListProps {
   selectedConversationId?: string;
@@ -29,6 +30,7 @@ export function ConversationList({
 }: ConversationListProps) {
   const { user } = useAuth();
   const router = useRouter();
+  const [showNewConversationDialog, setShowNewConversationDialog] = useState(false);
 
   const {
     data: conversations,
@@ -86,7 +88,25 @@ export function ConversationList({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-background">
         <h2 className="font-semibold text-lg">Messages</h2>
+        <Button
+          onClick={() => setShowNewConversationDialog(true)}
+          size="sm"
+          className="gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
+          aria-label="Start new conversation"
+        >
+          <Plus className="h-4 w-4" />
+          New
+        </Button>
       </div>
+
+      {/* New Conversation Dialog */}
+      <NewConversationDialog
+        open={showNewConversationDialog}
+        onOpenChange={setShowNewConversationDialog}
+        onConversationCreated={(conversationId, otherUserId) => {
+          onSelectConversation(conversationId, otherUserId);
+        }}
+      />
 
       {/* Conversations List */}
       <div className="flex-1 overflow-y-auto">

@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -23,6 +23,38 @@ user_router = APIRouter(
     prefix="/users",
     tags=["Users"],
 )
+
+
+@user_router.get(
+    "/",
+    summary="Search users",
+    status_code=status.HTTP_200_OK,
+    response_model=list[UserPublic],
+)
+async def search_users(
+    search: Annotated[str, Query(description="Search query for username or email")],
+    db: Annotated[Session, Depends(get_db)],
+    _current_user: Annotated[User, Depends(get_current_user)],
+    limit: Annotated[int, Query(ge=1, le=50, description="Maximum number of results")] = 10,
+) -> list[User]:
+    """
+    Search for users by username or email.
+
+    Requires authentication. Returns a list of users matching the search query.
+
+    Args:
+        search: Search query string (matches username or email)
+        limit: Maximum number of results (1-50, default 10)
+        db: Database session
+        _current_user: Authenticated user (required for auth, not used in function)
+
+    Returns:
+        list[UserPublic]: List of matching users
+
+    Raises:
+        HTTPException: 401 if not authenticated
+    """
+    return user_service.search(db, search, limit)
 
 
 @user_router.get(

@@ -92,6 +92,22 @@ class UserService:
             )
         return user
 
+    def search(self, db: Session, query: str, limit: int = 10) -> list[User]:
+        """
+        Search users by username or email.
+
+        Args:
+            db: Database session
+            query: Search query string
+            limit: Maximum number of results (default 10)
+
+        Returns:
+            list[User]: List of matching users
+        """
+        if not query or not query.strip():
+            return []
+        return UserRepository.search(db, query.strip(), limit)
+
     def create(self, db: Session, user: UserCreate) -> User:
         """
         Create a new user with validation.

@@ -6,19 +6,19 @@ This module contains helper functions for WebSocket authentication.
 
 import uuid
 
+from sqlalchemy.orm import Session
+
 from app.core.auth import verify_token
-from app.core.database import SessionLocal
 from app.models.user import User
 from app.repository.user import UserRepository
 
 
-def authenticate_websocket_user(token: str) -> User | None:
+def authenticate_websocket_user(db: Session, token: str) -> User | None:
     """
     Authenticate user from JWT token for WebSocket connections.
 
-    Creates a temporary database session, validates token, fetches user, then closes session.
-
     Args:
+        db: Database session
         token: JWT access token
 
     Returns:
@@ -37,8 +37,4 @@ def authenticate_websocket_user(token: str) -> User | None:
     except (ValueError, AttributeError):
         return None
 
-    db = SessionLocal()
-    try:
-        return UserRepository.get_by_id(db, user_id)
-    finally:
-        db.close()
+    return UserRepository.get_by_id(db, user_id)

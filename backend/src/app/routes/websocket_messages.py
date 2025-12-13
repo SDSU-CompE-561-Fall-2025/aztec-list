@@ -8,10 +8,12 @@ import asyncio
 import json
 import logging
 import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from sqlalchemy.orm import Session
 
-from app.core.database import SessionLocal
+from app.core.database import get_db
 from app.core.websocket import authenticate_websocket_user
 from app.schemas.message import MessageCreate, MessagePublic
 from app.services.conversation import conversation_service
@@ -100,18 +102,20 @@ async def remove_websocket_connection(conversation_id: uuid.UUID, websocket: Web
             connection_locks.pop(conversation_id, None)
 
 
-async def verify_conversation_access(conversation_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+async def verify_conversation_access(
+    db: Session, conversation_id: uuid.UUID, user_id: uuid.UUID
+) -> bool:
     """
     Verify that a conversation exists and user is a participant.
 
     Args:
+        db: Database session
         conversation_id: Conversation UUID
         user_id: User UUID
 
     Returns:
         bool: True if conversation exists and user is participant, False otherwise
     """
-    db = SessionLocal()
     try:
         conversation_service.get_by_id(db, conversation_id)
         conversation_service.verify_participant(db, conversation_id, user_id)
@@ -119,17 +123,16 @@ async def verify_conversation_access(conversation_id: uuid.UUID, user_id: uuid.U
         return False
     else:
         return True
-    finally:
-        db.close()
 
 
 async def handle_websocket_message(
-    conversation_id: uuid.UUID, user_id: uuid.UUID, content: str
+    db: Session, conversation_id: uuid.UUID, user_id: uuid.UUID, content: str
 ) -> None:
     """
     Handle incoming WebSocket message: save to DB and broadcast to participants.
 
     Args:
+        db: Database session
         conversation_id: Conversation UUID
         user_id: Sender user UUID
         content: Message content
@@ -145,21 +148,22 @@ async def handle_websocket_message(
         msg = f"Invalid message content: {e}"
         raise ValueError(msg) from e
 
-    db = SessionLocal()
-    try:
-        message = message_service.create(db, conversation_id, user_id, validated_content)
-        message_public = MessagePublic.model_validate(message)
-        message_json = message_public.model_dump_json()
-        await broadcast_message_to_conversation(conversation_id, message_json)
-    finally:
-        db.close()
+    message = message_service.create(db, conversation_id, user_id, validated_content)
+    message_public = MessagePublic.model_validate(message)
+    message_json = message_public.model_dump_json()
+    await broadcast_message_to_conversation(conversation_id, message_json)
 
 
 async def authenticate_websocket(
-    websocket: WebSocket, conversation_id: uuid.UUID
+    websocket: WebSocket, db: Session, conversation_id: uuid.UUID
 ) -> tuple[bool, uuid.UUID | None]:
     """
     Authenticate WebSocket connection and verify access.
+
+    Args:
+        websocket: WebSocket connection
+        db: Database session
+        conversation_id: Conversation UUID
 
     Returns:
         tuple: (success, user_id) - success is True if authenticated, user_id is the authenticated user
@@ -178,10 +182,10 @@ async def authenticate_websocket(
         elif not auth_message.get("token"):
             error_reason = "Token missing in auth message"
         else:
-            user = authenticate_websocket_user(auth_message["token"])
+            user = authenticate_websocket_user(db, auth_message["token"])
             if user is None:
                 error_reason = "Authentication failed"
-            elif not await verify_conversation_access(conversation_id, user.id):
+            elif not await verify_conversation_access(db, conversation_id, user.id):
                 error_reason = "Conversation not found or access denied"
             else:
                 # Success
@@ -201,10 +205,17 @@ async def authenticate_websocket(
 
 
 async def process_websocket_message(
-    websocket: WebSocket, conversation_id: uuid.UUID, user_id: uuid.UUID, data: str
+    websocket: WebSocket, db: Session, conversation_id: uuid.UUID, user_id: uuid.UUID, data: str
 ) -> bool:
     """
     Process a single WebSocket message.
+
+    Args:
+        websocket: WebSocket connection
+        db: Database session
+        conversation_id: Conversation UUID
+        user_id: User UUID
+        data: Raw message data
 
     Returns:
         bool: True to continue loop, False to break
@@ -221,7 +232,7 @@ async def process_websocket_message(
         return True
 
     try:
-        await handle_websocket_message(conversation_id, user_id, content)
+        await handle_websocket_message(db, conversation_id, user_id, content)
     except ValueError as e:
         await websocket.send_json({"error": "Validation error", "detail": str(e)})
 
@@ -232,6 +243,7 @@ async def process_websocket_message(
 async def websocket_endpoint(
     websocket: WebSocket,
     conversation_id: uuid.UUID,
+    db: Annotated[Session, Depends(get_db)],
 ) -> None:
     """
     WebSocket endpoint for real-time messaging in a conversation.
@@ -246,6 +258,7 @@ async def websocket_endpoint(
     Args:
         websocket: WebSocket connection
         conversation_id: Conversation UUID
+        db: Database session (injected via dependency)
 
     Raises:
         WebSocket close with code 1008 if authentication fails or user not participant
@@ -254,7 +267,7 @@ async def websocket_endpoint(
     await websocket.accept()
 
     # Authenticate and verify access
-    success, user_id = await authenticate_websocket(websocket, conversation_id)
+    success, user_id = await authenticate_websocket(websocket, db, conversation_id)
     if not success or user_id is None:
         return
 
@@ -266,7 +279,7 @@ async def websocket_endpoint(
             try:
                 data = await websocket.receive_text()
                 should_continue = await process_websocket_message(
-                    websocket, conversation_id, user_id, data
+                    websocket, db, conversation_id, user_id, data
                 )
                 if not should_continue:
                     break
