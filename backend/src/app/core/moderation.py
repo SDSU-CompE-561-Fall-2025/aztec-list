@@ -248,7 +248,7 @@ class ContentModerator:
         ),
         # External marketplace URLs (suspicious)
         re.compile(
-            r"\b(craigslist|facebook\.com/marketplace|offerup|letgo|mercari)\b",
+            r"(https?://|www\.)?(craigslist\.org|facebook\.com/marketplace|offerup\.com|letgo\.com|mercari\.com)(/[^\s]*)?",
             re.IGNORECASE,
         ),
     ]
