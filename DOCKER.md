@@ -158,8 +158,8 @@ For production, update these settings in your `.env.docker`:
 
 5. **Configure email service** (optional):
    ```
-   RESEND__API_KEY="your-resend-api-key"
-   RESEND__FROM_EMAIL="noreply@yourdomain.com"
+   EMAIL__RESEND_API_KEY="your-resend-api-key"
+   EMAIL__FROM_EMAIL="noreply@yourdomain.com"
    ```
 
 ### Using PostgreSQL
