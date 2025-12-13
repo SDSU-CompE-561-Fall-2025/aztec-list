@@ -385,7 +385,7 @@ class TestGetConversationMessages:
             messages.append(msg)
 
         response = client.get(
-            f"/api/v1/messages/conversations/{test_conversation.id}/messages?skip=2",
+            f"/api/v1/messages/conversations/{test_conversation.id}/messages?offset=2",
             headers=auth_headers,
         )
 
@@ -412,7 +412,7 @@ class TestGetConversationMessages:
             messages.append(msg)
 
         response = client.get(
-            f"/api/v1/messages/conversations/{test_conversation.id}/messages?limit=3&skip=2",
+            f"/api/v1/messages/conversations/{test_conversation.id}/messages?limit=3&offset=2",
             headers=auth_headers,
         )
 
@@ -495,15 +495,15 @@ class TestGetConversationMessages:
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def test_get_messages_negative_skip(
+    def test_get_messages_negative_offset(
         self,
         client: TestClient,
         test_conversation: Conversation,
         auth_headers: dict[str, str],
     ):
-        """Test that negative skip parameter is rejected."""
+        """Test that negative offset parameter is rejected."""
         response = client.get(
-            f"/api/v1/messages/conversations/{test_conversation.id}/messages?skip=-1",
+            f"/api/v1/messages/conversations/{test_conversation.id}/messages?offset=-1",
             headers=auth_headers,
         )
 

@@ -209,7 +209,7 @@ async def update_current_user(
     """
     updated_user, email_sent = user_service.update(db, current_user.id, update_data)
     return {
-        **UserPublic.model_validate(updated_user).model_dump(),
+        **UserPrivate.model_validate(updated_user).model_dump(),
         "verification_email_sent": email_sent,
     }
 

@@ -75,8 +75,8 @@ class UserPrivate(UserPublic):
     email: EmailStr
 
 
-class UserPublicWithEmailStatus(UserPublic):
-    """Schema for user data with email sending status."""
+class UserPublicWithEmailStatus(UserPrivate):
+    """Schema for user data with email sending status - includes email since it's user's own data."""
 
     verification_email_sent: bool = True
 

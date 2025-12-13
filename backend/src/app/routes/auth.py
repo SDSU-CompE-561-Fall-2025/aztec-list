@@ -12,7 +12,7 @@ from app.core.rate_limiter import limiter
 from app.core.security import generate_verification_token, get_verification_token_expiry
 from app.core.settings import Settings, get_settings
 from app.repository.user import UserRepository
-from app.schemas.user import Token, UserCreate, UserPrivate, UserPublic, UserPublicWithEmailStatus
+from app.schemas.user import Token, UserCreate, UserPrivate, UserPublicWithEmailStatus
 from app.services.user import user_service
 
 auth_router = APIRouter(
@@ -51,7 +51,7 @@ async def signup(
     """
     db_user, email_sent = user_service.create(db, user)
     return {
-        **UserPublic.model_validate(db_user).model_dump(),
+        **UserPrivate.model_validate(db_user).model_dump(),
         "verification_email_sent": email_sent,
     }
 
