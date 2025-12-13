@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { PaginationControls } from "@/components/listings/PaginationControls";
-import { API_BASE_URL, DEFAULT_LIMIT, STATIC_BASE_URL } from "@/lib/constants";
+import { API_BASE_URL, DEFAULT_LIMIT } from "@/lib/constants";
 import { ChevronLeft, User, Building2, Calendar } from "lucide-react";
 import { createUserQueryOptions } from "@/queryOptions/createUserQueryOptions";
 import { createUserListingsQueryOptions } from "@/queryOptions/createUserListingsQueryOptions";

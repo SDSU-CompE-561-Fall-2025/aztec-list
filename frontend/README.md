@@ -57,6 +57,31 @@ bun run lint:fix
 
 ## Testing
 
+### Unit & Integration (Jest + RTL)
+
+Tests live under `src/**/__tests__/` (unit) and `src/__tests__/integration/` (integration). They use Jest + React Testing Library with our `renderWithProviders` helper.
+
+Run commands:
+
+```bash
+# From frontend/
+npm test                     # run all unit+integration tests
+npm test -- --runInBand      # serialize tests (useful for flakiness)
+npm run test:watch            # watch mode
+npm run test:coverage        # coverage report in coverage/
+
+# Run a single file
+npm test -- header.test.tsx
+```
+
+Notes:
+
+- Router and fetch are mocked in `jest.setup.js`; use `renderWithProviders` and `mockFetch` from `src/test-utils.tsx` for components that need providers or API calls.
+- Clear `localStorage`/`sessionStorage` in tests that mutate auth state (see examples in `src/components/custom/__tests__/header.test.tsx`).
+- For dropdowns and menus, prefer `userEvent` over `fireEvent` to match real interactions.
+
+For a fuller guide, see [TESTING.md](TESTING.md).
+
 ### E2E Tests with Playwright
 
 End-to-end tests are located in `tests/e2e/` and use [Playwright](https://playwright.dev/) for browser automation.
