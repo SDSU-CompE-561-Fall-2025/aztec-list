@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+  # Backend service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aztec-list-backend
+    ports:
+      - "8000:8000"
+    # loads environment variables from .env file
+    environment:
+      - APP__TITLE=${APP__TITLE:-Aztec List}
+      - APP__DESCRIPTION=${APP__DESCRIPTION:-API for an OfferUp-style marketplace for college students}
+      - APP__VERSION=${APP__VERSION:-0.1.0}
+      - APP__DOCS_URL=${APP__DOCS_URL:-/docs}
+      - APP__REDOC_URL=${APP__REDOC_URL:-/redoc}
+      - JWT__SECRET_KEY=${JWT__SECRET_KEY}
+      - JWT__ALGORITHM=${JWT__ALGORITHM:-HS256}
+      - JWT__ACCESS_TOKEN_EXPIRE_MINUTES=${JWT__ACCESS_TOKEN_EXPIRE_MINUTES:-10000}
+      - DB__DATABASE_URL=${DB__DATABASE_URL:-sqlite:///./aztec_list.db}
+      - DB__ECHO=${DB__ECHO:-false}
+      - MODERATION__STRIKE_AUTO_BAN_THRESHOLD=${MODERATION__STRIKE_AUTO_BAN_THRESHOLD:-3}
+      - LISTING__MAX_IMAGES_PER_LISTING=${LISTING__MAX_IMAGES_PER_LISTING:-10}
+      - CORS__ALLOWED_ORIGINS=${CORS__ALLOWED_ORIGINS:-["http://localhost:3000"]}
+      - CORS__ALLOW_CREDENTIALS=${CORS__ALLOW_CREDENTIALS:-true}
+      - CORS__ALLOWED_METHODS=${CORS__ALLOWED_METHODS:-["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]}
+      - CORS__ALLOWED_HEADERS=${CORS__ALLOWED_HEADERS:-["*"]}
+      - LOGGING__LEVEL=${LOGGING__LEVEL:-INFO}
+      - LOGGING__FORMAT=${LOGGING__FORMAT:-"%(asctime)s - %(name)s - %(levelname)s - %(message)s"}
+      - RESEND__API_KEY=${RESEND__API_KEY:-}
+      - RESEND__FROM_EMAIL=${RESEND__FROM_EMAIL:-noreply@azteclist.com}
+    volumes:
+      - ./backend/aztec_list.db:/app/aztec_list.db
+      - ./backend/uploads:/app/uploads
+      - ./backend/src:/app/src # Mount source code for hot reload
+    networks:
+      - aztec-list-network
+    restart: unless-stopped
+
+  # Frontend service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    container_name: aztec-list-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src # Mount source code for hot reload
+      - ./frontend/public:/app/public # Mount public assets
+    depends_on:
+      - backend
+    networks:
+      - aztec-list-network
+    restart: unless-stopped
+
+networks:
+  aztec-list-network:
+    driver: bridge

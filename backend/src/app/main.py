@@ -9,6 +9,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.api.v1.routes import api_router
+from app.core.database import Base, engine
 from app.core.logging import configure_logging
 from app.core.middleware import RequestLoggingMiddleware, add_cache_headers_middleware
 from app.core.rate_limiter import limiter
@@ -30,6 +31,7 @@ upload_dir.mkdir(parents=True, exist_ok=True)
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
     """Application lifespan manager - runs on startup and shutdown."""
     # Startup: Verify upload directory exists
+    Base.metadata.create_all(bind=engine)
     if not upload_dir.exists():
         upload_dir.mkdir(parents=True, exist_ok=True)
     yield
