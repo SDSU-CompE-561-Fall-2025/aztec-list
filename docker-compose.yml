@@ -4,7 +4,7 @@ services:
     image: postgres:16-alpine
     container_name: aztec-list-postgres
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-azteclist}
+      - POSTGRES_USER=${POSTGRES_USER:-aztec_list}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB:-aztec_list}
     volumes:
@@ -13,7 +13,7 @@ services:
       - aztec-list-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-azteclist}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-aztec_list}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -36,7 +36,7 @@ services:
       - JWT__SECRET_KEY=${JWT__SECRET_KEY}
       - JWT__ALGORITHM=${JWT__ALGORITHM:-HS256}
       - JWT__ACCESS_TOKEN_EXPIRE_MINUTES=${JWT__ACCESS_TOKEN_EXPIRE_MINUTES:-10000}
-      - DB__DATABASE_URL=${DB__DATABASE_URL:-postgresql://azteclist:password@postgres:5432/aztec_list}
+      - DB__DATABASE_URL=${DB__DATABASE_URL:-postgresql://aztec_list:password@postgres:5432/aztec_list}
       - DB__ECHO=${DB__ECHO:-false}
       - MODERATION__STRIKE_AUTO_BAN_THRESHOLD=${MODERATION__STRIKE_AUTO_BAN_THRESHOLD:-3}
       - LISTING__MAX_IMAGES_PER_LISTING=${LISTING__MAX_IMAGES_PER_LISTING:-10}
