@@ -9,7 +9,7 @@ from app.core.auth import create_access_token
 from app.core.database import get_db
 from app.core.settings import Settings, get_settings
 from app.models.user import User
-from app.schemas.user import Token, UserCreate, UserPublic
+from app.schemas.user import Token, UserCreate, UserPrivate, UserPublic
 from app.services.user import user_service
 
 auth_router = APIRouter(
@@ -78,5 +78,5 @@ async def login(
     return Token(
         access_token=access_token,
         token_type="bearer",  # noqa: S106
-        user=UserPublic.model_validate(user),
+        user=UserPrivate.model_validate(user),
     )

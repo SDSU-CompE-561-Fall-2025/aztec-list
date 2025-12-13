@@ -14,7 +14,7 @@ from app.schemas.listing import (
     UserListingsParams,
 )
 from app.schemas.profile import ProfilePublic
-from app.schemas.user import PasswordChange, UserPublic, UserUpdate
+from app.schemas.user import PasswordChange, UserPrivate, UserPublic, UserUpdate
 from app.services.listing import listing_service
 from app.services.profile import profile_service
 from app.services.user import user_service
@@ -61,7 +61,7 @@ async def search_users(
     "/me",
     summary="Get current user",
     status_code=status.HTTP_200_OK,
-    response_model=UserPublic,
+    response_model=UserPrivate,
 )
 async def get_current_user_info(
     current_user: Annotated[User, Depends(get_current_user)],
@@ -75,7 +75,7 @@ async def get_current_user_info(
         db: Database session
 
     Returns:
-        UserPublic: Current user's information
+        UserPrivate: Current user's information including email
 
     Raises:
         HTTPException: 401 if not authenticated

@@ -60,9 +60,15 @@ class UserPublic(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class UserPrivate(UserPublic):
+    """Schema for private user data - includes email for authenticated user's own data."""
+
+    email: EmailStr
+
+
 class Token(BaseModel):
     """Schema for authentication token response."""
 
     access_token: str
     token_type: str
-    user: UserPublic
+    user: UserPrivate
