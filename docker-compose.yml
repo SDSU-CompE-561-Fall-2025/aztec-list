@@ -27,8 +27,8 @@ services:
       - CORS__ALLOWED_HEADERS=${CORS__ALLOWED_HEADERS:-["*"]}
       - LOGGING__LEVEL=${LOGGING__LEVEL:-INFO}
       - LOGGING__FORMAT=${LOGGING__FORMAT:-"%(asctime)s - %(name)s - %(levelname)s - %(message)s"}
-      - RESEND__API_KEY=${RESEND__API_KEY:-}
-      - RESEND__FROM_EMAIL=${RESEND__FROM_EMAIL:-noreply@azteclist.com}
+      - EMAIL__RESEND_API_KEY=${EMAIL__RESEND_API_KEY:-}
+      - EMAIL__FROM_EMAIL=${EMAIL__FROM_EMAIL:-noreply@azteclist.com}
     volumes:
       - ./backend/aztec_list.db:/app/aztec_list.db
       - ./backend/uploads:/app/uploads
