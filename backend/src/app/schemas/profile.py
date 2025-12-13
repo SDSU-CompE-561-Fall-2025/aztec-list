@@ -81,8 +81,22 @@ class ProfilePictureUpdate(BaseModel):
     picture_url: HttpUrl = Field(..., description="Valid HTTP/HTTPS URL of the profile picture")
 
 
-class ProfilePublic(ProfileBase):
-    """Schema for profile response."""
+class ProfilePublic(BaseModel):
+    """Schema for PUBLIC profile view (other users viewing this profile)."""
+
+    id: uuid.UUID
+    user_id: uuid.UUID
+    name: str | None = Field(None, min_length=1, description="Full name of the user")
+    campus: str | None = Field(None, description="University or campus name")
+    profile_picture_url: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ProfilePrivate(ProfileBase):
+    """Schema for PRIVATE profile view (user viewing their own profile with contact info)."""
 
     id: uuid.UUID
     user_id: uuid.UUID

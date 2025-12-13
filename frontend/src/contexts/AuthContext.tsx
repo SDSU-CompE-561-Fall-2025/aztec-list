@@ -9,6 +9,7 @@ import {
   ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   login as apiLogin,
   signup as apiSignup,
@@ -64,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setIsHydrated(true);
@@ -88,6 +90,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthToken(authToken.access_token);
       setStoredUser(authToken.user);
 
+      // Clear cached data from any previous session
+      queryClient.clear();
+
       notifyAuthListeners();
     } catch (error) {
       throw error;
@@ -98,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (signupData: SignupData): Promise<void> => {
     try {
+      setIsLoading(true);
       const result = await apiSignup(signupData);
 
       // Store email sending status in sessionStorage for success page
@@ -111,12 +117,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     } catch (error) {
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const logout = (): void => {
     removeAuthToken();
     removeStoredUser();
+
+    // Stop inflight queries, then clear cache to prevent leakage between users
+    queryClient.cancelQueries();
+    queryClient.clear();
 
     // Clear banned handler flag to allow it to trigger for a different account
     if (typeof window !== "undefined") {

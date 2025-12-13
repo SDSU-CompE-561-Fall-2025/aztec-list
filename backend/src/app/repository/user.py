@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 
 from app.models.user import User
 
@@ -82,6 +82,32 @@ class UserRepository:
             User | None: User if found, None otherwise
         """
         return db.get(User, user_id)
+
+    @staticmethod
+    def search(db: Session, query: str, limit: int = 10) -> list[User]:
+        """
+        Search users by username or email (case-insensitive).
+
+        Args:
+            db: Database session
+            query: Search query string
+            limit: Maximum number of results (default 10)
+
+        Returns:
+            list[User]: List of matching users
+        """
+        search_pattern = f"%{query}%"
+        stmt = (
+            select(User)
+            .where(
+                or_(
+                    func.lower(User.username).like(func.lower(search_pattern)),
+                    func.lower(User.email).like(func.lower(search_pattern)),
+                )
+            )
+            .limit(limit)
+        )
+        return list(db.scalars(stmt).all())
 
     @staticmethod
     def create(db: Session, user: UserCreate, hashed_password: str) -> User:

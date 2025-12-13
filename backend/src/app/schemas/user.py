@@ -57,15 +57,22 @@ class PasswordChange(BaseModel):
     new_password: str
 
 
-class UserPublic(UserBase):
+class UserPublic(BaseModel):
     """Schema for public user data in API responses."""
 
     id: uuid.UUID
+    username: str
     is_verified: bool
     role: UserRole
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class UserPrivate(UserPublic):
+    """Schema for private user data - includes email for authenticated user's own data."""
+
+    email: EmailStr
 
 
 class UserPublicWithEmailStatus(UserPublic):
@@ -79,4 +86,4 @@ class Token(BaseModel):
 
     access_token: str
     token_type: str
-    user: UserPublic
+    user: UserPrivate

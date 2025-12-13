@@ -13,6 +13,7 @@ from app.core.logging import configure_logging
 from app.core.middleware import RequestLoggingMiddleware, add_cache_headers_middleware
 from app.core.rate_limiter import limiter
 from app.core.settings import settings
+from app.routes.websocket_messages import websocket_router
 
 # Configure logging from settings
 configure_logging(settings.logging)
@@ -71,3 +72,4 @@ app.add_middleware(RequestLoggingMiddleware)
 app.mount("/uploads", StaticFiles(directory=str(upload_dir)), name="uploads")
 
 app.include_router(api_router)
+app.include_router(websocket_router)

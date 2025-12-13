@@ -13,6 +13,84 @@ from fastapi.testclient import TestClient
 from app.models.user import User
 
 
+class TestSearchUsers:
+    """Test GET /users/ endpoint."""
+
+    def test_search_users_by_username(
+        self, authenticated_client: TestClient, test_user: User, db_session
+    ):
+        """Test searching users by username."""
+        response = authenticated_client.get(f"/api/v1/users/?search={test_user.username}")
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) >= 1
+        user_ids = [u["id"] for u in data]
+        assert str(test_user.id) in user_ids
+
+    def test_search_users_by_email(
+        self, authenticated_client: TestClient, test_user: User, db_session
+    ):
+        """Test searching users by email."""
+        response = authenticated_client.get(f"/api/v1/users/?search={test_user.email}")
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) >= 1
+        user_ids = [u["id"] for u in data]
+        assert str(test_user.id) in user_ids
+
+    def test_search_users_partial_match(self, authenticated_client: TestClient, test_user: User):
+        """Test searching users with partial username match."""
+        # Search with first 3 characters of username
+        partial = test_user.username[:3]
+        response = authenticated_client.get(f"/api/v1/users/?search={partial}")
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert isinstance(data, list)
+        # Should find at least the test user
+        assert len(data) >= 1
+
+    def test_search_users_case_insensitive(self, authenticated_client: TestClient, test_user: User):
+        """Test searching users is case-insensitive."""
+        response = authenticated_client.get(f"/api/v1/users/?search={test_user.username.upper()}")
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert isinstance(data, list)
+        user_ids = [u["id"] for u in data]
+        assert str(test_user.id) in user_ids
+
+    def test_search_users_no_match(self, authenticated_client: TestClient):
+        """Test searching users with no matches returns empty list."""
+        response = authenticated_client.get("/api/v1/users/?search=nonexistentuserxyz12345")
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) == 0
+
+    def test_search_users_limit(self, authenticated_client: TestClient, test_user: User):
+        """Test search respects limit parameter."""
+        response = authenticated_client.get(
+            f"/api/v1/users/?search={test_user.username[:2]}&limit=1"
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) <= 1
+
+    def test_search_users_without_authentication(self, client: TestClient):
+        """Test searching users without authentication fails."""
+        response = client.get("/api/v1/users/?search=test")
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
 class TestGetCurrentUser:
     """Test GET /users/me endpoint."""
 

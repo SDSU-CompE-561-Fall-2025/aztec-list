@@ -5,9 +5,12 @@
 export interface UserPublic {
   id: string;
   username: string;
-  email: string;
   is_verified: boolean;
   created_at: string;
+}
+
+export interface UserPrivate extends UserPublic {
+  email: string;
 }
 
 export interface ContactInfo {
