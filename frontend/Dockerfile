@@ -1,5 +1,5 @@
 # Use Node.js 20 alpine image for development
-FROM node:20-alpine
+FROM node:26-alpine
 
 # Set working directory
 WORKDIR /app
