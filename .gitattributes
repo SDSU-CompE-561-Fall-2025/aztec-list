@@ -1,0 +1,19 @@
+# Normalize line endings: store LF in the repo and check out LF on every
+# platform. Overrides core.autocrlf so Windows clones stop producing CRLF
+# (which made the pre-commit mixed-line-ending hook re-fix + abort commits).
+* text=auto eol=lf
+
+# Binary files: never apply line-ending conversion.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.svg text eol=lf
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.pdf binary
+*.db binary

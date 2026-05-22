@@ -95,7 +95,7 @@ function SettingsContent() {
 
   // Fetch existing profile data using React Query
   const { data: profile, isLoading: isProfileFetching } = useQuery(
-    createProfileQueryOptions(user?.id)
+    createProfileQueryOptions(user?.id),
   );
 
   // Initialize form state from fetched profile (only once)
@@ -119,7 +119,7 @@ function SettingsContent() {
       formPhone !== (profile?.contact_info?.phone || "") ||
       stagedPictureFile !== null ||
       isPictureRemovalStaged,
-    [formName, formCampus, formPhone, profile, stagedPictureFile, isPictureRemovalStaged]
+    [formName, formCampus, formPhone, profile, stagedPictureFile, isPictureRemovalStaged],
   );
 
   // Check if form is valid for submission
@@ -133,7 +133,7 @@ function SettingsContent() {
   // Track if account has changes (memoized)
   const hasAccountChanges = useMemo(
     () => username !== (user?.username ?? "") || email !== (user?.email ?? ""),
-    [username, email, user?.username, user?.email]
+    [username, email, user?.username, user?.email],
   );
 
   // Delete account state
@@ -428,7 +428,7 @@ function SettingsContent() {
               border: "1px solid rgb(251, 146, 60)",
             },
             duration: 8000,
-          }
+          },
         );
       }
 
@@ -451,7 +451,7 @@ function SettingsContent() {
                 border: "1px solid rgb(34, 197, 94)",
               },
               duration: 6000,
-            }
+            },
           );
         }
       } else {
@@ -492,7 +492,7 @@ function SettingsContent() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (response.ok) {
@@ -636,41 +636,41 @@ function SettingsContent() {
 
   return (
     <div className="min-h-screen bg-background px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
-      <div className="max-w-2xl mx-auto w-full">
+      <div className="mx-auto w-full max-w-2xl">
         {/* Header */}
         <div className="mb-4 sm:mb-6">
           <Button
             variant="ghost"
-            className="text-muted-foreground hover:text-foreground -ml-3 mb-3"
+            className="mb-3 -ml-3 text-muted-foreground hover:text-foreground"
             onClick={() => router.push("/profile")}
           >
-            <ChevronLeft className="w-4 h-4 mr-2" />
+            <ChevronLeft className="mr-2 h-4 w-4" />
             Back to Profile
           </Button>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">Account Settings</h1>
-          <p className="text-muted-foreground text-sm sm:text-base">
+          <h1 className="mb-1 text-2xl font-bold text-foreground sm:text-3xl">Account Settings</h1>
+          <p className="text-sm text-muted-foreground sm:text-base">
             Manage your account preferences and information
           </p>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="profile" className="space-y-3 sm:space-y-4">
-          <TabsList className="bg-muted border w-full grid grid-cols-3 h-auto p-1">
+          <TabsList className="grid h-auto w-full grid-cols-3 border bg-muted p-1">
             <TabsTrigger
               value="profile"
-              className="text-xs sm:text-sm data-[state=active]:bg-background"
+              className="text-xs data-[state=active]:bg-background sm:text-sm"
             >
               Profile
             </TabsTrigger>
             <TabsTrigger
               value="account"
-              className="text-xs sm:text-sm data-[state=active]:bg-background"
+              className="text-xs data-[state=active]:bg-background sm:text-sm"
             >
               Account
             </TabsTrigger>
             <TabsTrigger
               value="security"
-              className="text-xs sm:text-sm data-[state=active]:bg-background"
+              className="text-xs data-[state=active]:bg-background sm:text-sm"
             >
               Security
             </TabsTrigger>
@@ -678,12 +678,12 @@ function SettingsContent() {
 
           {/* Profile Tab */}
           <TabsContent value="profile">
-            <Card className="bg-card border">
+            <Card className="border bg-card">
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl text-foreground">
+                <CardTitle className="text-lg text-foreground sm:text-xl">
                   Profile Information
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-muted-foreground">
+                <CardDescription className="text-xs text-muted-foreground sm:text-sm">
                   Add details to help buyers connect with you
                 </CardDescription>
               </CardHeader>
@@ -691,42 +691,42 @@ function SettingsContent() {
                 {isInitialLoading ? (
                   <div className="space-y-6">
                     {/* Profile Picture Skeleton */}
-                    <div className="pb-6 border-b">
+                    <div className="border-b pb-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-muted rounded-full animate-pulse"></div>
+                        <div className="h-16 w-16 animate-pulse rounded-full bg-muted"></div>
                         <div className="flex gap-2">
-                          <div className="h-9 w-[72px] bg-muted rounded animate-pulse"></div>
-                          <div className="h-9 w-[76px] bg-muted rounded animate-pulse"></div>
+                          <div className="h-9 w-[72px] animate-pulse rounded bg-muted"></div>
+                          <div className="h-9 w-[76px] animate-pulse rounded bg-muted"></div>
                         </div>
                       </div>
                     </div>
                     {/* Form Fields Skeleton */}
                     <div className="space-y-3">
                       <div className="space-y-1.5">
-                        <div className="h-5 w-[70px] bg-muted rounded animate-pulse"></div>
-                        <div className="h-9 bg-muted rounded animate-pulse"></div>
+                        <div className="h-5 w-[70px] animate-pulse rounded bg-muted"></div>
+                        <div className="h-9 animate-pulse rounded bg-muted"></div>
                       </div>
                       <div className="space-y-1.5">
-                        <div className="h-5 w-[52px] bg-muted rounded animate-pulse"></div>
-                        <div className="h-9 bg-muted rounded animate-pulse"></div>
+                        <div className="h-5 w-[52px] animate-pulse rounded bg-muted"></div>
+                        <div className="h-9 animate-pulse rounded bg-muted"></div>
                       </div>
                       <div className="space-y-1.5">
-                        <div className="h-5 w-[104px] bg-muted rounded animate-pulse"></div>
-                        <div className="h-9 bg-muted rounded animate-pulse"></div>
-                        <div className="h-4 w-[172px] bg-muted rounded animate-pulse mt-1.5"></div>
+                        <div className="h-5 w-[104px] animate-pulse rounded bg-muted"></div>
+                        <div className="h-9 animate-pulse rounded bg-muted"></div>
+                        <div className="mt-1.5 h-4 w-[172px] animate-pulse rounded bg-muted"></div>
                       </div>
                       <div className="pt-2">
-                        <div className="h-9 bg-muted rounded animate-pulse"></div>
+                        <div className="h-9 animate-pulse rounded bg-muted"></div>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <>
                     {/* Profile Picture Section */}
-                    <div className="mb-6 pb-6 border-b">
+                    <div className="mb-6 border-b pb-6">
                       <div className="flex items-center gap-4">
                         <div className="relative">
-                          <div className="w-16 h-16 bg-gradient-to-br from-purple-500/20 to-purple-600/20 border-2 border-purple-500/30 rounded-full flex items-center justify-center overflow-hidden relative group">
+                          <div className="group relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/20 to-purple-600/20">
                             {isPictureRemovalStaged ? (
                               <span className="text-xl font-bold text-purple-300">
                                 {user?.username?.substring(0, 2).toUpperCase() || "??"}
@@ -744,7 +744,7 @@ function SettingsContent() {
                                 src={
                                   getProfilePictureUrl(
                                     profile.profile_picture_url,
-                                    profile.updated_at
+                                    profile.updated_at,
                                   ) || ""
                                 }
                                 alt="Profile"
@@ -774,10 +774,10 @@ function SettingsContent() {
                               asChild
                               disabled={isProfileLoading}
                               size="sm"
-                              className="bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
+                              className="cursor-pointer bg-purple-600 text-white hover:bg-purple-700"
                             >
                               <span>
-                                <Upload className="w-4 h-4 mr-2" />
+                                <Upload className="mr-2 h-4 w-4" />
                                 {stagedPictureFile ? "Change" : "Upload"}
                               </span>
                             </Button>
@@ -792,7 +792,7 @@ function SettingsContent() {
                                 variant="outline"
                                 className="border-red-900/50 text-red-400 hover:bg-red-900/20 hover:text-red-300"
                               >
-                                <Trash2 className="w-4 h-4 mr-2" />
+                                <Trash2 className="mr-2 h-4 w-4" />
                                 Remove
                               </Button>
                             )}
@@ -802,7 +802,7 @@ function SettingsContent() {
 
                     <form onSubmit={handleProfileSave} className="space-y-3">
                       <div className="space-y-1.5">
-                        <Label htmlFor="name" className="text-sm sm:text-base text-foreground">
+                        <Label htmlFor="name" className="text-sm text-foreground sm:text-base">
                           Full Name
                         </Label>
                         <Input
@@ -817,7 +817,7 @@ function SettingsContent() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label htmlFor="campus" className="text-sm sm:text-base text-foreground">
+                        <Label htmlFor="campus" className="text-sm text-foreground sm:text-base">
                           Campus
                         </Label>
                         <Input
@@ -832,7 +832,7 @@ function SettingsContent() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label htmlFor="phone" className="text-sm sm:text-base text-foreground">
+                        <Label htmlFor="phone" className="text-sm text-foreground sm:text-base">
                           Phone Number
                         </Label>
                         <Input
@@ -847,7 +847,7 @@ function SettingsContent() {
                         {phoneError ? (
                           <p className="text-xs text-red-500">{phoneError}</p>
                         ) : (
-                          <p className="text-xs sm:text-sm text-muted-foreground">
+                          <p className="text-xs text-muted-foreground sm:text-sm">
                             US format: (555) 123-4567
                           </p>
                         )}
@@ -856,7 +856,7 @@ function SettingsContent() {
                       <div className="flex gap-3 pt-2">
                         <Button
                           type="submit"
-                          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 bg-purple-600 text-sm text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50 sm:text-base"
                           disabled={isProfileLoading || !hasProfileChanges || !isFormValid}
                         >
                           {isProfileLoading ? "Saving..." : "Save Profile"}
@@ -867,7 +867,7 @@ function SettingsContent() {
                             onClick={() => setShowProfileCancelDialog(true)}
                             disabled={isProfileLoading}
                             variant="outline"
-                            className="flex-1 border-red-900/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 text-sm sm:text-base"
+                            className="flex-1 border-red-900/50 text-sm text-red-400 hover:bg-red-900/20 hover:text-red-300 sm:text-base"
                           >
                             Cancel
                           </Button>
@@ -880,7 +880,7 @@ function SettingsContent() {
                       open={showProfileCancelDialog}
                       onOpenChange={setShowProfileCancelDialog}
                     >
-                      <AlertDialogContent className="bg-card border">
+                      <AlertDialogContent className="border bg-card">
                         <AlertDialogHeader>
                           <AlertDialogTitle className="text-foreground">
                             Discard Changes?
@@ -894,7 +894,7 @@ function SettingsContent() {
                           <AlertDialogCancel>Keep Editing</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={handleCancelProfileChanges}
-                            className="bg-red-600 hover:bg-red-700 text-white"
+                            className="bg-red-600 text-white hover:bg-red-700"
                           >
                             Discard Changes
                           </AlertDialogAction>
@@ -909,19 +909,19 @@ function SettingsContent() {
 
           {/* Account Tab */}
           <TabsContent value="account">
-            <Card className="bg-card border">
+            <Card className="border bg-card">
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl text-foreground">
+                <CardTitle className="text-lg text-foreground sm:text-xl">
                   Account Details
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-muted-foreground">
+                <CardDescription className="text-xs text-muted-foreground sm:text-sm">
                   Update your username
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleAccountUpdate} className="space-y-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="username" className="text-sm sm:text-base text-foreground">
+                    <Label htmlFor="username" className="text-sm text-foreground sm:text-base">
                       Username
                     </Label>
                     <Input
@@ -935,7 +935,7 @@ function SettingsContent() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="email" className="text-sm sm:text-base text-foreground">
+                    <Label htmlFor="email" className="text-sm text-foreground sm:text-base">
                       Email
                     </Label>
                     <Input
@@ -950,7 +950,7 @@ function SettingsContent() {
                       <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-500/30 dark:bg-blue-900/20">
                         <div className="flex items-start gap-2">
                           <svg
-                            className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0"
+                            className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -962,7 +962,7 @@ function SettingsContent() {
                               d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                             />
                           </svg>
-                          <p className="text-xs sm:text-sm text-blue-900 dark:text-blue-200">
+                          <p className="text-xs text-blue-900 sm:text-sm dark:text-blue-200">
                             Changing your email will require verification. You&apos;ll be logged out
                             of unverified sessions.
                           </p>
@@ -976,9 +976,9 @@ function SettingsContent() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3">
                         {user?.is_verified ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                          <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" />
                         ) : (
-                          <Mail className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                          <Mail className="mt-0.5 h-5 w-5 flex-shrink-0 text-purple-600" />
                         )}
                         <div className="space-y-1">
                           <p className="text-sm font-medium">
@@ -1016,7 +1016,7 @@ function SettingsContent() {
                   <div className="flex gap-3 pt-2">
                     <Button
                       type="submit"
-                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 bg-purple-600 text-sm text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50 sm:text-base"
                       disabled={isAccountLoading || !hasAccountChanges}
                     >
                       {isAccountLoading ? "Updating..." : "Update Account"}
@@ -1027,7 +1027,7 @@ function SettingsContent() {
                         onClick={() => setShowAccountCancelDialog(true)}
                         disabled={isAccountLoading}
                         variant="outline"
-                        className="flex-1 border-red-900/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 text-sm sm:text-base"
+                        className="flex-1 border-red-900/50 text-sm text-red-400 hover:bg-red-900/20 hover:text-red-300 sm:text-base"
                       >
                         Cancel
                       </Button>
@@ -1040,7 +1040,7 @@ function SettingsContent() {
                   open={showAccountCancelDialog}
                   onOpenChange={setShowAccountCancelDialog}
                 >
-                  <AlertDialogContent className="bg-card border">
+                  <AlertDialogContent className="border bg-card">
                     <AlertDialogHeader>
                       <AlertDialogTitle className="text-foreground">
                         Discard Changes?
@@ -1053,7 +1053,7 @@ function SettingsContent() {
                       <AlertDialogCancel>Keep Editing</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleCancelAccountChanges}
-                        className="bg-red-600 hover:bg-red-700 text-white"
+                        className="bg-red-600 text-white hover:bg-red-700"
                       >
                         Discard Changes
                       </AlertDialogAction>
@@ -1066,13 +1066,13 @@ function SettingsContent() {
             <Separator className="my-4 sm:my-6" />
 
             {/* Delete Account Section */}
-            <Card className="bg-card border border-red-900/50">
+            <Card className="border border-red-900/50 bg-card">
               <CardHeader>
-                <CardTitle className="text-base sm:text-lg text-red-500 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" />
+                <CardTitle className="flex items-center gap-2 text-base text-red-500 sm:text-lg">
+                  <AlertTriangle className="h-4 w-4" />
                   Danger Zone
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-muted-foreground">
+                <CardDescription className="text-xs text-muted-foreground sm:text-sm">
                   Permanently delete your account and all associated data
                 </CardDescription>
               </CardHeader>
@@ -1081,16 +1081,16 @@ function SettingsContent() {
                   <AlertDialogTrigger asChild>
                     <Button
                       variant="destructive"
-                      className="w-full text-xs sm:text-sm transition-all hover:scale-[1.02] hover:shadow-lg"
+                      className="w-full text-xs transition-all hover:scale-[1.02] hover:shadow-lg sm:text-sm"
                       disabled={isDeleting}
                     >
-                      <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                      <Trash2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                       Delete Account
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="bg-card border max-w-md mx-4">
+                  <AlertDialogContent className="mx-4 max-w-md border bg-card">
                     <AlertDialogHeader>
-                      <AlertDialogTitle className="text-base sm:text-lg text-foreground">
+                      <AlertDialogTitle className="text-base text-foreground sm:text-lg">
                         Are you absolutely sure?
                       </AlertDialogTitle>
                       <AlertDialogDescription className="text-xs text-muted-foreground">
@@ -1102,7 +1102,7 @@ function SettingsContent() {
                       <AlertDialogCancel className="text-xs sm:text-sm">Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleDeleteAccount}
-                        className="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm"
+                        className="bg-red-600 text-xs text-white hover:bg-red-700 sm:text-sm"
                       >
                         {isDeleting ? "Deleting..." : "Delete Account"}
                       </AlertDialogAction>
@@ -1115,12 +1115,12 @@ function SettingsContent() {
 
           {/* Security Tab */}
           <TabsContent value="security">
-            <Card className="bg-card border">
+            <Card className="border bg-card">
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl text-foreground">
+                <CardTitle className="text-lg text-foreground sm:text-xl">
                   Change Password
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-muted-foreground">
+                <CardDescription className="text-xs text-muted-foreground sm:text-sm">
                   Update your password to keep your account secure
                 </CardDescription>
               </CardHeader>
@@ -1129,7 +1129,7 @@ function SettingsContent() {
                   <div className="space-y-1.5">
                     <Label
                       htmlFor="current-password"
-                      className="text-sm sm:text-base text-foreground"
+                      className="text-sm text-foreground sm:text-base"
                     >
                       Current Password
                     </Label>
@@ -1145,7 +1145,7 @@ function SettingsContent() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="new-password" className="text-sm sm:text-base text-foreground">
+                    <Label htmlFor="new-password" className="text-sm text-foreground sm:text-base">
                       New Password
                     </Label>
                     <Input
@@ -1171,13 +1171,13 @@ function SettingsContent() {
                             />
                           ))}
                         </div>
-                        <p className="text-xs sm:text-sm text-muted-foreground">
+                        <p className="text-xs text-muted-foreground sm:text-sm">
                           Password strength: {strengthInfo.label}
                         </p>
                       </div>
                     )}
 
-                    <p className="text-xs sm:text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground sm:text-sm">
                       Must be at least 8 characters
                     </p>
                   </div>
@@ -1185,7 +1185,7 @@ function SettingsContent() {
                   <div className="space-y-1.5">
                     <Label
                       htmlFor="confirm-password"
-                      className="text-sm sm:text-base text-foreground"
+                      className="text-sm text-foreground sm:text-base"
                     >
                       Confirm New Password
                     </Label>
@@ -1202,7 +1202,7 @@ function SettingsContent() {
 
                   <Button
                     type="submit"
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                    className="mt-4 w-full bg-purple-600 text-sm text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50 sm:text-base"
                     disabled={
                       isPasswordLoading || !currentPassword || !newPassword || !confirmPassword
                     }

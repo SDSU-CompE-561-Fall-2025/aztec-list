@@ -92,7 +92,7 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
         toast.info(`New message from ${otherUserName}`);
       }
     },
-    [user?.id, otherUserName, conversationId, queryClient]
+    [user?.id, otherUserName, conversationId, queryClient],
   );
 
   const handleConnectionError = useCallback((error: Event) => {
@@ -116,7 +116,7 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
     const combined = [...messages, ...allMessages];
     // Remove duplicates and sort by created_at
     const unique = Array.from(new Map(combined.map((m) => [m.id, m])).values()).sort(
-      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
     );
     return unique;
   }, [messages, allMessages]);
@@ -144,7 +144,7 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
         console.error("Send message error:", error);
       }
     },
-    [isConnected, isConnecting, sendMessage]
+    [isConnected, isConnecting, sendMessage],
   );
 
   const loadMoreMessages = () => {
@@ -153,7 +153,7 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
 
   if (isLoading && allMessages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex flex-1 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -161,7 +161,7 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
 
   if (error) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
         <AlertCircle className="h-12 w-12 text-destructive" />
         <div className="text-center">
           <p className="font-semibold">Failed to load messages</p>
@@ -174,15 +174,15 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex h-full flex-1 flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b bg-background">
+      <div className="flex items-center gap-3 border-b bg-background p-4">
         <Avatar className="h-10 w-10">
           <AvatarImage
             src={
               getProfilePictureUrl(
                 otherUserProfile?.profile_picture_url,
-                otherUserProfile?.profile_picture_updated_at
+                otherUserProfile?.profile_picture_updated_at,
               ) || undefined
             }
             alt={otherUserName}
@@ -196,13 +196,13 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 space-y-4 overflow-y-auto p-4">
         {offset > 0 && (
           <div className="flex justify-center">
             <Button variant="outline" size="sm" onClick={loadMoreMessages} disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Loading...
                 </>
               ) : (
@@ -213,7 +213,7 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
         )}
 
         {displayMessages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+          <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground">
             <p>No messages yet</p>
             <p className="text-sm">Send a message to start the conversation</p>
           </div>
@@ -237,7 +237,7 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
                       src={
                         getProfilePictureUrl(
                           otherUserProfile?.profile_picture_url,
-                          otherUserProfile?.profile_picture_updated_at
+                          otherUserProfile?.profile_picture_updated_at,
                         ) || undefined
                       }
                       alt={otherUserName}
@@ -249,19 +249,19 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
 
                 <div
                   className={cn(
-                    "flex flex-col max-w-[70%]",
-                    isOwnMessage ? "items-end" : "items-start"
+                    "flex max-w-[70%] flex-col",
+                    isOwnMessage ? "items-end" : "items-start",
                   )}
                 >
                   <div
                     className={cn(
                       "rounded-lg px-4 py-2 break-words",
-                      isOwnMessage ? "bg-primary text-primary-foreground" : "bg-muted"
+                      isOwnMessage ? "bg-primary text-primary-foreground" : "bg-muted",
                     )}
                   >
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                   </div>
-                  <span className="text-xs text-muted-foreground mt-1">{timeString}</span>
+                  <span className="mt-1 text-xs text-muted-foreground">{timeString}</span>
                 </div>
 
                 {isOwnMessage && (
@@ -270,7 +270,7 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
                       src={
                         getProfilePictureUrl(
                           currentUserProfile?.profile_picture_url,
-                          currentUserProfile?.profile_picture_updated_at
+                          currentUserProfile?.profile_picture_updated_at,
                         ) || undefined
                       }
                       alt="You"

@@ -88,8 +88,8 @@ export function SupportTicketsView() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600 mx-auto mb-3"></div>
-          <p className="text-muted-foreground text-sm">Loading tickets...</p>
+          <div className="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-b-2 border-purple-600"></div>
+          <p className="text-sm text-muted-foreground">Loading tickets...</p>
         </div>
       </div>
     );
@@ -97,9 +97,9 @@ export function SupportTicketsView() {
 
   if (!tickets || tickets.length === 0) {
     return (
-      <Card className="bg-card border">
+      <Card className="border bg-card">
         <CardContent className="py-12 text-center">
-          <Mail className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+          <Mail className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
           <p className="text-muted-foreground">No support tickets yet.</p>
         </CardContent>
       </Card>
@@ -109,15 +109,15 @@ export function SupportTicketsView() {
   return (
     <div className="space-y-3">
       {tickets.map((ticket) => (
-        <Card key={ticket.id} className="bg-card border">
+        <Card key={ticket.id} className="border bg-card">
           <CardContent className="p-5">
             <div className="space-y-4">
               {/* Header with status and date */}
               <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex items-center gap-2">
                     <span
-                      className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full border ${
+                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${
                         STATUS_COLORS[ticket.status]
                       }`}
                     >
@@ -127,14 +127,14 @@ export function SupportTicketsView() {
                       {new Date(ticket.created_at).toLocaleString()}
                     </span>
                   </div>
-                  <h3 className="text-lg font-semibold text-foreground truncate">
+                  <h3 className="truncate text-lg font-semibold text-foreground">
                     {ticket.subject}
                   </h3>
                   <p className="text-sm text-muted-foreground">{ticket.email}</p>
                 </div>
 
                 {/* Status selector and delete button */}
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex flex-shrink-0 items-center gap-2">
                   <Select
                     value={ticket.status}
                     onValueChange={(value: string) => handleStatusChange(ticket.id, value)}
@@ -174,7 +174,7 @@ export function SupportTicketsView() {
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => handleDeleteTicket(ticket.id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          className="text-destructive-foreground bg-destructive hover:bg-destructive/90"
                         >
                           Delete
                         </AlertDialogAction>
@@ -185,12 +185,12 @@ export function SupportTicketsView() {
               </div>
 
               {/* Message */}
-              <div className="bg-muted/50 border rounded-lg p-4">
-                <p className="text-sm text-foreground whitespace-pre-wrap">{ticket.message}</p>
+              <div className="rounded-lg border bg-muted/50 p-4">
+                <p className="text-sm whitespace-pre-wrap text-foreground">{ticket.message}</p>
               </div>
 
               {/* Ticket ID */}
-              <div className="text-xs text-muted-foreground font-mono">Ticket ID: {ticket.id}</div>
+              <div className="font-mono text-xs text-muted-foreground">Ticket ID: {ticket.id}</div>
             </div>
           </CardContent>
         </Card>

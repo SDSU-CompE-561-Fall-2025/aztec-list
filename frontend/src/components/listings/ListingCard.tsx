@@ -25,10 +25,10 @@ export function ListingCard({ listing }: ListingCardProps) {
   return (
     <Link
       href={`${LISTINGS_BASE_URL}/${listing.id}`}
-      className="flex flex-col gap-2 group cursor-pointer"
+      className="group flex cursor-pointer flex-col gap-2"
     >
       {/* Image or placeholder */}
-      <div className="relative aspect-square bg-muted rounded-md overflow-hidden">
+      <div className="relative aspect-square overflow-hidden rounded-md bg-muted">
         {imageUrl ? (
           <>
             <Image
@@ -38,17 +38,17 @@ export function ListingCard({ listing }: ListingCardProps) {
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+            <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/20" />
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <ImageIcon className="w-12 h-12 text-muted-foreground" />
+          <div className="flex h-full w-full items-center justify-center">
+            <ImageIcon className="h-12 w-12 text-muted-foreground" />
           </div>
         )}
       </div>
 
       {/* Title */}
-      <h3 className="text-base font-semibold text-foreground line-clamp-2 group-hover:text-purple-400 transition-colors">
+      <h3 className="line-clamp-2 text-base font-semibold text-foreground transition-colors group-hover:text-purple-400">
         {listing.title}
       </h3>
 

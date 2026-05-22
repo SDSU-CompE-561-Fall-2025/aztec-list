@@ -39,7 +39,7 @@ export const getListings = async (params: ListingsParams = {}): Promise<ListingS
 
 export const getUserListings = async (
   userId: string,
-  params: UserListingsParams = {}
+  params: UserListingsParams = {},
 ): Promise<ListingSearchResponse> => {
   // Use the existing getListings function with sellerId filter
   // Note: sellerId is the same as userId (user owns their listings)
@@ -55,7 +55,7 @@ export const getUserListings = async (
 
 export const getOwnListings = async (
   userId: string,
-  params: UserListingsParams = {}
+  params: UserListingsParams = {},
 ): Promise<ListingSearchResponse> => {
   const token = getAuthToken();
   if (!token) {
@@ -101,7 +101,7 @@ export const updateListing = async (
     category: string;
     condition: string;
     is_active: boolean;
-  }>
+  }>,
 ): Promise<ListingPublic> => {
   const token = getAuthToken();
   if (!token) {
@@ -157,7 +157,7 @@ export const deleteListing = async (listingId: string): Promise<void> => {
 
 export const toggleListingActive = async (
   listingId: string,
-  isActive: boolean
+  isActive: boolean,
 ): Promise<ListingPublic> => {
   return updateListing(listingId, { is_active: isActive });
 };
@@ -314,7 +314,7 @@ export interface CreateSupportTicketResponse extends SupportTicket {
 }
 
 export const createSupportTicket = async (
-  data: CreateSupportTicketData
+  data: CreateSupportTicketData,
 ): Promise<CreateSupportTicketResponse> => {
   const token = getAuthToken();
 
@@ -363,7 +363,7 @@ export const getSupportTickets = async (): Promise<SupportTicket[]> => {
 
 export const updateSupportTicketStatus = async (
   ticketId: string,
-  status: string
+  status: string,
 ): Promise<SupportTicket> => {
   const token = getAuthToken();
   if (!token) {

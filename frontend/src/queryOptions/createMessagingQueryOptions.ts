@@ -20,7 +20,7 @@ export function createConversationsQueryOptions() {
 export function createMessagesQueryOptions(
   conversationId: string,
   limit: number = 50,
-  offset: number = 0
+  offset: number = 0,
 ) {
   const user = getStoredUser();
   return queryOptions({

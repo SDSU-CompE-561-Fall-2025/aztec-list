@@ -32,7 +32,7 @@ export default function VerifyEmailPage() {
             headers: {
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (response.ok) {

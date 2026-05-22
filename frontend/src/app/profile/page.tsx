@@ -50,7 +50,7 @@ function ProfileContent() {
 
   // Fetch profile data
   const { data: profileData, isLoading: isProfileLoading } = useQuery(
-    createProfileQueryOptions(user?.id)
+    createProfileQueryOptions(user?.id),
   );
 
   // Check if profile is incomplete - only after data has loaded
@@ -64,7 +64,7 @@ function ProfileContent() {
       offset,
       sort: "recent",
       include_inactive: true,
-    })
+    }),
   );
 
   // Filter listings based on status
@@ -109,10 +109,10 @@ function ProfileContent() {
           return {
             ...old,
             items: old.items.map((item: ListingSummary) =>
-              item.id === id ? { ...item, is_active: isActive } : item
+              item.id === id ? { ...item, is_active: isActive } : item,
             ),
           };
-        }
+        },
       );
 
       return { previousData };
@@ -126,7 +126,7 @@ function ProfileContent() {
             user?.id,
             { limit: DEFAULT_LIMIT, offset, sort: "recent", include_inactive: true },
           ],
-          context.previousData
+          context.previousData,
         );
       }
       showErrorToast(err, "Failed to update listing visibility");
@@ -146,10 +146,10 @@ function ProfileContent() {
             items: old.items.map((item: ListingSummary) =>
               item.id === updatedListing.id
                 ? { ...item, is_active: updatedListing.is_active }
-                : item
+                : item,
             ),
           };
-        }
+        },
       );
       toast.success(isActive ? "Listing is now visible" : "Listing is now hidden", {
         style: {
@@ -183,10 +183,10 @@ function ProfileContent() {
 
   if (isError) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <p className="text-red-500 font-semibold mb-2">Error loading your listings</p>
-          <p className="text-gray-400 text-sm">{error.message}</p>
+          <p className="mb-2 font-semibold text-red-500">Error loading your listings</p>
+          <p className="text-sm text-gray-400">{error.message}</p>
         </div>
       </div>
     );
@@ -194,21 +194,21 @@ function ProfileContent() {
 
   return (
     <div className="min-h-screen bg-background p-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto max-w-7xl">
         {/* Profile Banner */}
-        <div className="mb-6 sm:mb-8 bg-card/50 backdrop-blur-sm border rounded-xl p-8">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
+        <div className="mb-6 rounded-xl border bg-card/50 p-8 backdrop-blur-sm sm:mb-8">
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
             {/* Profile Picture */}
             <div className="flex-shrink-0">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/20 flex items-center justify-center overflow-hidden relative">
+              <div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-purple-500/20 bg-gradient-to-br from-purple-500/20 to-purple-600/20">
                 {isProfileLoading ? (
-                  <div className="w-full h-full bg-muted animate-pulse" />
+                  <div className="h-full w-full animate-pulse bg-muted" />
                 ) : profileData?.profile_picture_url ? (
                   <Image
                     src={
                       getProfilePictureUrl(
                         profileData.profile_picture_url,
-                        profileData.updated_at
+                        profileData.updated_at,
                       ) || ""
                     }
                     alt={user?.username || "Profile"}
@@ -225,16 +225,16 @@ function ProfileContent() {
             </div>
 
             {/* Profile Info */}
-            <div className="flex-1 min-w-0 w-full">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-2xl font-bold text-foreground mb-2 text-center sm:text-left">
+            <div className="w-full min-w-0 flex-1">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <h2 className="mb-2 text-center text-2xl font-bold text-foreground sm:text-left">
                     {isProfileLoading ? (
-                      <div className="h-8 bg-muted animate-pulse rounded w-48 mx-auto sm:mx-0" />
+                      <div className="mx-auto h-8 w-48 animate-pulse rounded bg-muted sm:mx-0" />
                     ) : profileData?.name ? (
                       <>
                         {profileData.name}
-                        <span className="text-lg text-muted-foreground font-normal sm:ml-2 block sm:inline mt-1 sm:mt-0">
+                        <span className="mt-1 block text-lg font-normal text-muted-foreground sm:mt-0 sm:ml-2 sm:inline">
                           (@{user?.username})
                         </span>
                       </>
@@ -244,9 +244,9 @@ function ProfileContent() {
                   </h2>
                   <div className="space-y-2 text-sm">
                     {profileData?.campus && (
-                      <div className="flex items-center gap-2 text-muted-foreground justify-center sm:justify-start">
+                      <div className="flex items-center justify-center gap-2 text-muted-foreground sm:justify-start">
                         <svg
-                          className="w-4 h-4 flex-shrink-0"
+                          className="h-4 w-4 flex-shrink-0"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -263,22 +263,22 @@ function ProfileContent() {
                     )}
 
                     {user?.email && (
-                      <div className="flex items-center gap-2 text-muted-foreground justify-center sm:justify-start">
-                        <Mail className="w-4 h-4 flex-shrink-0" />
+                      <div className="flex items-center justify-center gap-2 text-muted-foreground sm:justify-start">
+                        <Mail className="h-4 w-4 flex-shrink-0" />
                         <span className="truncate">{user.email}</span>
                       </div>
                     )}
 
                     {profileData?.contact_info?.phone && (
-                      <div className="flex items-center gap-2 text-muted-foreground justify-center sm:justify-start">
-                        <Phone className="w-4 h-4 flex-shrink-0" />
+                      <div className="flex items-center justify-center gap-2 text-muted-foreground sm:justify-start">
+                        <Phone className="h-4 w-4 flex-shrink-0" />
                         <span className="truncate">{profileData.contact_info.phone}</span>
                       </div>
                     )}
 
-                    <div className="flex items-center gap-2 text-muted-foreground justify-center sm:justify-start">
+                    <div className="flex items-center justify-center gap-2 text-muted-foreground sm:justify-start">
                       <svg
-                        className="w-4 h-4 flex-shrink-0"
+                        className="h-4 w-4 flex-shrink-0"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -302,22 +302,22 @@ function ProfileContent() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col gap-2 sm:gap-3 w-full sm:w-auto shrink-0">
+                <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:gap-3">
                   <div className="flex gap-2">
                     <Button asChild variant="outline" className="flex-1 justify-center">
-                      <Link href="/settings" className="w-full flex items-center justify-center">
+                      <Link href="/settings" className="flex w-full items-center justify-center">
                         Edit Profile
                       </Link>
                     </Button>
 
                     {user?.id && (
-                      <Button asChild variant="outline" className="px-3 justify-center">
+                      <Button asChild variant="outline" className="justify-center px-3">
                         <Link
                           href={`/profile/${user.id}`}
                           className="flex items-center justify-center"
                           title="View Public Profile"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="h-4 w-4" />
                         </Link>
                       </Button>
                     )}
@@ -326,13 +326,13 @@ function ProfileContent() {
                   {totalCount > 0 && (
                     <Button
                       asChild
-                      className="w-full bg-purple-600 hover:bg-purple-700 text-white justify-center"
+                      className="w-full justify-center bg-purple-600 text-white hover:bg-purple-700"
                     >
                       <Link
                         href="/listings/create"
-                        className="w-full flex items-center justify-center gap-2"
+                        className="flex w-full items-center justify-center gap-2"
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="h-4 w-4" />
                         <span>Add Listing</span>
                       </Link>
                     </Button>
@@ -346,10 +346,10 @@ function ProfileContent() {
         {/* Email Verification Banner - Only show if email is not verified */}
         {!user?.is_verified && (
           <div className="mb-4 sm:mb-6">
-            <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-500/30 rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row items-start gap-3">
-              <div className="flex-shrink-0 mt-0.5">
+            <div className="flex flex-col items-start gap-3 rounded-lg border border-purple-200 bg-purple-50 p-3 sm:flex-row sm:p-4 dark:border-purple-500/30 dark:bg-purple-900/20">
+              <div className="mt-0.5 flex-shrink-0">
                 <svg
-                  className="w-5 h-5 text-purple-600 dark:text-purple-400"
+                  className="h-5 w-5 text-purple-600 dark:text-purple-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -363,19 +363,19 @@ function ProfileContent() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-purple-900 dark:text-purple-300 font-semibold text-sm mb-1.5">
+                <h3 className="mb-1.5 text-sm font-semibold text-purple-900 dark:text-purple-300">
                   Please verify your email to create listings.
                 </h3>
-                <p className="text-purple-800 dark:text-purple-200/70 text-xs sm:text-sm">
+                <p className="text-xs text-purple-800 sm:text-sm dark:text-purple-200/70">
                   Check your inbox for the verification link or resend from your account settings.
                 </p>
               </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex w-full items-center gap-2 sm:w-auto">
                 <Button
                   asChild
                   variant="outline"
                   size="sm"
-                  className="border-purple-300 dark:border-purple-500/50 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:text-purple-800 dark:hover:text-purple-200 flex-1 sm:flex-initial shrink-0"
+                  className="flex-1 shrink-0 border-purple-300 text-purple-700 hover:bg-purple-100 hover:text-purple-800 sm:flex-initial dark:border-purple-500/50 dark:text-purple-300 dark:hover:bg-purple-900/30 dark:hover:text-purple-200"
                 >
                   <Link href="/settings">Verify Email</Link>
                 </Button>
@@ -387,10 +387,10 @@ function ProfileContent() {
         {/* Incomplete Profile Banner - Only show if profile is incomplete */}
         {isProfileIncomplete && showIncompleteBanner && (
           <div className="mb-4 sm:mb-6">
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row items-start gap-3">
-              <div className="flex-shrink-0 mt-0.5">
+            <div className="flex flex-col items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 sm:flex-row sm:p-4 dark:border-blue-500/30 dark:bg-blue-900/20">
+              <div className="mt-0.5 flex-shrink-0">
                 <svg
-                  className="w-5 h-5 text-blue-600 dark:text-blue-400"
+                  className="h-5 w-5 text-blue-600 dark:text-blue-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -404,28 +404,28 @@ function ProfileContent() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-blue-900 dark:text-blue-300 font-semibold text-sm mb-1">
+                <h3 className="mb-1 text-sm font-semibold text-blue-900 dark:text-blue-300">
                   Complete Your Profile
                 </h3>
-                <p className="text-blue-700 dark:text-blue-200/80 text-xs sm:text-sm">
+                <p className="text-xs text-blue-700 sm:text-sm dark:text-blue-200/80">
                   Add your name, campus, and contact information to help buyers connect with you.
                 </p>
               </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex w-full items-center gap-2 sm:w-auto">
                 <Button
                   asChild
                   variant="outline"
                   size="sm"
-                  className="border-blue-300 dark:border-blue-500/50 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-800 dark:hover:text-blue-200 flex-1 sm:flex-initial shrink-0"
+                  className="flex-1 shrink-0 border-blue-300 text-blue-700 hover:bg-blue-100 hover:text-blue-800 sm:flex-initial dark:border-blue-500/50 dark:text-blue-300 dark:hover:bg-blue-900/30 dark:hover:text-blue-200"
                 >
                   <Link href="/settings">Complete Profile</Link>
                 </Button>
                 <button
                   onClick={() => setShowIncompleteBanner(false)}
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 shrink-0 cursor-pointer"
+                  className="shrink-0 cursor-pointer text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                   aria-label="Dismiss"
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -441,17 +441,17 @@ function ProfileContent() {
 
         {/* Listings Section */}
         <div>
-          <div className="flex items-center justify-between mb-4 sm:mb-6">
-            <h2 className="text-xl sm:text-2xl font-semibold text-foreground">Your Listings</h2>
+          <div className="mb-4 flex items-center justify-between sm:mb-6">
+            <h2 className="text-xl font-semibold text-foreground sm:text-2xl">Your Listings</h2>
           </div>
 
           {/* Status Filter Tabs */}
-          <div className="flex gap-2 sm:gap-3 mb-6 border-b border overflow-x-auto">
+          <div className="mb-6 flex gap-2 overflow-x-auto border border-b sm:gap-3">
             <button
               onClick={() => router.push("/profile?status=all")}
-              className={`px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium transition-colors whitespace-nowrap ${
+              className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors sm:px-6 sm:py-3 sm:text-base ${
                 status === "all"
-                  ? "text-purple-500 border-b-2 border-purple-500"
+                  ? "border-b-2 border-purple-500 text-purple-500"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -459,9 +459,9 @@ function ProfileContent() {
             </button>
             <button
               onClick={() => router.push("/profile?status=active")}
-              className={`px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium transition-colors whitespace-nowrap ${
+              className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors sm:px-6 sm:py-3 sm:text-base ${
                 status === "active"
-                  ? "text-green-500 border-b-2 border-green-500"
+                  ? "border-b-2 border-green-500 text-green-500"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -469,9 +469,9 @@ function ProfileContent() {
             </button>
             <button
               onClick={() => router.push("/profile?status=inactive")}
-              className={`px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium transition-colors whitespace-nowrap ${
+              className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors sm:px-6 sm:py-3 sm:text-base ${
                 status === "inactive"
-                  ? "text-muted-foreground/70 border-b-2 border-muted-foreground/50"
+                  ? "border-b-2 border-muted-foreground/50 text-muted-foreground/70"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -481,29 +481,29 @@ function ProfileContent() {
 
           {/* Empty state with CTA */}
           {data && totalCount === 0 ? (
-            <div className="bg-card/50 backdrop-blur-sm border rounded-lg p-12 text-center">
-              <div className="max-w-md mx-auto">
-                <h3 className="text-xl font-semibold text-foreground mb-2">No listings yet</h3>
-                <p className="text-muted-foreground mb-6 text-base">
+            <div className="rounded-lg border bg-card/50 p-12 text-center backdrop-blur-sm">
+              <div className="mx-auto max-w-md">
+                <h3 className="mb-2 text-xl font-semibold text-foreground">No listings yet</h3>
+                <p className="mb-6 text-base text-muted-foreground">
                   Start selling by creating your first listing. It only takes a minute!
                 </p>
-                <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white" size="lg">
+                <Button asChild className="bg-purple-600 text-white hover:bg-purple-700" size="lg">
                   <Link href="/listings/create">
-                    <Plus className="w-5 h-5 mr-2" />
+                    <Plus className="mr-2 h-5 w-5" />
                     Create Your First Listing
                   </Link>
                 </Button>
               </div>
             </div>
           ) : filteredListings.length === 0 ? (
-            <div className="bg-muted rounded-lg p-12 text-center">
-              <div className="max-w-md mx-auto">
+            <div className="rounded-lg bg-muted p-12 text-center">
+              <div className="mx-auto max-w-md">
                 {status === "active" && (
                   <>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                    <h3 className="mb-2 text-lg font-semibold text-foreground">
                       No active listings
                     </h3>
-                    <p className="text-muted-foreground mb-6 text-sm">
+                    <p className="mb-6 text-sm text-muted-foreground">
                       All your listings are currently hidden. Click &ldquo;Inactive&rdquo; to view
                       them.
                     </p>
@@ -511,10 +511,10 @@ function ProfileContent() {
                 )}
                 {status === "inactive" && (
                   <>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                    <h3 className="mb-2 text-lg font-semibold text-foreground">
                       No hidden listings
                     </h3>
-                    <p className="text-muted-foreground mb-6 text-sm">
+                    <p className="mb-6 text-sm text-muted-foreground">
                       All your listings are currently visible. Great job!
                     </p>
                   </>
@@ -525,17 +525,17 @@ function ProfileContent() {
             <>
               {/* Results grid */}
               {isLoading ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                   {Array.from({ length: DEFAULT_LIMIT }).map((_, i) => (
                     <div key={i} className="flex flex-col gap-2">
-                      <div className="aspect-square bg-muted rounded-md animate-pulse" />
-                      <div className="h-4 bg-muted rounded animate-pulse" />
-                      <div className="h-6 bg-muted rounded animate-pulse w-1/2" />
+                      <div className="aspect-square animate-pulse rounded-md bg-muted" />
+                      <div className="h-4 animate-pulse rounded bg-muted" />
+                      <div className="h-6 w-1/2 animate-pulse rounded bg-muted" />
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                   {filteredListings.map((listing) => (
                     <ProfileListingCard
                       key={listing.id}
@@ -564,7 +564,7 @@ export default function ProfilePage() {
     <ProtectedRoute>
       <Suspense
         fallback={
-          <div className="flex items-center justify-center min-h-screen">
+          <div className="flex min-h-screen items-center justify-center">
             <p className="text-muted-foreground">Loading...</p>
           </div>
         }

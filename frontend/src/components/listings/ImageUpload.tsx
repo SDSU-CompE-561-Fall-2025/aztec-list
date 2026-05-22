@@ -199,7 +199,7 @@ export function ImageUpload({
         xhr.send(formData);
       });
     },
-    [listingId]
+    [listingId],
   );
 
   const handleFileSelect = useCallback(
@@ -269,7 +269,7 @@ export function ImageUpload({
             fileId,
             fileName: file.name,
           }))
-          .catch((error) => ({ status: "error" as const, error, fileId, fileName: file.name }))
+          .catch((error) => ({ status: "error" as const, error, fileId, fileName: file.name })),
       );
 
       const results = await Promise.allSettled(uploadPromises);
@@ -331,7 +331,7 @@ export function ImageUpload({
 
       event.target.value = "";
     },
-    [uploadWithProgress]
+    [uploadWithProgress],
   );
 
   const handleMarkForDeletion = (imageId: string) => {
@@ -370,15 +370,15 @@ export function ImageUpload({
 
   return (
     <div className={className}>
-      <Label className="text-foreground mb-2 block">
+      <Label className="mb-2 block text-foreground">
         Images {hasImages && `(${activeImagesCount}/10)`}
         {newUploads.size > 0 && (
-          <span className="text-green-400 ml-2 text-sm font-bold">
+          <span className="ml-2 text-sm font-bold text-green-400">
             {newUploads.size} new {newUploads.size === 1 ? "upload" : "uploads"} (unsaved)
           </span>
         )}
         {pendingDeletions.size > 0 && (
-          <span className="text-red-400 ml-2 text-sm font-bold">
+          <span className="ml-2 text-sm font-bold text-red-400">
             {pendingDeletions.size} pending deletion
           </span>
         )}
@@ -386,17 +386,17 @@ export function ImageUpload({
 
       {/* Image Grid */}
       {hasImages && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        <div className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-4">
           {images.map((image) => {
             const isMarkedForDeletion = pendingDeletions.has(image.id);
             const isNewUpload = newUploads.has(image.id);
             return (
-              <div key={image.id} className="relative group aspect-square">
+              <div key={image.id} className="group relative aspect-square">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`${STATIC_BASE_URL}${image.url}`}
                   alt={image.alt_text || "Listing image"}
-                  className={`w-full h-full object-cover rounded-md border ${
+                  className={`h-full w-full rounded-md border object-cover ${
                     isMarkedForDeletion
                       ? "border-red-500 opacity-40 grayscale"
                       : isNewUpload
@@ -406,21 +406,21 @@ export function ImageUpload({
                   loading="lazy"
                 />
                 {isMarkedForDeletion && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-md">
+                  <div className="absolute inset-0 flex items-center justify-center rounded-md bg-black/50">
                     <div className="text-center">
-                      <Trash2 className="w-8 h-8 text-red-500 mx-auto mb-2" />
-                      <p className="text-white text-sm font-medium">Marked for deletion</p>
+                      <Trash2 className="mx-auto mb-2 h-8 w-8 text-red-500" />
+                      <p className="text-sm font-medium text-white">Marked for deletion</p>
                     </div>
                   </div>
                 )}
                 {isNewUpload && !isMarkedForDeletion && (
-                  <div className="absolute top-2 left-2 bg-green-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+                  <div className="absolute top-2 left-2 flex items-center gap-1 rounded bg-green-600 px-2 py-1 text-xs text-white">
                     <span className="font-bold">NEW</span>
                   </div>
                 )}
                 {image.is_thumbnail && !isMarkedForDeletion && !isNewUpload && (
-                  <div className="absolute top-2 left-2 bg-purple-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
-                    <Star className="w-3 h-3 fill-current" />
+                  <div className="absolute top-2 left-2 flex items-center gap-1 rounded bg-purple-600 px-2 py-1 text-xs text-white">
+                    <Star className="h-3 w-3 fill-current" />
                     Thumbnail
                   </div>
                 )}
@@ -428,21 +428,21 @@ export function ImageUpload({
                   <button
                     type="button"
                     onClick={() => handleUnmarkForDeletion(image.id)}
-                    className="absolute top-2 right-2 bg-green-600 hover:bg-green-700 text-white p-1.5 rounded-md transition-opacity"
+                    className="absolute top-2 right-2 rounded-md bg-green-600 p-1.5 text-white transition-opacity hover:bg-green-700"
                     aria-label="Undo deletion"
                     title="Undo deletion"
                   >
-                    <Undo2 className="w-4 h-4" />
+                    <Undo2 className="h-4 w-4" />
                   </button>
                 ) : (
                   <button
                     type="button"
                     onClick={() => handleMarkForDeletion(image.id)}
-                    className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-2 right-2 rounded-md bg-red-600 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-700"
                     aria-label="Mark for deletion"
                     title="Mark for deletion"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 )}
               </div>
@@ -453,16 +453,16 @@ export function ImageUpload({
 
       {/* Uploading Files Progress */}
       {uploadingFiles.size > 0 && (
-        <div className="space-y-2 mb-4">
+        <div className="mb-4 space-y-2">
           {Array.from(uploadingFiles.values()).map((file) => (
-            <div key={file.id} className="bg-card rounded-md p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-foreground truncate flex-1 mr-2">{file.name}</span>
+            <div key={file.id} className="rounded-md bg-card p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="mr-2 flex-1 truncate text-sm text-foreground">{file.name}</span>
                 <span className="text-xs text-muted-foreground">{file.progress}%</span>
               </div>
-              <div className="w-full bg-muted rounded-full h-1.5">
+              <div className="h-1.5 w-full rounded-full bg-muted">
                 <div
-                  className="bg-purple-600 h-1.5 rounded-full transition-all duration-300"
+                  className="h-1.5 rounded-full bg-purple-600 transition-all duration-300"
                   style={{ width: `${file.progress}%` }}
                 />
               </div>
@@ -485,24 +485,19 @@ export function ImageUpload({
           />
           <label
             htmlFor="image-upload"
-            className={`
-              bg-card rounded-md flex flex-col items-center justify-center
-              text-center p-6 cursor-pointer border-2 border-dashed
-              hover:border-purple-500 hover:bg-muted transition-colors
-              ${isUploading ? "opacity-50 cursor-not-allowed" : ""}
-            `}
+            className={`flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed bg-card p-6 text-center transition-colors hover:border-purple-500 hover:bg-muted ${isUploading ? "cursor-not-allowed opacity-50" : ""} `}
           >
             {isUploading ? (
               <>
-                <Loader2 className="h-8 w-8 text-purple-500 mb-2 animate-spin" />
-                <p className="text-muted-foreground text-sm">Uploading...</p>
+                <Loader2 className="mb-2 h-8 w-8 animate-spin text-purple-500" />
+                <p className="text-sm text-muted-foreground">Uploading...</p>
               </>
             ) : (
               <>
-                <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                <p className="text-foreground text-sm font-medium mb-1">Click to upload images</p>
-                <p className="text-muted-foreground text-xs">JPG, PNG, WebP, GIF (max 5MB each)</p>
-                <p className="text-muted-foreground text-xs mt-1">
+                <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
+                <p className="mb-1 text-sm font-medium text-foreground">Click to upload images</p>
+                <p className="text-xs text-muted-foreground">JPG, PNG, WebP, GIF (max 5MB each)</p>
+                <p className="mt-1 text-xs text-muted-foreground">
                   {10 - images.length} slots remaining
                 </p>
               </>
@@ -512,7 +507,7 @@ export function ImageUpload({
       )}
 
       {!hasImages && !isUploading && (
-        <p className="text-muted-foreground text-sm mt-2">
+        <p className="mt-2 text-sm text-muted-foreground">
           First image uploaded will be set as the thumbnail
         </p>
       )}

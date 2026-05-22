@@ -46,7 +46,7 @@ export function SearchFilters() {
   // Local state for pending condition changes (before "Apply Filters" is clicked)
   // Initialize from URL, but allow temporary changes before applying
   const [selectedConditions, setSelectedConditions] = useState<Condition[]>(() =>
-    urlCondition ? [urlCondition] : []
+    urlCondition ? [urlCondition] : [],
   );
 
   // Sync local state with URL changes (e.g., browser back/forward, or after applying filters)
@@ -155,11 +155,11 @@ export function SearchFilters() {
     <div className="space-y-6">
       {/* Category Section */}
       <div>
-        <h3 className="text-sm font-semibold text-foreground mb-3">Category</h3>
+        <h3 className="mb-3 text-sm font-semibold text-foreground">Category</h3>
         <select
           value={selectedCategory}
           onChange={(e) => handleCategoryChange(e.target.value)}
-          className="w-full h-9 rounded-md border px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none bg-transparent dark:bg-input/30 border-input focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+          className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
         >
           <option value="">All Categories</option>
           {CATEGORIES.map((cat) => (
@@ -172,7 +172,7 @@ export function SearchFilters() {
 
       {/* Price Range Section */}
       <div>
-        <h3 className="text-sm font-semibold text-foreground mb-3">Price Range</h3>
+        <h3 className="mb-3 text-sm font-semibold text-foreground">Price Range</h3>
         <div className="space-y-2">
           <input
             type="number"
@@ -181,7 +181,7 @@ export function SearchFilters() {
             value={minPrice}
             onChange={(e) => handlePriceChange(e.target.value, setMinPrice)}
             onKeyDown={handlePriceKeyDown}
-            className={`w-full h-9 rounded-md border px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none bg-transparent dark:bg-input/30 border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] ${
+            className={`h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30 ${
               priceError ? "border-red-500 ring-destructive/20" : ""
             }`}
           />
@@ -192,7 +192,7 @@ export function SearchFilters() {
             value={maxPrice}
             onChange={(e) => handlePriceChange(e.target.value, setMaxPrice)}
             onKeyDown={handlePriceKeyDown}
-            className={`w-full h-9 rounded-md border px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none bg-transparent dark:bg-input/30 border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] ${
+            className={`h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30 ${
               priceError ? "border-red-500 ring-destructive/20" : ""
             }`}
           />
@@ -202,12 +202,12 @@ export function SearchFilters() {
 
       {/* Condition Section */}
       <div>
-        <h3 className="text-sm font-semibold text-foreground mb-3">Condition</h3>
+        <h3 className="mb-3 text-sm font-semibold text-foreground">Condition</h3>
         <div className="space-y-2">
           {CONDITIONS.map((condition) => (
             <label
               key={condition}
-              className="flex items-center gap-2 text-sm text-foreground cursor-pointer"
+              className="flex cursor-pointer items-center gap-2 text-sm text-foreground"
             >
               <input
                 type="checkbox"
@@ -223,11 +223,11 @@ export function SearchFilters() {
 
       {/* Sort By Section */}
       <div>
-        <h3 className="text-sm font-semibold text-foreground mb-3">Sort By</h3>
+        <h3 className="mb-3 text-sm font-semibold text-foreground">Sort By</h3>
         <select
           value={selectedSort}
           onChange={(e) => handleSortChange(e.target.value)}
-          className="w-full h-9 rounded-md border px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none bg-transparent dark:bg-input/30 border-input focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+          className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
         >
           {SORT_OPTIONS.map((sort) => (
             <option key={sort} value={sort}>
@@ -240,7 +240,7 @@ export function SearchFilters() {
       {/* Apply Filters Button */}
       <button
         onClick={handleApplyFilters}
-        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md text-sm transition-colors"
+        className="w-full rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700"
       >
         Apply Filters
       </button>
@@ -248,7 +248,7 @@ export function SearchFilters() {
       {/* Clear Filters Button */}
       <button
         onClick={handleClearFilters}
-        className="w-full bg-muted hover:bg-muted/80 text-muted-foreground font-medium py-2 px-4 rounded-md text-sm transition-colors"
+        className="w-full rounded-md bg-muted px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/80"
       >
         Clear Filters
       </button>
@@ -258,11 +258,11 @@ export function SearchFilters() {
   return (
     <>
       {/* Mobile Filter Button */}
-      <div className="lg:hidden mb-4">
+      <div className="mb-4 lg:hidden">
         <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" className="w-full">
-              <Filter className="w-4 h-4 mr-2" />
+              <Filter className="mr-2 h-4 w-4" />
               Filters
             </Button>
           </SheetTrigger>
@@ -276,7 +276,7 @@ export function SearchFilters() {
       </div>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block w-80 bg-card p-6 rounded-lg border">{filtersContent}</aside>
+      <aside className="hidden w-80 rounded-lg border bg-card p-6 lg:block">{filtersContent}</aside>
     </>
   );
 }

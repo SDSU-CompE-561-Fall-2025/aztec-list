@@ -28,21 +28,21 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background p-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto max-w-7xl">
         {/* Hero Section */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-3">
+          <h1 className="mb-3 text-3xl font-bold">
             Welcome to <span className="text-purple-500">Aztec</span>
             <span className="text-foreground">List</span>
           </h1>
-          <p className="text-muted-foreground text-base">
+          <p className="text-base text-muted-foreground">
             Buy and sell items on campus. Find great deals from fellow students.
           </p>
         </div>
 
         {/* Listings Section */}
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold text-foreground">Latest Listings</h2>
             {data && (
               <p className="text-base text-muted-foreground">

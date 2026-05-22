@@ -135,7 +135,7 @@ function CreateListingContent() {
           "Please verify your email to create listings. Check your inbox for the verification link or resend from your account settings.",
           {
             duration: 6000,
-          }
+          },
         );
       } else {
         showErrorToast(error, "Failed to create listing");
@@ -156,20 +156,20 @@ function CreateListingContent() {
 
   return (
     <div className="min-h-screen bg-background p-8">
-      <div className="max-w-3xl mx-auto">
+      <div className="mx-auto max-w-3xl">
         {/* Breadcrumb Navigation */}
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 group cursor-pointer"
+          className="group mb-6 flex cursor-pointer items-center gap-2 text-gray-400 transition-colors hover:text-white"
         >
-          <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           <span className="text-sm font-medium">Back</span>
         </button>
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground mb-2">Create New Listing</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="mb-2 text-2xl font-bold text-foreground">Create New Listing</h1>
+          <p className="text-sm text-muted-foreground">
             Fill in the details to create your listing
           </p>
         </div>
@@ -178,8 +178,8 @@ function CreateListingContent() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Show info about creating listing first if not created yet */}
           {!createdListingId && (
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-              <p className="text-blue-600 dark:text-blue-300 text-sm">
+            <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
+              <p className="text-sm text-blue-600 dark:text-blue-300">
                 💡 Create your listing first, then you&apos;ll be able to upload images
               </p>
             </div>
@@ -200,8 +200,8 @@ function CreateListingContent() {
               maxLength={100}
               className={`mt-1 ${errors.title ? "border-red-500" : ""}`}
             />
-            {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-            <p className="text-muted-foreground text-xs mt-1">{title.length}/100 characters</p>
+            {errors.title && <p className="mt-1 text-sm text-red-500">{errors.title}</p>}
+            <p className="mt-1 text-xs text-muted-foreground">{title.length}/100 characters</p>
           </div>
 
           {/* Description */}
@@ -221,9 +221,9 @@ function CreateListingContent() {
               className={`mt-1 resize-none ${errors.description ? "border-red-500" : ""}`}
             />
             {errors.description && (
-              <p className="text-red-500 text-sm mt-1">{errors.description}</p>
+              <p className="mt-1 text-sm text-red-500">{errors.description}</p>
             )}
-            <p className="text-muted-foreground text-xs mt-1">
+            <p className="mt-1 text-xs text-muted-foreground">
               {description.length}/500 characters
             </p>
           </div>
@@ -234,7 +234,7 @@ function CreateListingContent() {
               Price <span className="text-red-500">*</span>
             </Label>
             <div className="relative mt-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-lg">
+              <span className="absolute top-1/2 left-3 -translate-y-1/2 text-lg text-muted-foreground">
                 $
               </span>
               <Input
@@ -247,10 +247,10 @@ function CreateListingContent() {
                 onBlur={handlePriceBlur}
                 placeholder="0.00"
                 disabled={!!createdListingId}
-                className={`text-lg h-12 pl-8 ${errors.price ? "border-red-500" : ""}`}
+                className={`h-12 pl-8 text-lg ${errors.price ? "border-red-500" : ""}`}
               />
             </div>
-            {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
+            {errors.price && <p className="mt-1 text-sm text-red-500">{errors.price}</p>}
           </div>
 
           {/* Category */}
@@ -264,7 +264,7 @@ function CreateListingContent() {
               onChange={(e) => setCategory(e.target.value as Category)}
               onBlur={(e) => handleBlur("category", e.target.value)}
               disabled={!!createdListingId}
-              className={`mt-1 w-full h-9 rounded-md border px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none bg-background text-foreground border-input focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] ${
+              className={`mt-1 h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 ${
                 errors.category ? "border-red-500" : ""
               }`}
             >
@@ -275,7 +275,7 @@ function CreateListingContent() {
                 </option>
               ))}
             </select>
-            {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
+            {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
           </div>
 
           {/* Condition */}
@@ -289,7 +289,7 @@ function CreateListingContent() {
               onChange={(e) => setCondition(e.target.value as Condition)}
               onBlur={(e) => handleBlur("condition", e.target.value)}
               disabled={!!createdListingId}
-              className={`mt-1 w-full h-9 rounded-md border px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none bg-background text-foreground border-input focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] ${
+              className={`mt-1 h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 ${
                 errors.condition ? "border-red-500" : ""
               }`}
             >
@@ -300,35 +300,35 @@ function CreateListingContent() {
                 </option>
               ))}
             </select>
-            {errors.condition && <p className="text-red-500 text-sm mt-1">{errors.condition}</p>}
+            {errors.condition && <p className="mt-1 text-sm text-red-500">{errors.condition}</p>}
           </div>
 
           {/* Active Status */}
-          <div className="bg-card border border-border rounded-lg p-4">
+          <div className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-foreground font-medium">Listing Status</Label>
-                <p className="text-muted-foreground text-sm mt-1">
+                <Label className="font-medium text-foreground">Listing Status</Label>
+                <p className="mt-1 text-sm text-muted-foreground">
                   {isActive ? "Visible to buyers" : "Hidden from buyers"}
                 </p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label className="relative inline-flex cursor-pointer items-center">
                 <input
                   type="checkbox"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
                   disabled={!!createdListingId}
-                  className="sr-only peer"
+                  className="peer sr-only"
                 />
-                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                <div className="peer h-6 w-11 rounded-full bg-gray-700 peer-checked:bg-purple-600 peer-focus:ring-4 peer-focus:ring-purple-800 peer-focus:outline-none after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full"></div>
               </label>
             </div>
           </div>
 
           {/* Image Upload - shown after listing is created */}
           {createdListingId && (
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Add Images</h3>
+            <div className="rounded-lg border border-border bg-card p-6">
+              <h3 className="mb-4 text-lg font-semibold text-foreground">Add Images</h3>
               <ImageUpload
                 listingId={createdListingId}
                 existingImages={images}
@@ -344,11 +344,11 @@ function CreateListingContent() {
                 <Button
                   type="submit"
                   disabled={createMutation.isPending}
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                  className="bg-purple-600 text-white hover:bg-purple-700"
                 >
                   {createMutation.isPending ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Creating...
                     </>
                   ) : (
@@ -363,7 +363,7 @@ function CreateListingContent() {
               <Button
                 type="button"
                 onClick={handleDone}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="bg-purple-600 text-white hover:bg-purple-700"
               >
                 Done
               </Button>

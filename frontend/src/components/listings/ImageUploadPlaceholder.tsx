@@ -15,11 +15,11 @@ interface ImageUploadPlaceholderProps {
 export function ImageUploadPlaceholder({ className = "" }: ImageUploadPlaceholderProps) {
   return (
     <div
-      className={`aspect-square bg-gray-800 rounded-md flex flex-col items-center justify-center text-center p-8 ${className}`}
+      className={`flex aspect-square flex-col items-center justify-center rounded-md bg-gray-800 p-8 text-center ${className}`}
       data-image-upload-placeholder="true"
     >
-      <ImageIcon className="h-12 w-12 text-gray-600 mb-3" />
-      <p className="text-gray-400 text-sm">Image upload coming soon</p>
+      <ImageIcon className="mb-3 h-12 w-12 text-gray-600" />
+      <p className="text-sm text-gray-400">Image upload coming soon</p>
     </div>
   );
 }

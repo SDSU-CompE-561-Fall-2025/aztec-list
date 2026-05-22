@@ -78,15 +78,15 @@ export function ContactSupportForm() {
   };
 
   return (
-    <Card className="max-w-2xl mx-auto bg-card border">
+    <Card className="mx-auto max-w-2xl border bg-card">
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-500/10 rounded-lg">
-            <Mail className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          <div className="rounded-lg bg-purple-500/10 p-2">
+            <Mail className="h-6 w-6 text-purple-600 dark:text-purple-400" />
           </div>
           <div>
             <CardTitle className="text-2xl text-foreground">Contact Support</CardTitle>
-            <CardDescription className="text-muted-foreground mt-1">
+            <CardDescription className="mt-1 text-muted-foreground">
               Have a question or need help? Send us a message and we&apos;ll get back to you soon.
             </CardDescription>
           </div>
@@ -94,7 +94,7 @@ export function ContactSupportForm() {
       </CardHeader>
       <CardContent>
         {successMessage && (
-          <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+          <div className="mb-6 rounded-lg border border-green-500/30 bg-green-500/10 p-4">
             <p className="text-sm text-green-600 dark:text-green-400">{successMessage}</p>
           </div>
         )}
@@ -167,7 +167,7 @@ export function ContactSupportForm() {
           <Button
             type="submit"
             disabled={createTicketMutation.isPending}
-            className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-semibold"
+            className="w-full bg-gradient-to-r from-purple-600 to-purple-500 font-semibold text-white hover:from-purple-700 hover:to-purple-600"
           >
             {createTicketMutation.isPending ? "Sending..." : "Send Message"}
           </Button>

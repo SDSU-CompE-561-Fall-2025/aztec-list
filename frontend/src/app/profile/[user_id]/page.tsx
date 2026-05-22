@@ -48,7 +48,7 @@ function UserProfileContent() {
       limit: DEFAULT_LIMIT,
       offset,
       sort: "recent",
-    })
+    }),
   );
 
   const isLoading = isUserLoading || isListingsLoading;
@@ -57,18 +57,18 @@ function UserProfileContent() {
     return (
       <div className="min-h-screen bg-background">
         <div className="border-b bg-background/95 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="h-10 w-40 bg-muted rounded animate-pulse" />
+          <div className="mx-auto max-w-7xl px-6 py-4">
+            <div className="h-10 w-40 animate-pulse rounded bg-muted" />
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="mx-auto max-w-7xl px-6 py-8">
           <div className="space-y-6">
-            <div className="bg-card backdrop-blur-sm border rounded-xl p-6 h-32 animate-pulse" />
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="h-32 animate-pulse rounded-xl border bg-card p-6 backdrop-blur-sm" />
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {[1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
-                  className="bg-card backdrop-blur-sm border rounded-xl h-80 animate-pulse"
+                  className="h-80 animate-pulse rounded-xl border bg-card backdrop-blur-sm"
                 />
               ))}
             </div>
@@ -82,29 +82,29 @@ function UserProfileContent() {
     return (
       <div className="min-h-screen bg-background">
         <div className="border-b bg-background/95 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="mx-auto max-w-7xl px-6 py-4">
             <Button
               variant="ghost"
-              className="text-muted-foreground hover:text-foreground -ml-3"
+              className="-ml-3 text-muted-foreground hover:text-foreground"
               onClick={() => router.push("/")}
             >
-              <ChevronLeft className="w-4 h-4 mr-2" />
+              <ChevronLeft className="mr-2 h-4 w-4" />
               Back to listings
             </Button>
           </div>
         </div>
-        <div className="max-w-2xl mx-auto px-6 py-20 text-center">
-          <div className="bg-card backdrop-blur-sm border rounded-2xl p-12">
-            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
-              <User className="w-8 h-8 text-muted-foreground" />
+        <div className="mx-auto max-w-2xl px-6 py-20 text-center">
+          <div className="rounded-2xl border bg-card p-12 backdrop-blur-sm">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+              <User className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground mb-3">User Not Found</h1>
-            <p className="text-muted-foreground mb-8 leading-relaxed">
+            <h1 className="mb-3 text-2xl font-bold text-foreground">User Not Found</h1>
+            <p className="mb-8 leading-relaxed text-muted-foreground">
               This user could not be found or may have been removed.
             </p>
             <Button
               onClick={() => router.push("/")}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-purple-600 text-white hover:bg-purple-700"
             >
               Browse All Listings
             </Button>
@@ -119,26 +119,26 @@ function UserProfileContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b bg-background/95 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur-sm">
+        <div className="mx-auto max-w-7xl px-6 py-4">
           <Button
             variant="ghost"
-            className="text-muted-foreground hover:text-foreground -ml-3"
+            className="-ml-3 text-muted-foreground hover:text-foreground"
             onClick={() => router.back()}
           >
-            <ChevronLeft className="w-4 h-4 mr-2" />
+            <ChevronLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <div className="mx-auto max-w-7xl space-y-8 px-6 py-8">
         {/* User Profile Header */}
-        <div className="bg-card backdrop-blur-sm border rounded-xl p-8">
+        <div className="rounded-xl border bg-card p-8 backdrop-blur-sm">
           <div className="flex items-start gap-6">
-            <div className="w-24 h-24 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20 flex-shrink-0 overflow-hidden relative">
+            <div className="relative flex h-24 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-purple-500/20 bg-gradient-to-br from-purple-500/20 to-purple-600/20">
               {isProfileDataLoading ? (
-                <div className="w-full h-full bg-muted animate-pulse" />
+                <div className="h-full w-full animate-pulse bg-muted" />
               ) : profileData?.profile_picture_url ? (
                 <Image
                   src={
@@ -151,17 +151,17 @@ function UserProfileContent() {
                   className="object-cover"
                 />
               ) : (
-                <User className="w-12 h-12 text-purple-300" />
+                <User className="h-12 w-12 text-purple-300" />
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-foreground mb-2">
+            <div className="min-w-0 flex-1">
+              <h1 className="mb-2 text-2xl font-bold text-foreground">
                 {isProfileDataLoading ? (
-                  <div className="h-8 bg-muted animate-pulse rounded w-48" />
+                  <div className="h-8 w-48 animate-pulse rounded bg-muted" />
                 ) : profileData?.name ? (
                   <>
                     {profileData.name}
-                    <span className="text-lg text-muted-foreground font-normal ml-2">
+                    <span className="ml-2 text-lg font-normal text-muted-foreground">
                       (@{user.username})
                     </span>
                   </>
@@ -172,12 +172,12 @@ function UserProfileContent() {
               <div className="space-y-2 text-sm">
                 {profileData?.campus && (
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <Building2 className="w-4 h-4 flex-shrink-0" />
+                    <Building2 className="h-4 w-4 flex-shrink-0" />
                     <span className="truncate">{profileData.campus}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <Calendar className="w-4 h-4 flex-shrink-0" />
+                  <Calendar className="h-4 w-4 flex-shrink-0" />
                   <span>
                     Joined{" "}
                     {new Date(user.created_at).toLocaleDateString("en-US", {
@@ -187,7 +187,7 @@ function UserProfileContent() {
                   </span>
                 </div>
                 {user.is_verified && (
-                  <span className="inline-flex items-center px-3 py-1 bg-green-500/10 text-green-300 text-sm font-semibold rounded-full border border-green-500/30">
+                  <span className="inline-flex items-center rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-sm font-semibold text-green-300">
                     Verified
                   </span>
                 )}
@@ -201,23 +201,23 @@ function UserProfileContent() {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-foreground">
               Listings
-              <span className="ml-3 text-muted-foreground font-normal text-base">
+              <span className="ml-3 text-base font-normal text-muted-foreground">
                 ({totalCount})
               </span>
             </h2>
           </div>
 
           {listings.length === 0 ? (
-            <div className="bg-card backdrop-blur-sm border rounded-xl p-12 text-center">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <User className="w-8 h-8 text-muted-foreground" />
+            <div className="rounded-xl border bg-card p-12 text-center backdrop-blur-sm">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <User className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">No Listings Yet</h3>
+              <h3 className="mb-2 text-xl font-semibold text-foreground">No Listings Yet</h3>
               <p className="text-muted-foreground">This user hasn&apos;t posted any listings.</p>
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {listings.map((listing: ListingSummary) => (
                   <UserListingCard key={listing.id} listing={listing} />
                 ))}

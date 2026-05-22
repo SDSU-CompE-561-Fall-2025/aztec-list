@@ -51,10 +51,10 @@ export function ProfileListingCard({
     <>
       <div
         onClick={handleCardClick}
-        className="group bg-card backdrop-blur-sm border rounded-xl overflow-hidden hover:border-purple-500/50 transition-all cursor-pointer hover:shadow-lg hover:shadow-purple-500/10 relative"
+        className="group relative cursor-pointer overflow-hidden rounded-xl border bg-card backdrop-blur-sm transition-all hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10"
       >
         {/* Image Section */}
-        <div className="relative w-full aspect-square bg-muted overflow-hidden">
+        <div className="relative aspect-square w-full overflow-hidden bg-muted">
           {hasImage ? (
             <>
               <Image
@@ -64,28 +64,28 @@ export function ProfileListingCard({
                 sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 className="object-cover"
               />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+              <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/20" />
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <ImageIcon className="w-16 h-16 text-muted-foreground" />
+            <div className="flex h-full w-full items-center justify-center">
+              <ImageIcon className="h-16 w-16 text-muted-foreground" />
             </div>
           )}
 
           {!listing.is_active && (
-            <div className="absolute inset-0 bg-background/60 flex items-center justify-center z-10">
-              <span className="bg-muted text-muted-foreground px-3 py-1 rounded-md text-sm font-medium">
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60">
+              <span className="rounded-md bg-muted px-3 py-1 text-sm font-medium text-muted-foreground">
                 Hidden
               </span>
             </div>
           )}
 
           {/* Action buttons - show on hover */}
-          <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+          <div className="absolute top-2 right-2 z-20 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
             <Button
               size="icon"
               variant="secondary"
-              className="h-9 w-9 bg-background/90 hover:bg-muted border border-purple-400 hover:border-purple-300 hover:shadow-lg hover:shadow-purple-500/20 text-foreground"
+              className="h-9 w-9 border border-purple-400 bg-background/90 text-foreground hover:border-purple-300 hover:bg-muted hover:shadow-lg hover:shadow-purple-500/20"
               asChild
             >
               <Link href={`/listings/${listing.id}/edit`}>
@@ -95,7 +95,7 @@ export function ProfileListingCard({
             <Button
               size="icon"
               variant="secondary"
-              className="h-9 w-9 bg-background/90 hover:bg-muted border border-blue-400 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/20 text-foreground"
+              className="h-9 w-9 border border-blue-400 bg-background/90 text-foreground hover:border-blue-300 hover:bg-muted hover:shadow-lg hover:shadow-blue-500/20"
               onClick={() => onToggleActive(listing.id, !listing.is_active)}
               disabled={isTogglingActive}
             >
@@ -104,7 +104,7 @@ export function ProfileListingCard({
             <Button
               size="icon"
               variant="secondary"
-              className="h-9 w-9 bg-background/90 hover:bg-muted border border-red-400 hover:border-red-300 hover:shadow-lg hover:shadow-red-500/20 text-foreground"
+              className="h-9 w-9 border border-red-400 bg-background/90 text-foreground hover:border-red-300 hover:bg-muted hover:shadow-lg hover:shadow-red-500/20"
               onClick={() => setShowDeleteDialog(true)}
               disabled={isDeleting}
             >
@@ -114,8 +114,8 @@ export function ProfileListingCard({
         </div>
 
         {/* Content Section */}
-        <div className="p-4 space-y-2">
-          <h3 className="text-xl font-bold text-foreground line-clamp-1 group-hover:text-purple-300 transition-colors">
+        <div className="space-y-2 p-4">
+          <h3 className="line-clamp-1 text-xl font-bold text-foreground transition-colors group-hover:text-purple-300">
             {listing.title}
           </h3>
 
@@ -124,7 +124,7 @@ export function ProfileListingCard({
           </p>
 
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span className={`capitalize font-medium ${getConditionColor(listing.condition)}`}>
+            <span className={`font-medium capitalize ${getConditionColor(listing.condition)}`}>
               {listing.condition.replace("_", " ")}
             </span>
             <span>•</span>
@@ -139,7 +139,7 @@ export function ProfileListingCard({
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="bg-card border">
+        <AlertDialogContent className="border bg-card">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground">Delete listing?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">

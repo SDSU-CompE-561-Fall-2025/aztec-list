@@ -55,7 +55,7 @@ export function MessageInput({
   const isValid = content.trim().length > 0;
 
   return (
-    <div className="flex gap-2 p-4 border-t bg-background">
+    <div className="flex gap-2 border-t bg-background p-4">
       <Textarea
         ref={textareaRef}
         value={content}
@@ -63,7 +63,7 @@ export function MessageInput({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled}
-        className="min-h-[44px] max-h-[200px] resize-none"
+        className="max-h-[200px] min-h-[44px] resize-none"
         rows={1}
         aria-label="Message input"
       />
@@ -71,7 +71,7 @@ export function MessageInput({
         onClick={handleSend}
         disabled={!isValid || disabled}
         size="icon"
-        className="shrink-0 h-[44px] w-[44px]"
+        className="h-[44px] w-[44px] shrink-0"
         aria-label="Send message"
         title="Send message (Enter)"
       >

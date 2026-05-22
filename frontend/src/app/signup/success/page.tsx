@@ -43,7 +43,7 @@ export default function SignupSuccessPage() {
         {
           method: "POST",
           credentials: "include",
-        }
+        },
       );
 
       if (response.ok) {
@@ -87,7 +87,7 @@ export default function SignupSuccessPage() {
           {emailSendFailed && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
                 <div className="flex-1 space-y-2">
                   <p className="text-sm font-semibold text-amber-900 dark:text-amber-300">
                     Verification email failed to send
@@ -103,7 +103,7 @@ export default function SignupSuccessPage() {
 
           <div className="rounded-lg border border-purple-200 bg-purple-50 p-4 dark:border-purple-800 dark:bg-purple-950/30">
             <div className="flex items-start gap-3">
-              <Mail className="h-5 w-5 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" />
+              <Mail className="mt-0.5 h-5 w-5 flex-shrink-0 text-purple-600 dark:text-purple-400" />
               <div className="flex-1 space-y-2">
                 <p className="text-sm font-semibold text-purple-900 dark:text-purple-300">
                   Check your email to unlock listing creation

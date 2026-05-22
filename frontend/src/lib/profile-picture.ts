@@ -18,7 +18,7 @@ import { STATIC_BASE_URL } from "./constants";
  */
 export function getProfilePictureUrl(
   path: string | null | undefined,
-  updatedAt: string | null | undefined
+  updatedAt: string | null | undefined,
 ): string | null {
   if (!path) return null;
 

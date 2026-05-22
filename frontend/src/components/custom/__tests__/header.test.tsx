@@ -85,7 +85,7 @@ describe("Header Component", () => {
         () => {
           expect(screen.getByText("T")).toBeInTheDocument();
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
     });
   });
@@ -99,7 +99,7 @@ describe("Header Component", () => {
       fireEvent.submit(searchInput);
 
       expect(mockPush).toHaveBeenCalledWith(
-        expect.stringContaining("/listings?q=laptop&sort=recent")
+        expect.stringContaining("/listings?q=laptop&sort=recent"),
       );
     });
 
@@ -121,7 +121,7 @@ describe("Header Component", () => {
       fireEvent.submit(searchInput);
 
       expect(mockPush).toHaveBeenCalledWith(
-        expect.stringContaining("/listings?q=laptop&sort=recent")
+        expect.stringContaining("/listings?q=laptop&sort=recent"),
       );
     });
 
@@ -135,7 +135,7 @@ describe("Header Component", () => {
       fireEvent.submit(searchInput);
 
       expect(mockReplace).toHaveBeenCalledWith(
-        expect.stringContaining("/listings?q=textbook&sort=recent")
+        expect.stringContaining("/listings?q=textbook&sort=recent"),
       );
       expect(mockPush).not.toHaveBeenCalled();
     });
@@ -184,7 +184,7 @@ describe("Header Component", () => {
         () => {
           expect(screen.getByText("T")).toBeInTheDocument();
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
 
       const avatar = screen.getByText("T").closest("span");
@@ -217,7 +217,7 @@ describe("Header Component", () => {
         () => {
           expect(screen.getByText("A")).toBeInTheDocument();
         },
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
 
       // Click avatar to open menu

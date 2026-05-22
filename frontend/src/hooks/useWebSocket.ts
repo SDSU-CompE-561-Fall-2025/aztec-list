@@ -136,7 +136,7 @@ export function useWebSocket({
         if (event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts) {
           const delay = Math.min(
             baseReconnectDelay * Math.pow(1.5, reconnectAttemptsRef.current),
-            30000 // Cap at 30 seconds
+            30000, // Cap at 30 seconds
           );
           reconnectAttemptsRef.current += 1;
 
