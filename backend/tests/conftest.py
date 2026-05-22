@@ -457,3 +457,48 @@ def valid_image_data() -> dict:
         "is_thumbnail": False,
         "alt_text": "Test image description",
     }
+
+
+# ============================================================================
+# AI / Semantic Search Fixtures
+# ============================================================================
+
+
+class FakeEmbedder:
+    """Deterministic keyword-count embedder for tests (no model download, no network)."""
+
+    _VOCAB = ("desk", "chair", "laptop", "bike", "table", "phone", "gaming", "cheap")
+
+    def _embed(self, text: str) -> list[float]:
+        lowered = text.lower()
+        vector = [float(lowered.count(word)) for word in self._VOCAB]
+        vector.append(1.0)  # bias term keeps vectors non-zero so cosine distance is defined
+        return vector
+
+    def embed_query(self, text: str) -> list[float]:
+        return self._embed(text)
+
+    def embed_listing(self, title: str, description: str) -> list[float]:
+        return self._embed(f"{title}\n{description}")
+
+    @property
+    def dimension(self) -> int:
+        return len(self._VOCAB) + 1
+
+
+@pytest.fixture
+def fake_embedder() -> FakeEmbedder:
+    """A deterministic embedder so vector-search tests need no model or network."""
+    return FakeEmbedder()
+
+
+@pytest.fixture
+def memory_vector_store(fake_embedder: FakeEmbedder):
+    """An isolated in-memory Qdrant vector store wired to the fake embedder."""
+    from app.services.vector_store import VectorStoreService
+
+    return VectorStoreService(
+        location=":memory:",
+        collection="test_listings",
+        embedder=fake_embedder,
+    )
