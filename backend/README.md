@@ -62,6 +62,30 @@ backend/
 └── uv.lock               # Lock file
 ```
 
+## AI / Semantic Search
+
+Optional meaning-based listing search (local embeddings + Qdrant vector store). **Off by
+default** — keyword search is used unless you enable it.
+
+```bash
+# backend/.env
+AI__ENABLED=true
+```
+
+Backfill the vector index (stop the dev server first — embedded Qdrant is single-process):
+
+```bash
+uv run python scripts/reindex_listings.py   # clean rebuild: re-embeds every listing
+```
+
+New listings index automatically while AI is enabled. Key settings (full list in
+`.env.example`): `EMBEDDING__MODEL`, `VECTOR__QDRANT_URL` (empty = embedded on-disk),
+`VECTOR__SCORE_FLOOR`, `VECTOR__RELATIVE_MARGIN`.
+
+Architecture, the model benchmark, and tuning rationale (why `bge-small`, why no hybrid, how
+the cutoff was calibrated) live in
+[docs/06-semantic-search.md](../docs/06-semantic-search.md).
+
 ## Development
 
 ### Testing

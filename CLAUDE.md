@@ -27,6 +27,8 @@ uv run ruff check src                 # lint  (config: select = ["ALL"], line-le
 uv run ruff format src                # format
 uv run pytest                         # all tests (cov is on by default via addopts)
 uv run pytest tests/unit/test_user_service.py::TestLogin::test_login_success_with_username -v   # single test
+uv run python scripts/reindex_listings.py   # rebuild semantic-search vector index (when AI__ENABLED)
+uv run --with pip-audit pip-audit --strict   # dependency CVE audit — run after ANY dep change
 ```
 
 Python 3.13 required. `uv run` executes inside the project venv (`backend/.venv`).
@@ -47,6 +49,7 @@ schemas/     Pydantic request/response models (I/O boundary)
 - `core/` holds cross-cutting concerns: `settings.py`, `database.py`, `dependencies.py` (FastAPI DI), `auth.py`/`security.py` (JWT + argon2 via pwdlib), `rate_limiter.py` (slowapi), `email.py` (Resend), `storage.py`/`image_processing.py` (uploads + Pillow), `moderation.py`, `middleware.py`, `websocket.py`.
 - **Config** is `pydantic-settings` with nested env vars using a `__` delimiter — e.g. `JWT__SECRET_KEY`, `CORS__ALLOWED_ORIGINS`, `EMAIL__RESEND_API_KEY`, `DB__DATABASE_URL`. Lives in `backend/.env` (template: `.env.example`).
 - **No migrations.** `Base.metadata.create_all` runs on startup (`main.py` lifespan). Local dev defaults to SQLite (`aztec_list.db`); Docker uses PostgreSQL. Schema changes happen by editing models.
+- **Semantic search (optional, `AI__ENABLED=true`).** `services/embeddings.py` (local fastembed, `bge-small`) + `services/vector_store.py` (Qdrant) back AI listing search; `ListingService.get_filtered` takes the vector path when `semantic=true`, else the keyword `ILIKE` path. A relevance cutoff (`VECTOR__SCORE_FLOOR` + `VECTOR__RELATIVE_MARGIN`) trims results. Local dev = embedded on-disk Qdrant (`VECTOR__PATH`, single-process); Docker = Qdrant container (`VECTOR__QDRANT_URL`). Rebuild the index with `scripts/reindex_listings.py` (dev server stopped). Design, model benchmark, and tuning rationale: `docs/06-semantic-search.md`.
 
 ## Frontend (run from `frontend/`)
 
@@ -68,7 +71,7 @@ Jest mocks router + fetch in `jest.setup.js`; use `renderWithProviders`/`mockFet
 ### Frontend architecture
 
 - **Next.js App Router** (`src/app/`), React 19. No Next API routes — the frontend talks **directly** to the FastAPI backend.
-- **Data layer:** `lib/api.ts` + `lib/messaging-api.ts` are typed `fetch` wrappers. Base URLs come from `lib/constants.ts` (`NEXT_PUBLIC_API_BASE_URL`, default `http://127.0.0.1:8000/api/v1`; `NEXT_PUBLIC_STATIC_BASE_URL` for uploaded images). Query params map 1:1 to FastAPI names (e.g. `q` → `search_text`).
+- **Data layer:** `lib/api.ts` + `lib/messaging-api.ts` are typed `fetch` wrappers. Base URLs come from `lib/constants.ts` (`NEXT_PUBLIC_API_BASE_URL`, default `http://127.0.0.1:8000/api/v1`; `NEXT_PUBLIC_STATIC_BASE_URL` for uploaded images). Query params map 1:1 to FastAPI names (e.g. `q` → `search_text`). The "Smart search (AI)" toggle adds `semantic=true`; semantic results are relevance-ranked and flag the top hit with a "Top match" badge.
 - **Server state:** TanStack Query. `queryOptions/` holds per-domain query-option factories consumed by components.
 - **Auth:** `contexts/AuthContext.tsx` for state; `lib/auth.ts` (`getAuthToken`) injects the JWT into API calls.
 - **UI:** shadcn-style — `components/ui/` built on Radix + `cva` + `tailwind-merge`'s `cn` helper. Tailwind v4 (CSS-based config in `src/app/globals.css`). Prettier sorts classes via `prettier-plugin-tailwindcss`.
@@ -84,4 +87,6 @@ Jest mocks router + fetch in `jest.setup.js`; use `renderWithProviders`/`mockFet
 
 - **Pre-commit** (config: `.pre-commit-config.yaml`): Ruff (backend), Prettier + ESLint (frontend, via `.pre-commit-hooks/` Python wrappers), gitleaks, and whitespace/EOL fixers. Install once from repo root: `uv tool install pre-commit && pre-commit install`. Run manually: `pre-commit run --all-files`.
 - **CI/security** (`.github/workflows/`): `security-audit.yml` runs `pip-audit` (backend) and `bun audit` (frontend); `codeql.yml` (SAST); `gitleaks.yml` (secrets). A red `bun audit` blocks Dependabot PRs from merging — fix the advisory (often via a `package.json` override) rather than ignoring it.
+- **Always run the audit locally after adding or bumping ANY dependency — don't wait for CI.** Backend: `uv run --with pip-audit pip-audit --strict`. Frontend: `bun audit`. Fix advisories by bumping the lock (`uv lock --upgrade-package <name>`) or a `package.json` override — never bypass a red audit.
+- **CodeQL also gates the PR.** Wrap any user-derived value in `sanitize_log()` (`core/logging_safe.py`) before logging to avoid log-injection alerts; do side-effect-only imports via `importlib.import_module(...)` so they don't read as unused imports.
 - **Docker:** `docker-compose up --build` from repo root runs Postgres + backend + frontend; config via root `.env` (template `.env.example`).

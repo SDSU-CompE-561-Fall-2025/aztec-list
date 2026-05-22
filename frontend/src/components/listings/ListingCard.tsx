@@ -9,9 +9,10 @@ import { ImageIcon } from "lucide-react";
 
 interface ListingCardProps {
   listing: ListingSummary;
+  topMatch?: boolean;
 }
 
-export function ListingCard({ listing }: ListingCardProps) {
+export function ListingCard({ listing, topMatch = false }: ListingCardProps) {
   const hasImage = listing.thumbnail_url;
 
   // Build image URL safely
@@ -29,6 +30,18 @@ export function ListingCard({ listing }: ListingCardProps) {
     >
       {/* Image or placeholder */}
       <div className="relative aspect-square overflow-hidden rounded-md bg-muted">
+        {topMatch && (
+          <div
+            className="absolute top-2 left-2 z-10 rounded-full bg-purple-600 px-2 py-0.5 text-xs font-medium text-white shadow"
+            title={
+              listing.relevance_score != null
+                ? `Relevance ${listing.relevance_score.toFixed(2)}`
+                : undefined
+            }
+          >
+            Top match
+          </div>
+        )}
         {imageUrl ? (
           <>
             <Image

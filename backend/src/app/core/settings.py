@@ -210,6 +210,68 @@ class TestSettings(BaseModel):
     )
 
 
+class AISettings(BaseModel):
+    """Master switch and shared config for AI features (semantic search, assistant)."""
+
+    enabled: bool = Field(
+        default=False,
+        description=(
+            "Master switch for AI features. When false, search falls back to keyword "
+            "matching and no embedding model is loaded (no startup cost)."
+        ),
+    )
+
+
+class EmbeddingSettings(BaseModel):
+    """Local text-embedding model configuration (fastembed, no API key)."""
+
+    model: str = Field(
+        default="BAAI/bge-small-en-v1.5",
+        description="fastembed model used to embed listing text; runs locally and offline",
+    )
+
+
+class VectorStoreSettings(BaseModel):
+    """Vector store (Qdrant) configuration for listing embeddings."""
+
+    qdrant_url: str = Field(
+        default="",
+        description=(
+            "Qdrant server URL (e.g. http://localhost:6333). When empty, an embedded "
+            "on-disk Qdrant at `path` is used (single-process, development only)."
+        ),
+    )
+    path: str = Field(
+        default="./qdrant_data",
+        description="On-disk path for the embedded Qdrant used when no server URL is set",
+    )
+    collection: str = Field(
+        default="listings",
+        description="Qdrant collection name holding listing vectors",
+    )
+    score_floor: float = Field(
+        default=0.40,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Absolute minimum cosine similarity for a semantic match. If even the best hit "
+            "scores below this, the query is treated as matching nothing. Keep low; the "
+            "relative margin does most of the trimming."
+        ),
+    )
+    relative_margin: float = Field(
+        default=0.05,
+        ge=0.0,
+        le=2.0,
+        description=(
+            "Keep only listings scoring within this cosine margin of the best hit. Adapts to "
+            "each query's score scale (unlike a fixed threshold). Smaller = stricter; set high "
+            "(e.g. 2.0) to disable relative trimming. 0.05 calibrated for bge-small's tight "
+            "score clustering on short listings."
+        ),
+    )
+
+
 class Settings(BaseSettings):
     """
     Application settings loaded from environment variables.
@@ -238,6 +300,9 @@ class Settings(BaseSettings):
     email: EmailSettings = Field(default_factory=EmailSettings)
     rate_limit: RateLimitSettings = Field(default_factory=RateLimitSettings)
     test: TestSettings = Field(default_factory=TestSettings)
+    ai: AISettings = Field(default_factory=AISettings)
+    embedding: EmbeddingSettings = Field(default_factory=EmbeddingSettings)
+    vector: VectorStoreSettings = Field(default_factory=VectorStoreSettings)
 
 
 @lru_cache

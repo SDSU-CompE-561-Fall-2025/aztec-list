@@ -23,3 +23,7 @@ htmlcov/
 # Virtual environments
 .venv/
 venv/
+
+# AI / semantic search local artifacts
+qdrant_data/
+local_cache/

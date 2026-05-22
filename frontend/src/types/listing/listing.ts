@@ -13,6 +13,7 @@ export interface ListingSummary {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  relevance_score?: number | null;
 }
 
 export interface ListingSearchResponse {

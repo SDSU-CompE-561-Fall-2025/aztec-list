@@ -106,6 +106,29 @@ class ListingRepository:
         )
 
     @staticmethod
+    def get_by_ids(db: Session, listing_ids: list[uuid.UUID]) -> list[Listing]:
+        """
+        Get active listings by a list of IDs, preserving the order of `listing_ids`.
+
+        Used by semantic search: the vector store returns IDs ranked by relevance,
+        and the rows are re-ordered in Python to match that ranking.
+
+        Args:
+            db: Database session
+            listing_ids: Listing IDs in the desired output order
+
+        Returns:
+            list[Listing]: Active listings ordered to match listing_ids (missing/inactive dropped)
+        """
+        if not listing_ids:
+            return []
+        rows = db.scalars(
+            select(Listing).where(Listing.id.in_(listing_ids), Listing.is_active)
+        ).all()
+        order = {listing_id: index for index, listing_id in enumerate(listing_ids)}
+        return sorted(rows, key=lambda row: order[row.id])
+
+    @staticmethod
     def get_by_seller(
         db: Session, seller_id: uuid.UUID, params: UserListingsParams
     ) -> list[Listing]:
