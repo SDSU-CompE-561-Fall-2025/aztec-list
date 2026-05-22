@@ -13,6 +13,7 @@ from pathlib import Path
 import resend
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+from app.core.logging_safe import sanitize_log
 from app.core.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -163,10 +164,10 @@ class EmailService:
                 }
             )
         except Exception:
-            logger.exception("Failed to send verification email to %s", email)
+            logger.exception("Failed to send verification email to %s", sanitize_log(email))
             return False
         else:
-            logger.info("Verification email sent to %s", email)
+            logger.info("Verification email sent to %s", sanitize_log(email))
             return True
 
 

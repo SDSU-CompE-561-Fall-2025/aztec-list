@@ -13,6 +13,7 @@ from fastapi import HTTPException, status
 
 from app.core.auth import get_password_hash, verify_password
 from app.core.email import email_service
+from app.core.logging_safe import sanitize_log
 from app.core.security import generate_verification_token, get_verification_token_expiry
 from app.repository.admin import AdminActionRepository
 from app.repository.user import UserRepository
@@ -268,8 +269,8 @@ class UserService:
                     "Failed to send verification email during email change",
                     extra={
                         "user_id": str(user.id),
-                        "old_email": user.email,
-                        "new_email": update_data.email,
+                        "old_email": sanitize_log(user.email),
+                        "new_email": sanitize_log(update_data.email),
                     },
                 )
 

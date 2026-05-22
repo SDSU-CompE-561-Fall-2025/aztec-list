@@ -30,6 +30,12 @@ bun.lockb
 # testing
 /coverage
 
+# playwright (generated reports/artifacts — never commit)
+/playwright-report/
+/test-results/
+/blob-report/
+/playwright/.cache/
+
 # next.js
 /.next/
 /out/

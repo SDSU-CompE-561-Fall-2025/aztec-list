@@ -5,15 +5,23 @@
  * authentication helpers, and common assertions.
  */
 
+import { randomUUID } from "node:crypto";
+
 import { Page, expect } from "@playwright/test";
+
+/**
+ * Generate a short, cryptographically-random suffix for unique test data.
+ */
+function randomSuffix(): string {
+  return randomUUID().replace(/-/g, "").slice(0, 6);
+}
 
 /**
  * Generate a unique test email address
  */
 export function generateTestEmail(): string {
   const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
-  return `test.${timestamp}.${random}@sdsu.edu`;
+  return `test.${timestamp}.${randomSuffix()}@sdsu.edu`;
 }
 
 /**
@@ -21,8 +29,7 @@ export function generateTestEmail(): string {
  */
 export function generateUsername(): string {
   const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
-  return `user_${timestamp}_${random}`;
+  return `user_${timestamp}_${randomSuffix()}`;
 }
 
 /**

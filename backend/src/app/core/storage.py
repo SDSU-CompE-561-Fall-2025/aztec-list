@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING
 from fastapi import HTTPException, status
 
 from app.core.image_processing import strip_exif_and_optimize
+from app.core.logging_safe import sanitize_log
 from app.core.settings import settings
 
 if TYPE_CHECKING:
@@ -37,6 +38,26 @@ MIN_PROFILE_PATH_PARTS = 4  # /, uploads, profiles, user_id, filename
 
 # Allowed image extensions
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+
+
+def _resolve_within(base: Path, *parts: str) -> Path:
+    """
+    Join ``parts`` onto ``base`` and ensure the result stays inside ``base``.
+
+    Guards against path traversal (e.g. ``..`` segments or absolute paths) in
+    any path component that may be influenced by user input.
+
+    Raises:
+        HTTPException: 400 if the resolved path escapes ``base``.
+    """
+    base_resolved = base.resolve()
+    target = base_resolved.joinpath(*parts).resolve()
+    if not target.is_relative_to(base_resolved):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file path",
+        )
+    return target
 
 
 def validate_image_file(file: UploadFile) -> None:
@@ -129,6 +150,10 @@ async def save_upload_file(file: UploadFile, listing_id: uuid.UUID) -> str:
             detail="Filename is required",
         )
 
+    # Validate the destination directory stays within the upload base before any I/O.
+    upload_path = _resolve_within(Path(settings.storage.upload_dir), str(listing_id))
+    file_path: Path | None = None
+
     try:
         contents = await file.read()
         # Image processor automatically strips EXIF and optimizes based on size/format
@@ -136,9 +161,8 @@ async def save_upload_file(file: UploadFile, listing_id: uuid.UUID) -> str:
         optimized_contents, extension = strip_exif_and_optimize(contents)
 
         unique_filename = f"{uuid.uuid4()}{extension}"
-        upload_path = Path(settings.storage.upload_dir) / str(listing_id)
         upload_path.mkdir(parents=True, exist_ok=True)
-        file_path = upload_path / unique_filename
+        file_path = _resolve_within(upload_path, unique_filename)
 
         file_path.write_bytes(optimized_contents)
         logger.info(
@@ -148,7 +172,7 @@ async def save_upload_file(file: UploadFile, listing_id: uuid.UUID) -> str:
         )
     except Exception as e:
         # Clean up partial file if save failed
-        if file_path.exists():
+        if file_path is not None and file_path.exists():
             file_path.unlink(missing_ok=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -182,6 +206,10 @@ async def save_profile_picture(file: UploadFile, user_id: uuid.UUID) -> str:
     validate_image_file(file)
     file_size = validate_file_size(file)
 
+    # Validate the destination directory stays within the upload base before any I/O.
+    upload_path = _resolve_within(Path(settings.storage.profile_upload_dir), str(user_id))
+    file_path: Path | None = None
+
     try:
         contents = await file.read()
         # Image processor automatically preserves GIF/WEBP formats when appropriate
@@ -189,9 +217,8 @@ async def save_profile_picture(file: UploadFile, user_id: uuid.UUID) -> str:
         optimized_contents, extension = strip_exif_and_optimize(contents)
 
         filename = f"profile{extension}"
-        upload_path = Path(settings.storage.profile_upload_dir) / str(user_id)
         upload_path.mkdir(parents=True, exist_ok=True)
-        file_path = upload_path / filename
+        file_path = _resolve_within(upload_path, filename)
 
         # Delete any old profile pictures with different extensions
         for old_file in upload_path.glob("profile.*"):
@@ -199,7 +226,9 @@ async def save_profile_picture(file: UploadFile, user_id: uuid.UUID) -> str:
                 try:
                     old_file.unlink()
                     logger.info(
-                        "Deleted old profile picture for user %s: %s", user_id, old_file.name
+                        "Deleted old profile picture for user %s: %s",
+                        sanitize_log(user_id),
+                        sanitize_log(old_file.name),
                     )
                 except OSError as e:
                     logger.warning("Failed to delete old profile picture: %s", e)
@@ -207,13 +236,13 @@ async def save_profile_picture(file: UploadFile, user_id: uuid.UUID) -> str:
         file_path.write_bytes(optimized_contents)
         logger.info(
             "Saved and optimized profile picture for user %s: %s (original: %d KB)",
-            user_id,
-            filename,
+            sanitize_log(user_id),
+            sanitize_log(filename),
             file_size // 1024,
         )
     except Exception as e:
         # Clean up on failure
-        if file_path.exists():
+        if file_path is not None and file_path.exists():
             file_path.unlink(missing_ok=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -235,15 +264,21 @@ def delete_profile_picture(user_id: uuid.UUID) -> None:
         Handles all supported image extensions
     """
     try:
-        profile_dir = Path(settings.storage.profile_upload_dir) / str(user_id)
+        profile_dir = _resolve_within(Path(settings.storage.profile_upload_dir), str(user_id))
 
         # Delete all profile pictures with any extension
         for profile_file in profile_dir.glob("profile.*"):
             if profile_file.is_file():
                 profile_file.unlink()
-                logger.info("Deleted profile picture for user %s: %s", user_id, profile_file.name)
-    except OSError as exc:
-        logger.warning("Failed to delete profile picture for user %s: %s", user_id, exc)
+                logger.info(
+                    "Deleted profile picture for user %s: %s",
+                    sanitize_log(user_id),
+                    sanitize_log(profile_file.name),
+                )
+    except (OSError, HTTPException) as exc:
+        logger.warning(
+            "Failed to delete profile picture for user %s: %s", sanitize_log(user_id), exc
+        )
 
 
 def delete_file(url_path: str) -> None:
@@ -269,27 +304,28 @@ def delete_file(url_path: str) -> None:
 
         # Validate path structure: /uploads/images/{listing_id}/{filename}
         if len(path_parts) < MIN_PATH_PARTS:
-            logger.debug("Path too short: %s", url_path)
+            logger.debug("Path too short: %s", sanitize_log(url_path))
             return
 
         if path_parts[1] != "uploads" or path_parts[2] != "images":
-            logger.debug("Invalid path format: %s", url_path)
+            logger.debug("Invalid path format: %s", sanitize_log(url_path))
             return
 
         listing_id = path_parts[3]
         filename = path_parts[4]
-        file_path = Path(settings.storage.upload_dir) / listing_id / filename
+        # Containment check: reject any traversal in the URL-derived components.
+        file_path = _resolve_within(Path(settings.storage.upload_dir), listing_id, filename)
 
         # Delete file if it exists
         if file_path.exists() and file_path.is_file():
             file_path.unlink()
-            logger.info("Deleted file: %s", file_path)
+            logger.info("Deleted file: %s", sanitize_log(file_path))
         else:
-            logger.debug("File not found: %s", file_path)
+            logger.debug("File not found: %s", sanitize_log(file_path))
 
-    except (OSError, ValueError, IndexError) as exc:
+    except (OSError, ValueError, IndexError, HTTPException) as exc:
         # Log deletion errors but don't break DB operations
-        logger.warning("Failed to delete file %s: %s", url_path, exc)
+        logger.warning("Failed to delete file %s: %s", sanitize_log(url_path), exc)
 
 
 def delete_listing_images(listing_id: uuid.UUID) -> None:
@@ -307,14 +343,14 @@ def delete_listing_images(listing_id: uuid.UUID) -> None:
         Does not raise an error if directory doesn't exist (idempotent operation)
     """
     try:
-        listing_dir = Path(settings.storage.upload_dir) / str(listing_id)
+        listing_dir = _resolve_within(Path(settings.storage.upload_dir), str(listing_id))
 
         if listing_dir.exists() and listing_dir.is_dir():
             # Use shutil.rmtree to recursively delete directory and all contents
             shutil.rmtree(listing_dir)
-            logger.info("Deleted all images for listing %s", listing_id)
+            logger.info("Deleted all images for listing %s", sanitize_log(listing_id))
         else:
-            logger.debug("No image directory found for listing %s", listing_id)
-    except OSError as exc:
+            logger.debug("No image directory found for listing %s", sanitize_log(listing_id))
+    except (OSError, HTTPException) as exc:
         # Log deletion errors but don't break DB operations
-        logger.warning("Failed to delete images for listing %s: %s", listing_id, exc)
+        logger.warning("Failed to delete images for listing %s: %s", sanitize_log(listing_id), exc)
