@@ -6,7 +6,6 @@ Tests for user registration, login, and token-based authentication.
 
 import uuid
 
-import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 

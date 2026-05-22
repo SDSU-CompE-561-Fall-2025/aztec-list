@@ -3,7 +3,6 @@
 import logging
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 from app.core.email import EmailService
 

@@ -4,7 +4,7 @@ import io
 import logging
 import uuid
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import HTTPException, UploadFile

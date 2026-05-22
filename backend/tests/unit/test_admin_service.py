@@ -380,7 +380,7 @@ class TestAdminServiceStrike:
             ]  # First returns strike, second returns ban
             db = MagicMock(spec=Session)
 
-            result = admin_service.create_strike(db, mock_admin.id, mock_user.id, strike_data)
+            admin_service.create_strike(db, mock_admin.id, mock_user.id, strike_data)
 
             # Should create 2 actions: strike + auto-ban
             assert mock_create.call_count == 2

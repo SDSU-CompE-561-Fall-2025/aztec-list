@@ -6,7 +6,6 @@ Tests for user CRUD operations and profile management.
 
 import uuid
 
-import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
@@ -444,7 +443,6 @@ class TestUserIntegration:
         # Get current user
         get_response = authenticated_client.get("/api/v1/users/me")
         assert get_response.status_code == status.HTTP_200_OK
-        original_data = get_response.json()
 
         # Update user
         update_response = authenticated_client.patch(

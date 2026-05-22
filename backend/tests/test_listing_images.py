@@ -6,7 +6,6 @@ Tests for listing image CRUD operations and thumbnail management.
 
 import uuid
 
-import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 

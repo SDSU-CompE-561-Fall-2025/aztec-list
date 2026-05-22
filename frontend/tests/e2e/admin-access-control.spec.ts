@@ -61,7 +61,7 @@ test.describe("Admin Access Control", () => {
       const possibleUrls = ["/", "/login", "/listings"];
       const currentPath = new URL(page.url()).pathname;
       const isValidRedirect = possibleUrls.some(
-        (url) => currentPath === url || currentPath.startsWith(url)
+        (url) => currentPath === url || currentPath.startsWith(url),
       );
       expect(isValidRedirect).toBeTruthy();
     });
@@ -81,9 +81,6 @@ test.describe("Admin Access Control", () => {
       await context.clearCookies();
 
       await page.goto("/admin");
-
-      // Should see loading spinner briefly
-      const loadingText = page.getByText(/loading admin dashboard/i);
 
       // Either loading appears briefly or we're already redirected
       // This is timing-dependent, so we just verify we don't see the actual dashboard
@@ -418,9 +415,6 @@ test.describe("Admin Access Control", () => {
       await context.clearCookies();
 
       await page.goto("/admin");
-
-      // Should show loading spinner
-      const loadingText = page.getByText(/loading/i);
 
       // Loading might be very brief, but should exist
       // We verify the page doesn't crash and eventually redirects
