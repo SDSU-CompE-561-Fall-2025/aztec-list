@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.routes.admin import admin_router
+from app.routes.ai import ai_router
 from app.routes.auth import auth_router
 from app.routes.listing_images import listing_images_router
 from app.routes.listings import listing_router
@@ -18,6 +19,7 @@ api_router.include_router(user_router)
 api_router.include_router(listing_router)
 api_router.include_router(listing_images_router)
 api_router.include_router(admin_router)
+api_router.include_router(ai_router)
 api_router.include_router(message_router)
 api_router.include_router(support_router)
 api_router.include_router(test_router)
