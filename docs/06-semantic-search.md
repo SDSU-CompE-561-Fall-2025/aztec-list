@@ -1,6 +1,6 @@
 # Semantic Search (AI)
 
-AI-powered listing search that ranks by **meaning**, not just keyword overlap — so
+AI-powered listing search that ranks by **meaning**, not just keyword overlap - so
 "something I can drive" surfaces the Porsche and the driving game, and "cologne that
 smells good" finds the fragrances even though none of them contain the word "cologne".
 
@@ -45,8 +45,8 @@ All nested under the `__` env delimiter (see `backend/.env.example`):
 Pure k-NN returns *everything* ranked, so without a cutoff a vague query returned the whole
 catalogue. Two layers trim it:
 
-1. **Absolute floor** (`SCORE_FLOOR`) — if even the best hit is below it, return nothing.
-2. **Relative margin** (`RELATIVE_MARGIN`) — keep only listings within this cosine of the
+1. **Absolute floor** (`SCORE_FLOOR`) - if even the best hit is below it, return nothing.
+2. **Relative margin** (`RELATIVE_MARGIN`) - keep only listings within this cosine of the
    top hit.
 
 The relative margin matters because cosine scores **drift per query**. A fixed threshold is
@@ -64,10 +64,10 @@ cut → raise toward `0.07`. `0.05` was calibrated against real listings (below)
 ## Benchmark findings
 
 These drove the design. Measured on the **real listing data** (19 listings) with realistic
-buyer queries — a small, indicative eval, not a formal benchmark, but enough to overturn two
+buyer queries - a small, indicative eval, not a formal benchmark, but enough to overturn two
 "textbook" assumptions.
 
-### 1. Model: `bge-small` is the sweet spot — bigger is not better
+### 1. Model: `bge-small` is the sweet spot - bigger is not better
 
 5 fastembed models, 12 queries (rank@1 = top result relevant; MRR / Recall@3 over all):
 
@@ -83,7 +83,7 @@ The 67 MB model ties or beats everything up to 10× its size. Larger MTEB-leader
 (mxbai, gte) did **not** separate this short-title catalogue better, so the default stays
 `bge-small`: tiny, fast, 384-dim (cheap storage), offline.
 
-### 2. Hybrid (BM25) would hurt here — dense already wins
+### 2. Hybrid (BM25) would hurt here - dense already wins
 
 Conventional advice is "add BM25 + fuse with RRF" for short text. Measured on this data it
 **regressed**, so it was **not** adopted:
@@ -102,14 +102,14 @@ descriptions get much longer or the catalogue grows a lot.)
 
 ### 3. Negative results (also measured, also skipped)
 
-- **Query instruction prefix** ("Represent this sentence…") — *slightly hurt* `bge-v1.5`,
+- **Query instruction prefix** ("Represent this sentence…") - *slightly hurt* `bge-v1.5`,
   which dropped the instruction requirement. fastembed applies none anyway.
-- **Doc enrichment with labelled fields** ("Category: X. Condition: Y. …") — *hurt*; the
+- **Doc enrichment with labelled fields** ("Category: X. Condition: Y. …") - *hurt*; the
   shared boilerplate tokens dilute the vector.
 
 ### Conclusion
 
-The retrieval bottleneck was never ranking quality (~0.95 MRR already) — it was the
+The retrieval bottleneck was never ranking quality (~0.95 MRR already) - it was the
 **cutoff**. Keep `bge-small`, invest in the threshold. Reranking is moot at this MRR.
 
 ## Operations
@@ -127,7 +127,7 @@ uv run python scripts/reindex_listings.py     # drops + recreates the collection
 vectors behind. Searches drop orphans at query time (IDs are re-resolved to live active rows,
 and the result count reflects only those), and `reindex_listings.py` clears them for good.
 
-**Embedded vs server:** embedded on-disk Qdrant is single-process — fine for a single dev
+**Embedded vs server:** embedded on-disk Qdrant is single-process - fine for a single dev
 worker. For multiple workers, or to run the reindex while the server is up, run the Qdrant
 container and set `VECTOR__QDRANT_URL`.
 
@@ -135,7 +135,7 @@ container and set `VECTOR__QDRANT_URL`.
 
 - **Vague queries on short titles** cluster tightly (`bge-small` scored 0.43–0.61 across the
   whole catalogue for "something I can drive"). The cutoff handles it, but separation is
-  inherently soft — a known trait of small embedders on short text.
+  inherently soft - a known trait of small embedders on short text.
 - **Content artifacts**, not retrieval bugs: a listing literally titled "drugs" scores high
   for many queries. That is a moderation concern (planned LLM moderation), not tuning.
 - **If the catalogue/descriptions grow:** re-benchmark; hybrid (BM25 + dense) and a
@@ -145,9 +145,9 @@ container and set `VECTOR__QDRANT_URL`.
 
 ## Testing
 
-- `tests/unit/test_vector_store.py` — Qdrant logic against an in-memory instance + a
+- `tests/unit/test_vector_store.py` - Qdrant logic against an in-memory instance + a
   deterministic fake embedder (offline, no model download).
-- `tests/integration/test_semantic_search.py` — end-to-end wiring: ordering, relative cutoff,
+- `tests/integration/test_semantic_search.py` - end-to-end wiring: ordering, relative cutoff,
   orphan-vector exclusion, and keyword fallback when AI is off.
-- `tests/unit/test_embeddings.py` — real-model smoke test, marked `slow` (downloads the model;
+- `tests/unit/test_embeddings.py` - real-model smoke test, marked `slow` (downloads the model;
   skip with `-m "not slow"`).
