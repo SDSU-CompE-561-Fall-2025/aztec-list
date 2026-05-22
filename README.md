@@ -86,6 +86,16 @@ bun dev
 - The `dev` script echoes `Dev server: http://localhost:3000` before handing off to Next.js so the link is always visible/clickable.
 - Scripts: `bun run lint`, `bun run build`, `bun run test`, `bun audit`, etc.
 
+## Semantic Search (AI)
+
+Optional AI-powered listing search that ranks by **meaning**, not just keywords — local
+embeddings ([fastembed](https://github.com/qdrant/fastembed)) + [Qdrant](https://qdrant.tech)
+vector search, no external API or key. It is **off by default**; enable with
+`AI__ENABLED=true` (backend) and toggle **"Smart search (AI)"** on the listings page.
+
+Setup, the embedding-model benchmark, and the tuning rationale are documented in
+[docs/06-semantic-search.md](docs/06-semantic-search.md).
+
 ## Security & DevSecOps
 
 The repository ships with an automated security pipeline that runs on every push and pull request to `main`, plus a weekly scheduled scan.
