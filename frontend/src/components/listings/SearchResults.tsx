@@ -5,9 +5,16 @@ import { SKELETON_LOADING_COUNT } from "@/lib/constants";
 interface SearchResultsProps {
   listings: ListingSummary[];
   isLoading: boolean;
+  semantic?: boolean;
+  isFirstPage?: boolean;
 }
 
-export function SearchResults({ listings, isLoading }: SearchResultsProps) {
+export function SearchResults({
+  listings,
+  isLoading,
+  semantic = false,
+  isFirstPage = false,
+}: SearchResultsProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
@@ -26,7 +33,9 @@ export function SearchResults({ listings, isLoading }: SearchResultsProps) {
     return (
       <div className="flex items-center justify-center py-20">
         <p className="text-center text-muted-foreground">
-          No listings match your search. Try adjusting your filters.
+          {semantic
+            ? "No strong matches. Try different words, or turn off Smart search for keyword results."
+            : "No listings match your search. Try adjusting your filters."}
         </p>
       </div>
     );
@@ -34,8 +43,12 @@ export function SearchResults({ listings, isLoading }: SearchResultsProps) {
 
   return (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-      {listings.map((listing) => (
-        <ListingCard key={listing.id} listing={listing} />
+      {listings.map((listing, index) => (
+        <ListingCard
+          key={listing.id}
+          listing={listing}
+          topMatch={semantic && isFirstPage && index === 0}
+        />
       ))}
     </div>
   );

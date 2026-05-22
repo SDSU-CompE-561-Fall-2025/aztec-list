@@ -149,10 +149,35 @@ export function SearchFilters() {
     }
   };
 
+  const semanticEnabled = searchParams.get("semantic") === "true";
+
+  const handleSemanticToggle = (checked: boolean) => {
+    updateURL({ semantic: checked ? "true" : undefined, offset: undefined });
+  };
+
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const filtersContent = (
     <div className="space-y-6">
+      {/* Search Mode Section */}
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-foreground">Search Mode</h3>
+        <label className="flex cursor-pointer items-start gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            checked={semanticEnabled}
+            onChange={(e) => handleSemanticToggle(e.target.checked)}
+            className="mt-0.5 rounded border bg-background text-purple-500 focus:ring-2 focus:ring-purple-500"
+          />
+          <span>
+            Smart search (AI)
+            <span className="block text-xs text-muted-foreground">
+              Finds items by meaning, not just exact keywords.
+            </span>
+          </span>
+        </label>
+      </div>
+
       {/* Category Section */}
       <div>
         <h3 className="mb-3 text-sm font-semibold text-foreground">Category</h3>
@@ -224,17 +249,23 @@ export function SearchFilters() {
       {/* Sort By Section */}
       <div>
         <h3 className="mb-3 text-sm font-semibold text-foreground">Sort By</h3>
-        <select
-          value={selectedSort}
-          onChange={(e) => handleSortChange(e.target.value)}
-          className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
-        >
-          {SORT_OPTIONS.map((sort) => (
-            <option key={sort} value={sort}>
-              {formatSortLabel(sort)}
-            </option>
-          ))}
-        </select>
+        {semanticEnabled ? (
+          <p className="text-sm text-muted-foreground">
+            Sorted by relevance while Smart search is on.
+          </p>
+        ) : (
+          <select
+            value={selectedSort}
+            onChange={(e) => handleSortChange(e.target.value)}
+            className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+          >
+            {SORT_OPTIONS.map((sort) => (
+              <option key={sort} value={sort}>
+                {formatSortLabel(sort)}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* Apply Filters Button */}

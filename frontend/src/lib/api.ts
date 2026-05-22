@@ -6,7 +6,8 @@ import { API_BASE_URL } from "@/lib/constants";
 import { getAuthToken } from "@/lib/auth";
 
 export const getListings = async (params: ListingsParams = {}): Promise<ListingSearchResponse> => {
-  const { q, category, minPrice, maxPrice, condition, sellerId, limit, offset, sort } = params;
+  const { q, category, minPrice, maxPrice, condition, sellerId, limit, offset, sort, semantic } =
+    params;
 
   const url = new URL(`${API_BASE_URL}/listings`);
 
@@ -20,6 +21,7 @@ export const getListings = async (params: ListingsParams = {}): Promise<ListingS
   if (limit !== undefined) url.searchParams.set("limit", String(limit));
   if (offset !== undefined) url.searchParams.set("offset", String(offset));
   if (sort) url.searchParams.set("sort", sort);
+  if (semantic) url.searchParams.set("semantic", "true");
 
   const res = await fetch(url.toString());
   if (!res.ok) {

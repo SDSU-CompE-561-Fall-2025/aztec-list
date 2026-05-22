@@ -41,6 +41,7 @@ function ListingsContent() {
         : undefined,
     sort:
       sortParam && SORT_OPTIONS.includes(sortParam as Sort) ? (sortParam as Sort) : DEFAULT_SORT,
+    semantic: searchParams.get("semantic") === "true",
     limit: DEFAULT_LIMIT,
     offset: parseInt(searchParams.get("offset") ?? "0", 10) || 0,
   };
@@ -65,8 +66,13 @@ function ListingsContent() {
             {filters.q && (
               <div className="mb-6">
                 <h1 className="text-xl font-bold text-foreground">
-                  Search results for &quot;{filters.q}&quot;
+                  {`${filters.semantic ? "Smart results for" : "Search results for"} "${filters.q}"`}
                 </h1>
+                {filters.semantic && (
+                  <p className="mt-1 text-sm text-purple-400">
+                    Ranked by meaning, not just keywords
+                  </p>
+                )}
                 {data && (
                   <p className="mt-1 text-sm text-muted-foreground">
                     {data.count} {data.count === 1 ? "result" : "results"} found
@@ -76,7 +82,12 @@ function ListingsContent() {
             )}
 
             {/* Results grid */}
-            <SearchResults listings={data?.items || []} isLoading={isLoading} />
+            <SearchResults
+              listings={data?.items || []}
+              isLoading={isLoading}
+              semantic={filters.semantic}
+              isFirstPage={filters.offset === 0}
+            />
 
             {/* Pagination controls */}
             {data && <PaginationControls count={data.count} />}

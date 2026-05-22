@@ -12,4 +12,5 @@ export type ListingsParams = {
   limit?: number;
   offset?: number;
   sort?: Sort;
+  semantic?: boolean;
 };
