@@ -48,6 +48,7 @@ export function SearchResults({
           key={listing.id}
           listing={listing}
           topMatch={semantic && isFirstPage && index === 0}
+          priority={index === 0}
         />
       ))}
     </div>
