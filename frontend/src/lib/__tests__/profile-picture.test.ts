@@ -7,6 +7,8 @@ import { STATIC_BASE_URL } from "../constants";
 
 describe("profile-picture.ts", () => {
   const FALLBACK_BASE_URL = STATIC_BASE_URL;
+  // Escape all RegExp metacharacters (the base URL contains "." and ":").
+  const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
   describe("getProfilePictureUrl", () => {
     it("should return null if path is null", () => {
@@ -55,7 +57,7 @@ describe("profile-picture.ts", () => {
       const afterTime = Date.now();
 
       expect(result).toMatch(
-        new RegExp(`^${FALLBACK_BASE_URL.replace(/\//g, "\\/")}\/uploads\/avatar\\.jpg\\?v=\\d+$`),
+        new RegExp(`^${escapeRegExp(FALLBACK_BASE_URL)}/uploads/avatar\\.jpg\\?v=\\d+$`),
       );
 
       const timestamp = parseInt(result!.split("?v=")[1]);
@@ -69,7 +71,7 @@ describe("profile-picture.ts", () => {
       const afterTime = Date.now();
 
       expect(result).toMatch(
-        new RegExp(`^${FALLBACK_BASE_URL.replace(/\//g, "\\/")}\/uploads\/avatar\\.jpg\\?v=\\d+$`),
+        new RegExp(`^${escapeRegExp(FALLBACK_BASE_URL)}/uploads/avatar\\.jpg\\?v=\\d+$`),
       );
 
       const timestamp = parseInt(result!.split("?v=")[1]);
