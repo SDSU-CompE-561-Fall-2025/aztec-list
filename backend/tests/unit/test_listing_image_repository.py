@@ -15,7 +15,6 @@ from app.models.listing import Listing
 from app.models.listing_image import Image
 from app.models.user import User
 from app.repository.listing_image import ListingImageRepository
-from app.schemas.listing_image import ImageCreate, ImageUpdate
 
 
 @pytest.fixture

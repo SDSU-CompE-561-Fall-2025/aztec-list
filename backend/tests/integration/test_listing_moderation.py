@@ -1,10 +1,8 @@
 """Integration tests for automated content moderation in listing creation."""
 
 
-import pytest
 from fastapi import status
 
-from app.main import app
 
 
 class TestListingModerationIntegration:

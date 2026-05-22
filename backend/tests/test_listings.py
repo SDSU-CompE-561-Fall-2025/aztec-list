@@ -6,7 +6,6 @@ Tests for listing CRUD operations, filtering, and pagination.
 
 import uuid
 
-import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 

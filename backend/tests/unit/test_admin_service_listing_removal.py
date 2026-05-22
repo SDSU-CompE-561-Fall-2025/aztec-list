@@ -15,7 +15,6 @@ from app.core.enums import AdminActionType, UserRole
 from app.models.admin import AdminAction
 from app.models.listing import Listing
 from app.models.user import User
-from app.schemas.admin import AdminActionCreate
 from app.services.admin import AdminActionService
 
 
@@ -150,6 +149,8 @@ class TestRemoveListingWithStrike:
 
             # Should create removal action + strike + ban
             assert mock_create.call_count == 3
+            # The listing itself should have been removed
+            mock_delete.assert_called_once()
 
             # Verify ban action was created with correct details
             calls = mock_create.call_args_list
@@ -264,7 +265,7 @@ class TestRemoveListingWithStrike:
         with (
             patch("app.services.admin.ListingRepository.get_by_id") as mock_get_listing,
             patch("app.services.admin.UserRepository.get_by_id") as mock_get_user,
-            patch("app.services.admin.ListingRepository.delete_no_commit") as mock_delete,
+            patch("app.services.admin.ListingRepository.delete_no_commit"),
             patch("app.services.admin.AdminActionRepository.create_no_commit") as mock_create,
         ):
             mock_get_listing.return_value = mock_listing

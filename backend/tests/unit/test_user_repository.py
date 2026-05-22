@@ -6,7 +6,6 @@ Tests the data access layer for user operations.
 
 import uuid
 
-import pytest
 from sqlalchemy.orm import Session
 
 from app.models.user import User

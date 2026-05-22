@@ -16,7 +16,7 @@ from app.core.enums import UserRole
 from app.models.listing import Listing
 from app.models.listing_image import Image
 from app.models.user import User
-from app.schemas.listing_image import ImageCreate, ImageUpdate
+from app.schemas.listing_image import ImageUpdate
 from app.services.listing_image import ListingImageService
 
 

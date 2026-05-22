@@ -110,30 +110,6 @@ class TestUserServiceGet:
             assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
             assert str(random_id) in exc_info.value.detail
 
-    def test_get_by_id_success(self, user_service: UserService, mock_user: User):
-        """Test getting user by ID when exists."""
-        with patch("app.services.user.UserRepository.get_by_id") as mock_get:
-            mock_get.return_value = mock_user
-            db = MagicMock(spec=Session)
-
-            result = user_service.get_by_id(db, mock_user.id)
-
-            assert result == mock_user
-            mock_get.assert_called_once_with(db, mock_user.id)
-
-    def test_get_by_id_not_found_raises_404(self, user_service: UserService):
-        """Test getting user by ID when doesn't exist raises 404."""
-        with patch("app.services.user.UserRepository.get_by_id") as mock_get:
-            mock_get.return_value = None
-            db = MagicMock(spec=Session)
-            random_id = uuid.uuid4()
-
-            with pytest.raises(HTTPException) as exc_info:
-                user_service.get_by_id(db, random_id)
-
-            assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
-            assert str(random_id) in exc_info.value.detail
-
 
 class TestUserServiceCreate:
     """Test UserService create method."""

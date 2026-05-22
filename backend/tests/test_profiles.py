@@ -5,7 +5,6 @@ Tests for profile CRUD operations including creation, retrieval,
 updates, and profile picture management.
 """
 
-import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -243,8 +242,10 @@ class TestUpdateProfile:
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        # Note: This might be flaky if the test runs too fast
-        # In a real scenario, updated_at should be newer or equal
+        assert data["name"] == "New Name"
+        # updated_at should be newer than or equal to the original (same ISO-8601 format,
+        # so lexicographic comparison is valid).
+        assert data["updated_at"] >= original_updated_at
 
     def test_update_profile_picture_via_general_endpoint(
         self, authenticated_client: TestClient, test_profile: Profile

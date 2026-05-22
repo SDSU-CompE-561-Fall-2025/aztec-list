@@ -13,7 +13,6 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import create_access_token
 from app.models.conversation import Conversation
-from app.models.message import Message
 from app.models.user import User
 from app.repository.conversation import ConversationRepository
 from app.repository.message import MessageRepository
@@ -127,7 +126,6 @@ class TestWebSocketAuthentication:
         self, client: TestClient, test_conversation: Conversation, test_user: User
     ):
         """Test first message is not auth type."""
-        token = create_access_token({"sub": str(test_user.id)})
         from starlette.websockets import WebSocketDisconnect
 
         with pytest.raises(WebSocketDisconnect):

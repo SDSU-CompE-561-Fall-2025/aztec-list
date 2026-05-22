@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Git conventions
 
-- **Commits: title only.** No body/description, no `Co-Authored-By` trailer. One concise subject line.
+- **Commits: title only.** No body/description, no `Co-Authored-By` trailer. One concise subject line, **≤50 characters** (longer subjects wrap and look broken in git viewers).
 - **Never open pull requests.** Do not run `gh pr create` (or any PR-opening command). Commit and push only; the user opens PRs themselves.
 
 ## Workspace layout — run commands in the right directory

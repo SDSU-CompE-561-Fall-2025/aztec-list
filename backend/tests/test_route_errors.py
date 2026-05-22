@@ -8,12 +8,10 @@ Tests for various error scenarios across all routes including:
 - Type validation errors
 """
 
-import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.models.listing import Listing
-from app.models.user import User
 
 
 class TestInvalidUUIDs:
