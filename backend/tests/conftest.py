@@ -28,6 +28,14 @@ from app.models.user import User
 # Disable rate limiting for all tests by default (can be enabled in specific tests)
 settings.rate_limit.enabled = False
 limiter.enabled = False
+# Skip LLM query expansion in tests (no LLM available; keeps search offline + deterministic).
+settings.llm.expand_queries = False
+
+# Force the global vector store to in-memory during tests so it never touches the
+# on-disk ./qdrant_data (a running dev server may hold a lock on it).
+from app.services.vector_store import vector_store as _global_vector_store  # noqa: E402
+
+_global_vector_store._location = ":memory:"  # noqa: SLF001
 
 # Use in-memory SQLite for tests
 TEST_DATABASE_URL = "sqlite:///:memory:"
