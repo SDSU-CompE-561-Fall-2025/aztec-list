@@ -28,6 +28,7 @@ uv run ruff format src                # format
 uv run pytest                         # all tests (cov is on by default via addopts)
 uv run pytest tests/unit/test_user_service.py::TestLogin::test_login_success_with_username -v   # single test
 uv run python scripts/reindex_listings.py   # rebuild semantic-search vector index (when AI__ENABLED)
+uv run --with pip-audit pip-audit --strict   # dependency CVE audit — run after ANY dep change
 ```
 
 Python 3.13 required. `uv run` executes inside the project venv (`backend/.venv`).
@@ -86,4 +87,6 @@ Jest mocks router + fetch in `jest.setup.js`; use `renderWithProviders`/`mockFet
 
 - **Pre-commit** (config: `.pre-commit-config.yaml`): Ruff (backend), Prettier + ESLint (frontend, via `.pre-commit-hooks/` Python wrappers), gitleaks, and whitespace/EOL fixers. Install once from repo root: `uv tool install pre-commit && pre-commit install`. Run manually: `pre-commit run --all-files`.
 - **CI/security** (`.github/workflows/`): `security-audit.yml` runs `pip-audit` (backend) and `bun audit` (frontend); `codeql.yml` (SAST); `gitleaks.yml` (secrets). A red `bun audit` blocks Dependabot PRs from merging — fix the advisory (often via a `package.json` override) rather than ignoring it.
+- **Always run the audit locally after adding or bumping ANY dependency — don't wait for CI.** Backend: `uv run --with pip-audit pip-audit --strict`. Frontend: `bun audit`. Fix advisories by bumping the lock (`uv lock --upgrade-package <name>`) or a `package.json` override — never bypass a red audit.
+- **CodeQL also gates the PR.** Wrap any user-derived value in `sanitize_log()` (`core/logging_safe.py`) before logging to avoid log-injection alerts; do side-effect-only imports via `importlib.import_module(...)` so they don't read as unused imports.
 - **Docker:** `docker-compose up --build` from repo root runs Postgres + backend + frontend; config via root `.env` (template `.env.example`).
