@@ -54,6 +54,19 @@ repos:
       - id: ruff-format
         files: ^backend/src/.*\.py$
 
+  # Backend lockfile: regenerate uv.lock when backend manifest/lock changes.
+  # pre-commit.ci (autofix_prs) commits the refreshed lock back onto PRs,
+  # which keeps Dependabot pip bumps in sync (it never updates uv.lock).
+  - repo: local
+    hooks:
+      - id: uv-lock-backend
+        name: uv lock (backend)
+        entry: uv lock --project backend
+        language: python
+        additional_dependencies: ["uv==0.10.2"]
+        files: ^backend/(pyproject\.toml|uv\.lock)$
+        pass_filenames: false
+
   # Frontend JavaScript/TypeScript hooks
   - repo: local
     hooks:
