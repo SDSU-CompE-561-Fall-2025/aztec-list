@@ -13,6 +13,7 @@ left behind by deletes/deactivations that happened while AI was disabled.
 
 from __future__ import annotations
 
+import importlib
 import logging
 import sys
 from pathlib import Path
@@ -22,12 +23,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from sqlalchemy import select
 
-# Imported for its side effect: transitively imports every ORM model so SQLAlchemy
-# can resolve relationship() targets (e.g. Listing.seller -> User) before querying.
-import app.api.v1.routes  # noqa: F401
 from app.core.database import SessionLocal
 from app.models.listing import Listing
 from app.services.vector_store import vector_store
+
+# Side effect: load every ORM model so SQLAlchemy can resolve relationship()
+# targets (e.g. Listing.seller -> User) before querying. Done via import_module
+# (not a bare import) so it doesn't read as an unused import.
+importlib.import_module("app.api.v1.routes")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("reindex_listings")

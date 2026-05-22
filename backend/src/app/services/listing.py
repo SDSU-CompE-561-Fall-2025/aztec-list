@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
 
+from app.core.logging_safe import sanitize_log
 from app.core.security import ensure_resource_owner
 from app.core.settings import settings
 from app.core.storage import delete_listing_images
@@ -238,7 +239,7 @@ class ListingService:
         try:
             vector_store.upsert_listing(listing)
         except Exception:  # eventual consistency; repair via reindex script
-            logger.exception("Failed to index listing %s in vector store", listing.id)
+            logger.exception("Failed to index listing %s in vector store", sanitize_log(listing.id))
 
     @staticmethod
     def _deindex_listing(listing_id: uuid.UUID) -> None:
@@ -248,7 +249,9 @@ class ListingService:
         try:
             vector_store.delete_listing(listing_id)
         except Exception:  # eventual consistency; repair via reindex script
-            logger.exception("Failed to remove listing %s from vector store", listing_id)
+            logger.exception(
+                "Failed to remove listing %s from vector store", sanitize_log(listing_id)
+            )
 
 
 # Create a singleton instance
