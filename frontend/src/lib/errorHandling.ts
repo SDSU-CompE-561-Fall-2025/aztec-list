@@ -40,7 +40,7 @@ export function handleBannedUser() {
  */
 export function showErrorToast(
   error: Error | unknown,
-  fallbackMessage: string = "An error occurred"
+  fallbackMessage: string = "An error occurred",
 ) {
   const message = error instanceof Error ? error.message : fallbackMessage;
 

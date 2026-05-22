@@ -18,7 +18,7 @@ interface FetchOptions extends RequestInit {
  */
 export async function authenticatedFetch(
   url: string,
-  options: FetchOptions = {}
+  options: FetchOptions = {},
 ): Promise<Response> {
   const { requiresAuth = false, headers, ...restOptions } = options;
 

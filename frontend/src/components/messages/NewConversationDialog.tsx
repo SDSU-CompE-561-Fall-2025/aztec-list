@@ -61,7 +61,7 @@ export function NewConversationDialog({
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -155,7 +155,7 @@ export function NewConversationDialog({
                 onClick={handleSearch}
                 disabled={isSearching || !searchQuery.trim()}
                 size="icon"
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="bg-purple-600 text-white hover:bg-purple-700"
                 aria-label="Search users"
               >
                 {isSearching ? (
@@ -174,7 +174,7 @@ export function NewConversationDialog({
 
           {/* Search Results */}
           {!selectedUser && searchResults.length > 0 && (
-            <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
+            <div className="max-h-64 divide-y overflow-y-auto rounded-lg border">
               {searchResults.map((user) => (
                 <UserSearchResultItem
                   key={user.id}
@@ -191,7 +191,7 @@ export function NewConversationDialog({
 
           {/* No Results */}
           {!selectedUser && hasSearched && !isSearching && searchResults.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">No users found</p>
+            <p className="py-4 text-center text-sm text-muted-foreground">No users found</p>
           )}
 
           {/* Actions */}
@@ -212,11 +212,11 @@ export function NewConversationDialog({
             <Button
               onClick={handleStartConversation}
               disabled={!selectedUser || createConversationMutation.isPending}
-              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+              className="flex-1 bg-purple-600 text-white hover:bg-purple-700"
             >
               {createConversationMutation.isPending ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating...
                 </>
               ) : (
@@ -248,7 +248,7 @@ function SelectedUserDisplay({ user, onClear }: { user: UserPublic; onClear: () 
   });
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted">
+    <div className="flex items-center gap-3 rounded-lg border bg-muted p-3">
       <Avatar className="h-10 w-10">
         <AvatarImage
           src={getProfilePictureUrl(profile?.profile_picture_url, profile?.updated_at) || undefined}
@@ -257,8 +257,8 @@ function SelectedUserDisplay({ user, onClear }: { user: UserPublic; onClear: () 
         />
         <AvatarFallback>{user.username[0]?.toUpperCase()}</AvatarFallback>
       </Avatar>
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold truncate">{user.username}</p>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-semibold">{user.username}</p>
       </div>
       <Button variant="ghost" size="icon" onClick={onClear}>
         <X className="h-4 w-4" />
@@ -287,7 +287,7 @@ function UserSearchResultItem({ user, onClick }: { user: UserPublic; onClick: ()
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 p-3 hover:bg-muted transition-colors text-left focus:outline-none focus:ring-2 focus:ring-primary"
+      className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-muted focus:ring-2 focus:ring-primary focus:outline-none"
       aria-label={`Select ${user.username}`}
     >
       <Avatar className="h-10 w-10">
@@ -298,8 +298,8 @@ function UserSearchResultItem({ user, onClick }: { user: UserPublic; onClick: ()
         />
         <AvatarFallback>{user.username[0]?.toUpperCase()}</AvatarFallback>
       </Avatar>
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold truncate">{user.username}</p>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-semibold">{user.username}</p>
       </div>
     </button>
   );

@@ -57,7 +57,7 @@ describe("auth.ts", () => {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
-        })
+        }),
       );
     });
 
@@ -68,7 +68,7 @@ describe("auth.ts", () => {
         login({
           username: "wrong@sdsu.edu",
           password: "wrongpass",
-        })
+        }),
       ).rejects.toThrow("Invalid credentials");
     });
 
@@ -79,7 +79,7 @@ describe("auth.ts", () => {
         login({
           username: "test@sdsu.edu",
           password: "password123",
-        })
+        }),
       ).rejects.toThrow("Network error");
     });
   });
@@ -112,7 +112,7 @@ describe("auth.ts", () => {
           headers: {
             "Content-Type": "application/json",
           },
-        })
+        }),
       );
     });
 
@@ -124,7 +124,7 @@ describe("auth.ts", () => {
           email: "existing@sdsu.edu",
           username: "newuser",
           password: "password123",
-        })
+        }),
       ).rejects.toThrow("Email already registered");
     });
   });
@@ -207,7 +207,7 @@ describe("auth.ts", () => {
             "Content-Type": "application/json",
             Authorization: "Bearer test-token",
           }),
-        })
+        }),
       );
     });
 
@@ -221,7 +221,7 @@ describe("auth.ts", () => {
       mockFetchError("Current password is incorrect", 401);
 
       await expect(changePassword("wrongPass", "newPass")).rejects.toThrow(
-        "Current password is incorrect"
+        "Current password is incorrect",
       );
     });
   });
@@ -254,7 +254,7 @@ describe("auth.ts", () => {
           headers: expect.objectContaining({
             Authorization: "Bearer test-token",
           }),
-        })
+        }),
       );
     });
 

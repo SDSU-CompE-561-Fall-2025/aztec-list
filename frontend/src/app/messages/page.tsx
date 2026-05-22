@@ -23,14 +23,14 @@ export default function MessagesPage() {
   const isHydrated = useSyncExternalStore(
     () => () => {},
     () => true,
-    () => false
+    () => false,
   );
 
   // Initialize state from URL params directly to avoid effect setState
   const conversationFromUrl = searchParams.get("conversation");
   const userFromUrl = searchParams.get("user");
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(
-    conversationFromUrl
+    conversationFromUrl,
   );
   const [selectedOtherUserId, setSelectedOtherUserId] = useState<string | null>(userFromUrl);
   const [isMobileThreadView, setIsMobileThreadView] = useState(!!conversationFromUrl);
@@ -51,7 +51,7 @@ export default function MessagesPage() {
       // Update URL
       router.push(`/messages?conversation=${conversationId}&user=${otherUserId}`);
     },
-    [router]
+    [router],
   );
 
   const handleBackToList = useCallback(() => {
@@ -71,11 +71,11 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
-      <div className="flex-1 flex overflow-hidden">
+    <div className="flex h-[calc(100vh-4rem)] flex-col">
+      <div className="flex flex-1 overflow-hidden">
         {/* Conversation List - Desktop: always visible, Mobile: hide when thread is shown */}
         <div
-          className={`w-full md:w-80 lg:w-96 border-r bg-background ${
+          className={`w-full border-r bg-background md:w-80 lg:w-96 ${
             isMobileThreadView ? "hidden md:block" : "block"
           }`}
         >
@@ -96,7 +96,7 @@ export default function MessagesPage() {
           {selectedConversationId && selectedOtherUserId && otherUser ? (
             <>
               {/* Mobile Back Button */}
-              <div className="md:hidden border-b p-2">
+              <div className="border-b p-2 md:hidden">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -117,12 +117,12 @@ export default function MessagesPage() {
               />
             </>
           ) : (
-            <div className="hidden md:flex flex-1 items-center justify-center p-8 text-center">
+            <div className="hidden flex-1 items-center justify-center p-8 text-center md:flex">
               <div className="max-w-sm space-y-4">
-                <MessageSquare className="h-16 w-16 text-muted-foreground mx-auto" />
+                <MessageSquare className="mx-auto h-16 w-16 text-muted-foreground" />
                 <div>
-                  <h2 className="font-semibold text-lg">No conversation selected</h2>
-                  <p className="text-muted-foreground mt-2">
+                  <h2 className="text-lg font-semibold">No conversation selected</h2>
+                  <p className="mt-2 text-muted-foreground">
                     Choose a conversation from the list to view messages
                   </p>
                 </div>

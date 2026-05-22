@@ -47,7 +47,7 @@ interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
  */
 export function renderWithProviders(
   ui: ReactElement,
-  { queryClient, ...renderOptions }: CustomRenderOptions = {}
+  { queryClient, ...renderOptions }: CustomRenderOptions = {},
 ) {
   return render(ui, {
     wrapper: ({ children }) => (
@@ -70,7 +70,7 @@ export function mockFetch(response: unknown, options: { ok?: boolean; status?: n
       json: () => Promise.resolve(response),
       text: () => Promise.resolve(JSON.stringify(response)),
       headers: new Headers(),
-    })
+    }),
   ) as jest.Mock;
 
   return global.fetch as jest.Mock;
@@ -87,7 +87,7 @@ export function mockFetchError(error: string, status = 400) {
       json: () => Promise.resolve({ detail: error }),
       text: () => Promise.resolve(JSON.stringify({ detail: error })),
       headers: new Headers(),
-    })
+    }),
   ) as jest.Mock;
 
   return global.fetch as jest.Mock;

@@ -11,21 +11,21 @@ export default function SupportPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur-sm">
+        <div className="mx-auto max-w-7xl px-6 py-4">
           <Button
             variant="ghost"
-            className="text-muted-foreground hover:text-foreground -ml-3"
+            className="-ml-3 text-muted-foreground hover:text-foreground"
             onClick={() => router.back()}
           >
-            <ChevronLeft className="w-4 h-4 mr-2" />
+            <ChevronLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8 lg:py-12">
+      <div className="mx-auto max-w-7xl px-6 py-8 lg:py-12">
         <ContactSupportForm />
       </div>
     </div>

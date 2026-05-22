@@ -55,7 +55,7 @@ export function ConversationList({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex h-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -84,14 +84,14 @@ export function ConversationList({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-background">
-        <h2 className="font-semibold text-lg">Messages</h2>
+      <div className="flex items-center justify-between border-b bg-background p-4">
+        <h2 className="text-lg font-semibold">Messages</h2>
         <Button
           onClick={() => setShowNewConversationDialog(true)}
           size="sm"
-          className="gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
+          className="gap-1.5 bg-purple-600 text-white hover:bg-purple-700"
           aria-label="Start new conversation"
         >
           <Plus className="h-4 w-4" />
@@ -111,11 +111,11 @@ export function ConversationList({
       {/* Conversations List */}
       <div className="flex-1 overflow-y-auto">
         {conversations && conversations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center">
+          <div className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center">
             <MessageSquare className="h-16 w-16 text-muted-foreground" />
             <div>
               <p className="font-semibold">No conversations yet</p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Message a seller from a listing to start a conversation
               </p>
             </div>
@@ -188,7 +188,7 @@ function ConversationListItem({
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
         if (!response.ok) return false;
         const messages = await response.json();
@@ -212,8 +212,8 @@ function ConversationListItem({
     <button
       onClick={onClick}
       className={cn(
-        "w-full flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-primary",
-        isSelected && "bg-muted"
+        "flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50 focus:ring-2 focus:ring-primary focus:outline-none",
+        isSelected && "bg-muted",
       )}
       aria-label={`Conversation with ${displayName}`}
       aria-current={isSelected ? "true" : undefined}
@@ -223,7 +223,7 @@ function ConversationListItem({
           src={
             getProfilePictureUrl(
               otherUserProfile?.profile_picture_url,
-              otherUserProfile?.profile_picture_updated_at
+              otherUserProfile?.profile_picture_updated_at,
             ) || undefined
           }
           alt={displayName}
@@ -232,12 +232,12 @@ function ConversationListItem({
         <AvatarFallback>{displayName[0]?.toUpperCase()}</AvatarFallback>
       </Avatar>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-baseline justify-between gap-2 mb-1">
-          <p className="font-semibold truncate">{displayName}</p>
-          <span className="text-xs text-muted-foreground shrink-0">{timeString}</span>
+      <div className="min-w-0 flex-1">
+        <div className="mb-1 flex items-baseline justify-between gap-2">
+          <p className="truncate font-semibold">{displayName}</p>
+          <span className="shrink-0 text-xs text-muted-foreground">{timeString}</span>
         </div>
-        <p className="text-sm text-muted-foreground truncate">
+        <p className="truncate text-sm text-muted-foreground">
           {conversation.last_message && conversation.last_message.trim() !== ""
             ? conversation.last_message
             : hasMessages
@@ -247,7 +247,7 @@ function ConversationListItem({
       </div>
 
       {conversation.unread_count && conversation.unread_count > 0 && (
-        <div className="shrink-0 h-5 min-w-5 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center px-1.5">
+        <div className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">
           {conversation.unread_count}
         </div>
       )}

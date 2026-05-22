@@ -129,7 +129,7 @@ describe("AuthContext", () => {
             username: "wrong@sdsu.edu",
             password: "wrongpass",
           });
-        })
+        }),
       ).rejects.toThrow("Invalid credentials");
 
       expect(result.current.isAuthenticated).toBe(false);

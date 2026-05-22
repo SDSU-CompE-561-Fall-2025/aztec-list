@@ -156,7 +156,7 @@ export default function AdminDashboard() {
           {
             duration: 6000,
             style: TOAST_STYLES.error,
-          }
+          },
         );
       } else {
         toast.success(`Strike issued successfully! User now has ${data.strike_count} strike(s).`, {
@@ -242,7 +242,7 @@ export default function AdminDashboard() {
         data.is_verified ? "User verified successfully!" : "User unverified successfully!",
         {
           style: TOAST_STYLES.success,
-        }
+        },
       );
     },
     onError: (error) => {
@@ -317,10 +317,10 @@ export default function AdminDashboard() {
 
   if (authLoading) {
     return (
-      <div className="container mx-auto p-8 max-w-6xl">
-        <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="container mx-auto max-w-6xl p-8">
+        <div className="flex min-h-[60vh] items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-purple-600"></div>
             <p className="text-muted-foreground">Loading admin dashboard...</p>
           </div>
         </div>
@@ -335,19 +335,19 @@ export default function AdminDashboard() {
   const actions = actionsData?.items || [];
 
   return (
-    <div className="container mx-auto px-4 py-6 sm:px-6 sm:py-8 max-w-6xl">
-      <div className="mb-6 max-w-4xl mx-auto">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Admin Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+    <div className="container mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+      <div className="mx-auto mb-6 max-w-4xl">
+        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Admin Dashboard</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Manage users, listings, and moderation actions
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b max-w-4xl mx-auto">
+      <div className="mx-auto mb-6 flex max-w-4xl gap-2 border-b">
         <button
           onClick={() => setActiveTab("actions")}
-          className={`px-4 py-2 font-medium text-sm transition-colors ${
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === "actions"
               ? "border-b-2 border-purple-500 text-purple-300"
               : "text-muted-foreground hover:text-foreground"
@@ -357,7 +357,7 @@ export default function AdminDashboard() {
         </button>
         <button
           onClick={() => setActiveTab("strike")}
-          className={`px-4 py-2 font-medium text-sm transition-colors ${
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === "strike"
               ? "border-b-2 border-purple-500 text-purple-400"
               : "text-gray-400 hover:text-gray-200"
@@ -367,7 +367,7 @@ export default function AdminDashboard() {
         </button>
         <button
           onClick={() => setActiveTab("ban")}
-          className={`px-4 py-2 font-medium text-sm transition-colors ${
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === "ban"
               ? "border-b-2 border-purple-500 text-purple-400"
               : "text-gray-400 hover:text-gray-200"
@@ -377,7 +377,7 @@ export default function AdminDashboard() {
         </button>
         <button
           onClick={() => setActiveTab("remove")}
-          className={`px-4 py-2 font-medium text-sm transition-colors ${
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === "remove"
               ? "border-b-2 border-purple-500 text-purple-400"
               : "text-gray-400 hover:text-gray-200"
@@ -387,7 +387,7 @@ export default function AdminDashboard() {
         </button>
         <button
           onClick={() => setActiveTab("verify")}
-          className={`px-4 py-2 font-medium text-sm transition-colors ${
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === "verify"
               ? "border-b-2 border-purple-500 text-purple-400"
               : "text-gray-400 hover:text-gray-200"
@@ -397,7 +397,7 @@ export default function AdminDashboard() {
         </button>
         <button
           onClick={() => setActiveTab("support")}
-          className={`px-4 py-2 font-medium text-sm transition-colors ${
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === "support"
               ? "border-b-2 border-purple-500 text-purple-400"
               : "text-gray-400 hover:text-gray-200"
@@ -409,35 +409,35 @@ export default function AdminDashboard() {
 
       {/* Actions History Tab */}
       {activeTab === "actions" && (
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-foreground">
+        <div className="mx-auto max-w-4xl">
+          <h2 className="mb-4 text-lg font-semibold text-foreground sm:text-xl">
             Recent Admin Actions
           </h2>
           {actionsLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600 mx-auto mb-3"></div>
-                <p className="text-muted-foreground text-sm">Loading actions...</p>
+                <div className="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-b-2 border-purple-600"></div>
+                <p className="text-sm text-muted-foreground">Loading actions...</p>
               </div>
             </div>
           ) : actions.length === 0 ? (
-            <Card className="bg-card border">
+            <Card className="border bg-card">
               <CardContent className="py-12 text-center">
-                <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <AlertCircle className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
                 <p className="text-muted-foreground">No actions recorded yet.</p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-2.5">
               {actions.map((action: AdminAction) => (
-                <Card key={action.id} className="bg-card border">
+                <Card key={action.id} className="border bg-card">
                   <CardContent className="p-3.5">
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1 space-y-2">
                         {/* Action Type Badge and Timestamp */}
-                        <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border ${
+                            className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold ${
                               ACTION_TYPE_CONFIG[
                                 action.action_type as keyof typeof ACTION_TYPE_CONFIG
                               ]?.bgColor || "bg-gray-500/10"
@@ -462,18 +462,18 @@ export default function AdminDashboard() {
 
                         {/* Target User */}
                         <div className="flex items-baseline gap-1.5">
-                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                             Target:
                           </span>
                           {action.target_username ? (
                             <span className="text-sm font-medium text-foreground">
                               {action.target_username}
-                              <span className="text-xs text-muted-foreground ml-1.5 font-mono">
+                              <span className="ml-1.5 font-mono text-xs text-muted-foreground">
                                 {action.target_user_id}
                               </span>
                             </span>
                           ) : (
-                            <span className="text-xs text-muted-foreground font-mono">
+                            <span className="font-mono text-xs text-muted-foreground">
                               {action.target_user_id}
                             </span>
                           )}
@@ -481,18 +481,18 @@ export default function AdminDashboard() {
 
                         {/* Admin User */}
                         <div className="flex items-baseline gap-1.5">
-                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                             Admin:
                           </span>
                           {action.admin_username ? (
                             <span className="text-sm text-foreground">
                               {action.admin_username}
-                              <span className="text-xs text-muted-foreground ml-1.5 font-mono">
+                              <span className="ml-1.5 font-mono text-xs text-muted-foreground">
                                 {action.admin_id}
                               </span>
                             </span>
                           ) : (
-                            <span className="text-xs text-muted-foreground font-mono">
+                            <span className="font-mono text-xs text-muted-foreground">
                               {action.admin_id}
                             </span>
                           )}
@@ -501,10 +501,10 @@ export default function AdminDashboard() {
                         {/* Listing ID if present */}
                         {action.target_listing_id && (
                           <div className="flex items-baseline gap-1.5">
-                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                               Listing:
                             </span>
-                            <span className="text-xs text-muted-foreground font-mono">
+                            <span className="font-mono text-xs text-muted-foreground">
                               {action.target_listing_id}
                             </span>
                           </div>
@@ -512,9 +512,9 @@ export default function AdminDashboard() {
 
                         {/* Reason - Most prominent */}
                         {action.reason && (
-                          <div className="pt-1.5 mt-1.5 border-t">
-                            <p className="text-sm text-foreground leading-relaxed">
-                              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide mr-2">
+                          <div className="mt-1.5 border-t pt-1.5">
+                            <p className="text-sm leading-relaxed text-foreground">
+                              <span className="mr-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
                                 Reason:
                               </span>
                               {action.reason}
@@ -544,12 +544,12 @@ export default function AdminDashboard() {
 
       {/* Issue Strike Tab */}
       {activeTab === "strike" && (
-        <Card className="max-w-xl mx-auto bg-card border">
+        <Card className="mx-auto max-w-xl border bg-card">
           <CardHeader>
-            <CardTitle className="text-lg sm:text-xl text-foreground">
+            <CardTitle className="text-lg text-foreground sm:text-xl">
               Issue Strike to User
             </CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="mt-1 text-xs text-muted-foreground">
               Warn a user for policy violations. 3 strikes result in automatic ban.
             </p>
           </CardHeader>
@@ -602,7 +602,7 @@ export default function AdminDashboard() {
                   placeholder="Enter user UUID"
                 />
                 {strikeErrors.userId && (
-                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                  <p className="mt-1 flex items-center gap-1 text-xs text-red-400">
                     <AlertCircle className="h-3 w-3" />
                     {strikeErrors.userId}
                   </p>
@@ -629,7 +629,7 @@ export default function AdminDashboard() {
                   placeholder="Reason for strike..."
                 />
                 {strikeErrors.reason && (
-                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                  <p className="mt-1 flex items-center gap-1 text-xs text-red-400">
                     <AlertCircle className="h-3 w-3" />
                     {strikeErrors.reason}
                   </p>
@@ -638,7 +638,7 @@ export default function AdminDashboard() {
               <Button
                 type="submit"
                 disabled={strikeMutation.isPending}
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
+                className="w-full bg-yellow-500 text-white hover:bg-yellow-600"
               >
                 {strikeMutation.isPending ? "Issuing Strike..." : "Issue Strike"}
               </Button>
@@ -649,10 +649,10 @@ export default function AdminDashboard() {
 
       {/* Ban User Tab */}
       {activeTab === "ban" && (
-        <Card className="max-w-xl mx-auto bg-card border">
+        <Card className="mx-auto max-w-xl border bg-card">
           <CardHeader>
-            <CardTitle className="text-lg sm:text-xl text-foreground">Ban User</CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">
+            <CardTitle className="text-lg text-foreground sm:text-xl">Ban User</CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
               Permanently ban a user from the platform.
             </p>
           </CardHeader>
@@ -705,7 +705,7 @@ export default function AdminDashboard() {
                   placeholder="Enter user UUID"
                 />
                 {banErrors.userId && (
-                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                  <p className="mt-1 flex items-center gap-1 text-xs text-red-400">
                     <AlertCircle className="h-3 w-3" />
                     {banErrors.userId}
                   </p>
@@ -732,7 +732,7 @@ export default function AdminDashboard() {
                   placeholder="Reason for ban..."
                 />
                 {banErrors.reason && (
-                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                  <p className="mt-1 flex items-center gap-1 text-xs text-red-400">
                     <AlertCircle className="h-3 w-3" />
                     {banErrors.reason}
                   </p>
@@ -741,7 +741,7 @@ export default function AdminDashboard() {
               <Button
                 type="submit"
                 disabled={banMutation.isPending}
-                className="w-full bg-red-600 hover:bg-red-700 text-white"
+                className="w-full bg-red-600 text-white hover:bg-red-700"
               >
                 {banMutation.isPending ? "Banning User..." : "Ban User (Permanent)"}
               </Button>
@@ -752,10 +752,10 @@ export default function AdminDashboard() {
 
       {/* Remove Listing Tab */}
       {activeTab === "remove" && (
-        <Card className="max-w-xl mx-auto bg-card border">
+        <Card className="mx-auto max-w-xl border bg-card">
           <CardHeader>
-            <CardTitle className="text-lg sm:text-xl text-foreground">Remove Listing</CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">
+            <CardTitle className="text-lg text-foreground sm:text-xl">Remove Listing</CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
               Delete a listing and issue a strike to its owner.
             </p>
           </CardHeader>
@@ -808,7 +808,7 @@ export default function AdminDashboard() {
                   placeholder="Enter listing UUID"
                 />
                 {removeErrors.listingId && (
-                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                  <p className="mt-1 flex items-center gap-1 text-xs text-red-400">
                     <AlertCircle className="h-3 w-3" />
                     {removeErrors.listingId}
                   </p>
@@ -835,7 +835,7 @@ export default function AdminDashboard() {
                   placeholder="Reason for removal..."
                 />
                 {removeErrors.reason && (
-                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                  <p className="mt-1 flex items-center gap-1 text-xs text-red-400">
                     <AlertCircle className="h-3 w-3" />
                     {removeErrors.reason}
                   </p>
@@ -844,7 +844,7 @@ export default function AdminDashboard() {
               <Button
                 type="submit"
                 disabled={removeMutation.isPending}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                className="w-full bg-purple-600 text-white hover:bg-purple-700"
               >
                 {removeMutation.isPending ? "Removing Listing..." : "Remove Listing"}
               </Button>
@@ -855,10 +855,10 @@ export default function AdminDashboard() {
 
       {/* Verify Users Tab */}
       {activeTab === "verify" && (
-        <Card className="max-w-xl mx-auto bg-card border">
+        <Card className="mx-auto max-w-xl border bg-card">
           <CardHeader>
-            <CardTitle className="text-lg sm:text-xl text-foreground">User Verification</CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">
+            <CardTitle className="text-lg text-foreground sm:text-xl">User Verification</CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
               Manually set a user&apos;s email verification status. Useful for support cases or .edu
               email issues.
             </p>
@@ -888,7 +888,7 @@ export default function AdminDashboard() {
                   placeholder="Enter user UUID"
                 />
                 {verifyErrors.userId && (
-                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                  <p className="mt-1 flex items-center gap-1 text-xs text-red-400">
                     <AlertCircle className="h-3 w-3" />
                     {verifyErrors.userId}
                   </p>
@@ -913,7 +913,7 @@ export default function AdminDashboard() {
                     verifyMutation.mutate({ userId: targetUserId, isVerified: true });
                   }}
                   disabled={verifyMutation.isPending}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  className="flex-1 bg-green-600 text-white hover:bg-green-700"
                 >
                   {verifyMutation.isPending ? "Processing..." : "Verify User"}
                 </Button>
@@ -935,7 +935,7 @@ export default function AdminDashboard() {
                     verifyMutation.mutate({ userId: targetUserId, isVerified: false });
                   }}
                   disabled={verifyMutation.isPending}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                  className="flex-1 bg-red-600 text-white hover:bg-red-700"
                 >
                   {verifyMutation.isPending ? "Processing..." : "Unverify User"}
                 </Button>
@@ -947,8 +947,8 @@ export default function AdminDashboard() {
 
       {/* Support Tickets Tab */}
       {activeTab === "support" && (
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-foreground">Support Tickets</h2>
+        <div className="mx-auto max-w-4xl">
+          <h2 className="mb-4 text-lg font-semibold text-foreground sm:text-xl">Support Tickets</h2>
           <SupportTicketsView />
         </div>
       )}

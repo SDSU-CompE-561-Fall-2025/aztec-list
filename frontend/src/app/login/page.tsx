@@ -52,7 +52,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Login</CardTitle>
@@ -93,7 +93,7 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors cursor-pointer"
+                  className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer text-gray-400 transition-colors hover:text-gray-300"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -102,17 +102,17 @@ function LoginForm() {
             </div>
 
             {error && (
-              <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3">
+              <div className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
                 <div className="mb-2">{error}</div>
                 {isBannedError(error) && (
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="w-full mt-2 border-destructive/40 hover:bg-destructive/20 hover:text-destructive"
+                    className="mt-2 w-full border-destructive/40 hover:bg-destructive/20 hover:text-destructive"
                     onClick={() => router.push("/support")}
                   >
-                    <Mail className="h-4 w-4 mr-2" />
+                    <Mail className="mr-2 h-4 w-4" />
                     Contact Support
                   </Button>
                 )}
@@ -137,7 +137,7 @@ function LoginForm() {
 
           <div className="mt-4 text-center text-sm">
             Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-primary hover:underline font-medium">
+            <Link href="/signup" className="font-medium text-primary hover:underline">
               Sign up
             </Link>
           </div>
@@ -151,7 +151,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex min-h-screen items-center justify-center">
           <p className="text-gray-400">Loading...</p>
         </div>
       }

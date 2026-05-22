@@ -27,7 +27,7 @@ describe("profile-picture.ts", () => {
       const result = getProfilePictureUrl("/uploads/profiles/123/avatar.jpg", updatedAt);
 
       expect(result).toBe(
-        `${FALLBACK_BASE_URL}/uploads/profiles/123/avatar.jpg?v=${expectedTimestamp}`
+        `${FALLBACK_BASE_URL}/uploads/profiles/123/avatar.jpg?v=${expectedTimestamp}`,
       );
     });
 
@@ -55,7 +55,7 @@ describe("profile-picture.ts", () => {
       const afterTime = Date.now();
 
       expect(result).toMatch(
-        new RegExp(`^${FALLBACK_BASE_URL.replace(/\//g, "\\/")}\/uploads\/avatar\\.jpg\\?v=\\d+$`)
+        new RegExp(`^${FALLBACK_BASE_URL.replace(/\//g, "\\/")}\/uploads\/avatar\\.jpg\\?v=\\d+$`),
       );
 
       const timestamp = parseInt(result!.split("?v=")[1]);
@@ -69,7 +69,7 @@ describe("profile-picture.ts", () => {
       const afterTime = Date.now();
 
       expect(result).toMatch(
-        new RegExp(`^${FALLBACK_BASE_URL.replace(/\//g, "\\/")}\/uploads\/avatar\\.jpg\\?v=\\d+$`)
+        new RegExp(`^${FALLBACK_BASE_URL.replace(/\//g, "\\/")}\/uploads\/avatar\\.jpg\\?v=\\d+$`),
       );
 
       const timestamp = parseInt(result!.split("?v=")[1]);

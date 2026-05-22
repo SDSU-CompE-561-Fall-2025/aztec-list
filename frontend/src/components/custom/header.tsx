@@ -30,7 +30,7 @@ export function Header() {
 
   // Fetch profile data using React Query
   const { data: profileData, isLoading: isProfileLoading } = useQuery(
-    createProfileQueryOptions(user?.id)
+    createProfileQueryOptions(user?.id),
   );
 
   const handleSearch = (e: React.FormEvent) => {
@@ -52,19 +52,19 @@ export function Header() {
     if (isOnListingsPage) {
       // If already on listings page, update the URL with new search
       router.replace(
-        `${LISTINGS_BASE_URL}?q=${encodeURIComponent(trimmedQuery)}&sort=${DEFAULT_SORT}`
+        `${LISTINGS_BASE_URL}?q=${encodeURIComponent(trimmedQuery)}&sort=${DEFAULT_SORT}`,
       );
     } else {
       // If on home page or elsewhere, navigate to listings
       router.push(
-        `${LISTINGS_BASE_URL}?q=${encodeURIComponent(trimmedQuery)}&sort=${DEFAULT_SORT}`
+        `${LISTINGS_BASE_URL}?q=${encodeURIComponent(trimmedQuery)}&sort=${DEFAULT_SORT}`,
       );
     }
   };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 gap-4">
+      <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <div className="text-2xl font-bold">
@@ -74,9 +74,9 @@ export function Header() {
         </Link>
 
         {/* Search Bar */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
+        <form onSubmit={handleSearch} className="max-w-2xl flex-1">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Search..."
@@ -95,11 +95,11 @@ export function Header() {
             <div className="flex items-center gap-3">
               {isLoading ? (
                 <>
-                  <div className="h-9 w-16 bg-muted rounded animate-pulse" />
-                  <div className="h-9 w-20 bg-muted rounded animate-pulse" />
+                  <div className="h-9 w-16 animate-pulse rounded bg-muted" />
+                  <div className="h-9 w-20 animate-pulse rounded bg-muted" />
                 </>
               ) : (
-                <div className="w-10 h-10 bg-muted rounded-full animate-pulse" />
+                <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />
               )}
             </div>
           ) : !isAuthenticated ? (
@@ -120,7 +120,7 @@ export function Header() {
                       src={
                         getProfilePictureUrl(
                           profileData.profile_picture_url,
-                          profileData.updated_at
+                          profileData.updated_at,
                         ) || undefined
                       }
                       alt={user?.username || "User"}
@@ -134,7 +134,7 @@ export function Header() {
               <DropdownMenuContent align="end" sideOffset={8} className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1 py-0.5">
-                    <p className="text-sm font-semibold leading-none">{user?.username}</p>
+                    <p className="text-sm leading-none font-semibold">{user?.username}</p>
                     <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>

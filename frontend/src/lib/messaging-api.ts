@@ -80,7 +80,7 @@ export async function createOrGetConversation(otherUserId: string): Promise<Conv
 export async function getMessages(
   conversationId: string,
   limit: number = 20,
-  offset: number = 0
+  offset: number = 0,
 ): Promise<Message[]> {
   const token = getAuthToken();
   if (!token) {

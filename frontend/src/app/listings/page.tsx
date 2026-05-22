@@ -54,7 +54,7 @@ function ListingsContent() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto max-w-7xl">
         <div className="lg:flex lg:gap-8">
           {/* Sidebar with filters */}
           <SearchFilters />
@@ -68,7 +68,7 @@ function ListingsContent() {
                   Search results for &quot;{filters.q}&quot;
                 </h1>
                 {data && (
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {data.count} {data.count === 1 ? "result" : "results"} found
                   </p>
                 )}
@@ -91,7 +91,7 @@ export default function ListingsPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex min-h-screen items-center justify-center">
           <p className="text-gray-400">Loading...</p>
         </div>
       }

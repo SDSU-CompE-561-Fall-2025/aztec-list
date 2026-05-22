@@ -107,7 +107,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
@@ -166,7 +166,7 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -213,7 +213,7 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
                   tabIndex={-1}
                 >
                   {showConfirmPassword ? (
@@ -226,7 +226,7 @@ export default function SignupPage() {
             </div>
 
             {error && (
-              <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3">
+              <div className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
               </div>
             )}
@@ -249,7 +249,7 @@ export default function SignupPage() {
 
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline font-medium">
+            <Link href="/login" className="font-medium text-primary hover:underline">
               Login
             </Link>
           </div>

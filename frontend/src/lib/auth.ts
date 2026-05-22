@@ -47,7 +47,7 @@ export const login = async (credentials: LoginCredentials): Promise<AuthToken> =
  * @throws Error if registration fails
  */
 export const signup = async (
-  signupData: SignupData
+  signupData: SignupData,
 ): Promise<User & { verification_email_sent?: boolean }> => {
   const res = await fetch(`${API_BASE_URL}/auth/signup`, {
     method: "POST",
@@ -148,7 +148,7 @@ export const removeStoredUser = (): void => {
  */
 export const changePassword = async (
   currentPassword: string,
-  newPassword: string
+  newPassword: string,
 ): Promise<void> => {
   const token = getAuthToken();
   if (!token) {

@@ -167,95 +167,95 @@ export default function ListingDetailPage() {
     return (
       <div className="min-h-screen bg-background">
         <div className="border-b bg-background/95 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="h-10 w-40 bg-muted rounded animate-pulse" />
+          <div className="mx-auto max-w-7xl px-6 py-4">
+            <div className="h-10 w-40 animate-pulse rounded bg-muted" />
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-6 py-8 lg:py-12">
+        <div className="mx-auto max-w-7xl px-6 py-8 lg:py-12">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
             {/* Sidebar - matches order-2 md:order-2 */}
-            <div className="order-2 md:order-2 md:col-span-5 space-y-6">
+            <div className="order-2 space-y-6 md:order-2 md:col-span-5">
               {/* Price and title skeleton */}
               <div className="space-y-3">
-                <div className="h-9 w-32 bg-muted rounded animate-pulse" />
-                <div className="h-8 w-full bg-muted rounded animate-pulse" />
-                <div className="h-6 w-24 bg-muted rounded-full animate-pulse" />
+                <div className="h-9 w-32 animate-pulse rounded bg-muted" />
+                <div className="h-8 w-full animate-pulse rounded bg-muted" />
+                <div className="h-6 w-24 animate-pulse rounded-full bg-muted" />
               </div>
 
               {/* Dates skeleton */}
               <div className="space-y-1">
-                <div className="h-5 w-40 bg-muted rounded animate-pulse" />
-                <div className="h-5 w-40 bg-muted rounded animate-pulse" />
+                <div className="h-5 w-40 animate-pulse rounded bg-muted" />
+                <div className="h-5 w-40 animate-pulse rounded bg-muted" />
               </div>
 
               {/* Seller card skeleton */}
-              <div className="bg-card backdrop-blur-sm border rounded-xl p-5 space-y-3">
-                <div className="h-4 w-16 bg-muted rounded animate-pulse" />
+              <div className="space-y-3 rounded-xl border bg-card p-5 backdrop-blur-sm">
+                <div className="h-4 w-16 animate-pulse rounded bg-muted" />
                 <div className="flex items-center gap-3 p-2">
-                  <div className="w-12 h-12 bg-muted rounded-full animate-pulse" />
+                  <div className="h-12 w-12 animate-pulse rounded-full bg-muted" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-5 w-32 bg-muted rounded animate-pulse" />
-                    <div className="h-4 w-24 bg-muted rounded animate-pulse" />
-                    <div className="h-4 w-28 bg-muted rounded animate-pulse" />
+                    <div className="h-5 w-32 animate-pulse rounded bg-muted" />
+                    <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+                    <div className="h-4 w-28 animate-pulse rounded bg-muted" />
                   </div>
                 </div>
               </div>
 
               {/* Contact button skeleton */}
-              <div className="bg-card backdrop-blur-sm border rounded-xl p-5 space-y-3">
-                <div className="h-6 w-20 bg-muted rounded animate-pulse" />
-                <div className="h-10 w-full bg-muted rounded animate-pulse" />
+              <div className="space-y-3 rounded-xl border bg-card p-5 backdrop-blur-sm">
+                <div className="h-6 w-20 animate-pulse rounded bg-muted" />
+                <div className="h-10 w-full animate-pulse rounded bg-muted" />
               </div>
             </div>
 
             {/* Images - matches order-1 md:order-1 */}
-            <div className="order-1 md:order-1 md:col-span-7 flex flex-col gap-4">
-              <div className="flex flex-col md:flex-row gap-4">
+            <div className="order-1 flex flex-col gap-4 md:order-1 md:col-span-7">
+              <div className="flex flex-col gap-4 md:flex-row">
                 {/* Thumbnail strip */}
-                <div className="flex md:flex-col gap-2 w-full md:w-24 overflow-x-auto md:overflow-x-visible order-2 md:order-1">
+                <div className="order-2 flex w-full gap-2 overflow-x-auto md:order-1 md:w-24 md:flex-col md:overflow-x-visible">
                   {[1, 2, 3, 4].map((i) => (
                     <div
                       key={i}
-                      className="w-24 h-24 bg-card rounded-lg animate-pulse flex-shrink-0 border"
+                      className="h-24 w-24 flex-shrink-0 animate-pulse rounded-lg border bg-card"
                     />
                   ))}
                 </div>
                 {/* Main image */}
                 <div
-                  className="w-full bg-card rounded-xl animate-pulse border order-1 md:order-2"
+                  className="order-1 w-full animate-pulse rounded-xl border bg-card md:order-2"
                   style={{ aspectRatio: "652/728", maxWidth: "652px" }}
                 />
               </div>
               {/* Description/Condition skeleton - desktop only */}
-              <div className="hidden md:block space-y-6">
+              <div className="hidden space-y-6 md:block">
                 <div className="space-y-2">
-                  <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+                  <div className="h-4 w-24 animate-pulse rounded bg-muted" />
                   <div className="space-y-2">
-                    <div className="h-5 w-full bg-muted rounded animate-pulse" />
-                    <div className="h-5 w-full bg-muted rounded animate-pulse" />
-                    <div className="h-5 w-3/4 bg-muted rounded animate-pulse" />
+                    <div className="h-5 w-full animate-pulse rounded bg-muted" />
+                    <div className="h-5 w-full animate-pulse rounded bg-muted" />
+                    <div className="h-5 w-3/4 animate-pulse rounded bg-muted" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <div className="h-4 w-20 bg-muted rounded animate-pulse" />
-                  <div className="h-8 w-24 bg-muted rounded-lg animate-pulse" />
+                  <div className="h-4 w-20 animate-pulse rounded bg-muted" />
+                  <div className="h-8 w-24 animate-pulse rounded-lg bg-muted" />
                 </div>
               </div>
             </div>
 
             {/* Mobile description/condition - matches order-3 */}
-            <div className="md:hidden order-3 space-y-8">
+            <div className="order-3 space-y-8 md:hidden">
               <div className="space-y-3">
-                <div className="h-5 w-24 bg-muted rounded animate-pulse" />
+                <div className="h-5 w-24 animate-pulse rounded bg-muted" />
                 <div className="space-y-2">
-                  <div className="h-6 w-full bg-muted rounded animate-pulse" />
-                  <div className="h-6 w-full bg-muted rounded animate-pulse" />
-                  <div className="h-6 w-3/4 bg-muted rounded animate-pulse" />
+                  <div className="h-6 w-full animate-pulse rounded bg-muted" />
+                  <div className="h-6 w-full animate-pulse rounded bg-muted" />
+                  <div className="h-6 w-3/4 animate-pulse rounded bg-muted" />
                 </div>
               </div>
               <div className="space-y-3">
-                <div className="h-5 w-20 bg-muted rounded animate-pulse" />
-                <div className="h-9 w-28 bg-muted rounded-lg animate-pulse" />
+                <div className="h-5 w-20 animate-pulse rounded bg-muted" />
+                <div className="h-9 w-28 animate-pulse rounded-lg bg-muted" />
               </div>
             </div>
           </div>
@@ -268,31 +268,31 @@ export default function ListingDetailPage() {
     return (
       <div className="min-h-screen bg-background">
         <div className="border-b bg-background/95 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="mx-auto max-w-7xl px-6 py-4">
             <Button
               variant="ghost"
-              className="text-muted-foreground hover:text-foreground -ml-3"
+              className="-ml-3 text-muted-foreground hover:text-foreground"
               onClick={() => router.push("/")}
             >
-              <ChevronLeft className="w-4 h-4 mr-2" />
+              <ChevronLeft className="mr-2 h-4 w-4" />
               Back to listings
             </Button>
           </div>
         </div>
-        <div className="max-w-2xl mx-auto px-6 py-20 text-center">
-          <div className="bg-card backdrop-blur-sm border rounded-2xl p-12">
-            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
-              <User className="w-8 h-8 text-muted-foreground" />
+        <div className="mx-auto max-w-2xl px-6 py-20 text-center">
+          <div className="rounded-2xl border bg-card p-12 backdrop-blur-sm">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+              <User className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground mb-3">Listing Not Found</h1>
-            <p className="text-muted-foreground mb-8 leading-relaxed">
+            <h1 className="mb-3 text-2xl font-bold text-foreground">Listing Not Found</h1>
+            <p className="mb-8 leading-relaxed text-muted-foreground">
               {error instanceof Error
                 ? error.message
                 : "This listing could not be found or may have been removed."}
             </p>
             <Button
               onClick={() => router.push("/")}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-purple-600 text-white hover:bg-purple-700"
             >
               Browse All Listings
             </Button>
@@ -310,63 +310,63 @@ export default function ListingDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b bg-background/95 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur-sm">
+        <div className="mx-auto max-w-7xl px-6 py-4">
           <Button
             variant="ghost"
-            className="text-muted-foreground hover:text-foreground -ml-3"
+            className="-ml-3 text-muted-foreground hover:text-foreground"
             onClick={() => router.back()}
           >
-            <ChevronLeft className="w-4 h-4 mr-2" />
+            <ChevronLeft className="mr-2 h-4 w-4" />
             Back to listings
           </Button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 lg:py-12">
+      <div className="mx-auto max-w-7xl px-6 py-8 lg:py-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
-          <section className="order-2 md:order-2 md:col-span-5 space-y-6">
+          <section className="order-2 space-y-6 md:order-2 md:col-span-5">
             <div className="space-y-3">
-              <p className="text-3xl font-bold text-foreground tracking-tight">
+              <p className="text-3xl font-bold tracking-tight text-foreground">
                 {formatPrice(Number(listing.price))}
               </p>
-              <h1 className="text-2xl font-semibold text-foreground leading-tight">
+              <h1 className="text-2xl leading-tight font-semibold text-foreground">
                 {listing.title}
               </h1>
               <div className="flex flex-wrap gap-3">
-                <span className="inline-flex items-center px-3 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-300 text-xs font-semibold rounded-full border border-purple-500/30">
+                <span className="inline-flex items-center rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-xs font-semibold text-purple-600 dark:text-purple-300">
                   {formatCategory(listing.category)}
                 </span>
                 {!listing.is_active && (
-                  <span className="inline-flex items-center px-3 py-1 bg-muted text-muted-foreground text-xs font-medium rounded-full border">
+                  <span className="inline-flex items-center rounded-full border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
                     Inactive
                   </span>
                 )}
               </div>
             </div>
 
-            <div className="text-sm text-muted-foreground space-y-1">
+            <div className="space-y-1 text-sm text-muted-foreground">
               <p>Posted {formatDate(listing.created_at)}</p>
               {isUpdated && <p>Updated {formatDate(listing.updated_at)}</p>}
             </div>
 
-            <div className="bg-card backdrop-blur-sm border rounded-xl p-5 space-y-3">
-              <p className="text-sm font-semibold text-muted-foreground tracking-widest">
+            <div className="space-y-3 rounded-xl border bg-card p-5 backdrop-blur-sm">
+              <p className="text-sm font-semibold tracking-widest text-muted-foreground">
                 {isOwnListing ? "Your Listing" : "Seller"}
               </p>
               <button
                 onClick={() => router.push(`/profile/${listing.seller_id}`)}
-                className="flex items-center gap-3 w-full rounded-lg p-2 group text-left cursor-pointer"
+                className="group flex w-full cursor-pointer items-center gap-3 rounded-lg p-2 text-left"
               >
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/20 overflow-hidden relative">
+                <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-purple-500/20 bg-gradient-to-br from-purple-500/20 to-purple-600/20">
                   {isSellerProfileLoading ? (
-                    <div className="w-full h-full bg-muted animate-pulse" />
+                    <div className="h-full w-full animate-pulse bg-muted" />
                   ) : sellerProfile?.profile_picture_url ? (
                     <Image
                       src={
                         getProfilePictureUrl(
                           sellerProfile.profile_picture_url,
-                          sellerProfile.updated_at
+                          sellerProfile.updated_at,
                         ) || ""
                       }
                       alt={seller?.username || "Seller"}
@@ -375,19 +375,19 @@ export default function ListingDetailPage() {
                       className="object-cover"
                     />
                   ) : (
-                    <User className="w-6 h-6 text-purple-300" />
+                    <User className="h-6 w-6 text-purple-300" />
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-foreground text-base font-medium truncate">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-base font-medium text-foreground">
                     {isSellerProfileLoading ? (
-                      <span className="inline-block h-5 bg-muted animate-pulse rounded w-32" />
+                      <span className="inline-block h-5 w-32 animate-pulse rounded bg-muted" />
                     ) : (
                       sellerProfile?.name || seller?.username || "Loading..."
                     )}
                   </p>
                   {seller?.created_at && (
-                    <p className="text-muted-foreground text-xs">
+                    <p className="text-xs text-muted-foreground">
                       Joined{" "}
                       {new Date(seller.created_at).toLocaleDateString("en-US", {
                         month: "short",
@@ -395,7 +395,7 @@ export default function ListingDetailPage() {
                       })}
                     </p>
                   )}
-                  <span className="text-purple-600 dark:text-purple-300 text-sm group-hover:text-purple-700 dark:group-hover:text-purple-200 transition-colors">
+                  <span className="text-sm text-purple-600 transition-colors group-hover:text-purple-700 dark:text-purple-300 dark:group-hover:text-purple-200">
                     View profile →
                   </span>
                 </div>
@@ -406,47 +406,47 @@ export default function ListingDetailPage() {
                   size="sm"
                   onClick={() => router.push(`/listings/${listingId}/edit`)}
                   variant="outline"
-                  className="w-full border-purple-500/50 hover:border-purple-500 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 hover:text-purple-700 dark:text-purple-300 dark:hover:text-purple-200"
+                  className="w-full border-purple-500/50 bg-purple-500/10 text-purple-600 hover:border-purple-500 hover:bg-purple-500/20 hover:text-purple-700 dark:text-purple-300 dark:hover:text-purple-200"
                 >
-                  <Edit className="w-4 h-4 mr-2" />
+                  <Edit className="mr-2 h-4 w-4" />
                   Edit Listing
                 </Button>
               )}
             </div>
 
             {!isOwnListing && (
-              <div className="bg-card backdrop-blur-sm border rounded-xl p-5 space-y-3">
-                <p className="text-sm font-semibold text-muted-foreground tracking-widest">
+              <div className="space-y-3 rounded-xl border bg-card p-5 backdrop-blur-sm">
+                <p className="text-sm font-semibold tracking-widest text-muted-foreground">
                   Contact
                 </p>
                 <Button
                   size="lg"
                   onClick={() => setShowContactDialog(true)}
-                  className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-semibold"
+                  className="w-full bg-gradient-to-r from-purple-600 to-purple-500 font-semibold text-white hover:from-purple-700 hover:to-purple-600"
                 >
-                  <Mail className="w-5 h-5 mr-2" />
+                  <Mail className="mr-2 h-5 w-5" />
                   Contact Seller
                 </Button>
               </div>
             )}
           </section>
 
-          <div className="order-1 md:order-1 md:col-span-7 flex flex-col gap-4">
-            <div className="flex flex-col md:flex-row gap-4">
+          <div className="order-1 flex flex-col gap-4 md:order-1 md:col-span-7">
+            <div className="flex flex-col gap-4 md:flex-row">
               {hasMultipleImages && (
-                <div className="flex md:flex-col gap-2 w-full md:w-24 flex-shrink-0 order-2 md:order-1 overflow-x-auto md:overflow-y-auto md:overflow-x-visible md:max-h-[728px]">
+                <div className="order-2 flex w-full flex-shrink-0 gap-2 overflow-x-auto md:order-1 md:max-h-[728px] md:w-24 md:flex-col md:overflow-x-visible md:overflow-y-auto">
                   {galleryImages.map((image, index) => (
                     <button
                       key={image.id}
                       onClick={() => setCurrentImageIndex(index)}
                       className={cn(
-                        "w-24 h-24 bg-card rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer",
+                        "h-24 w-24 flex-shrink-0 cursor-pointer overflow-hidden rounded-lg border-2 bg-card transition-all",
                         boundedImageIndex === index
                           ? "border-purple-500 ring-2 ring-purple-500/20"
-                          : "border opacity-60 hover:opacity-100"
+                          : "border opacity-60 hover:opacity-100",
                       )}
                     >
-                      <div className="relative w-full h-full">
+                      <div className="relative h-full w-full">
                         <Image
                           src={image.url}
                           alt={image.alt}
@@ -461,13 +461,13 @@ export default function ListingDetailPage() {
               )}
 
               <div
-                className="relative w-full bg-card rounded-xl overflow-hidden border shadow-xl order-1 md:order-2"
+                className="relative order-1 w-full overflow-hidden rounded-xl border bg-card shadow-xl md:order-2"
                 style={{
                   aspectRatio: hasMultipleImages ? "652/728" : "720/728",
                   maxWidth: hasMultipleImages ? "652px" : "720px",
                 }}
               >
-                <div className="relative w-full h-full">
+                <div className="relative h-full w-full">
                   {activeImage ? (
                     <>
                       <Image
@@ -480,16 +480,16 @@ export default function ListingDetailPage() {
                       />
 
                       {hasMultipleImages && (
-                        <div className="absolute top-3 right-3 bg-background/90 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-medium text-foreground border">
+                        <div className="absolute top-3 right-3 rounded-full border bg-background/90 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-md">
                           {boundedImageIndex + 1} / {galleryImages.length}
                         </div>
                       )}
                     </>
                   ) : (
-                    <div className="absolute inset-0 w-full h-full flex items-center justify-center">
+                    <div className="absolute inset-0 flex h-full w-full items-center justify-center">
                       <div className="text-center">
-                        <User className="w-20 h-20 text-muted-foreground mx-auto mb-3" />
-                        <p className="text-muted-foreground text-sm">No image available</p>
+                        <User className="mx-auto mb-3 h-20 w-20 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">No image available</p>
                       </div>
                     </div>
                   )}
@@ -498,21 +498,21 @@ export default function ListingDetailPage() {
             </div>
 
             {/* Desktop: Description/Condition below images */}
-            <div className="hidden md:block space-y-6">
+            <div className="hidden space-y-6 md:block">
               <div className="space-y-2">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
                   Description
                 </p>
-                <p className="text-foreground text-base leading-relaxed whitespace-pre-wrap">
+                <p className="text-base leading-relaxed whitespace-pre-wrap text-foreground">
                   {descriptionText}
                 </p>
               </div>
               <div className="space-y-2">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
                   Condition
                 </p>
                 <span
-                  className={`inline-flex items-center px-3 py-1.5 bg-muted rounded-lg text-sm font-medium ${getConditionColor(listing.condition)}`}
+                  className={`inline-flex items-center rounded-lg bg-muted px-3 py-1.5 text-sm font-medium ${getConditionColor(listing.condition)}`}
                 >
                   {CONDITION_LABELS[listing.condition]}
                 </span>
@@ -521,21 +521,21 @@ export default function ListingDetailPage() {
           </div>
 
           {/* Mobile: Description/Condition after price section */}
-          <div className="md:hidden order-3 space-y-8">
+          <div className="order-3 space-y-8 md:hidden">
             <div className="space-y-3">
-              <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
+              <p className="text-sm font-bold tracking-widest text-muted-foreground uppercase">
                 Description
               </p>
-              <p className="text-foreground text-lg leading-relaxed whitespace-pre-wrap">
+              <p className="text-lg leading-relaxed whitespace-pre-wrap text-foreground">
                 {descriptionText}
               </p>
             </div>
             <div className="space-y-3">
-              <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
+              <p className="text-sm font-bold tracking-widest text-muted-foreground uppercase">
                 Condition
               </p>
               <span
-                className={`inline-flex items-center px-4 py-2 bg-muted rounded-lg text-lg font-medium ${getConditionColor(listing.condition)}`}
+                className={`inline-flex items-center rounded-lg bg-muted px-4 py-2 text-lg font-medium ${getConditionColor(listing.condition)}`}
               >
                 {CONDITION_LABELS[listing.condition]}
               </span>
@@ -545,34 +545,34 @@ export default function ListingDetailPage() {
 
         {/* Contact Dialog */}
         <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
-          <DialogContent className="bg-card border sm:max-w-md max-w-[calc(100vw-2rem)] p-4 sm:p-6">
+          <DialogContent className="max-w-[calc(100vw-2rem)] border bg-card p-4 sm:max-w-md sm:p-6">
             <DialogHeader className="space-y-1.5">
-              <DialogTitle className="text-foreground text-lg sm:text-xl">
+              <DialogTitle className="text-lg text-foreground sm:text-xl">
                 Contact Seller
               </DialogTitle>
-              <DialogDescription className="text-muted-foreground text-xs sm:text-sm">
+              <DialogDescription className="text-xs text-muted-foreground sm:text-sm">
                 Send a message to {seller?.username}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-2 pt-3 sm:pt-4 pb-1 sm:pb-2">
+            <div className="space-y-2 pt-3 pb-1 sm:pt-4 sm:pb-2">
               {/* Message Option */}
               <button
                 onClick={handleMessageSeller}
                 disabled={createConversationMutation.isPending}
-                className="w-full flex items-center gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-lg bg-muted hover:bg-muted/80 border hover:border-blue-500/50 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group flex w-full items-center gap-2.5 rounded-lg border bg-muted p-3 transition-all hover:border-blue-500/50 hover:bg-muted/80 disabled:cursor-not-allowed disabled:opacity-50 sm:gap-3 sm:p-3.5"
               >
-                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/20 shrink-0">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-blue-500/20 bg-blue-500/10 sm:h-10 sm:w-10">
                   {createConversationMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin text-blue-400 sm:h-5 sm:w-5" />
                   ) : (
-                    <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
+                    <MessageSquare className="h-4 w-4 text-blue-400 sm:h-5 sm:w-5" />
                   )}
                 </div>
-                <div className="flex-1 min-w-0 text-left">
-                  <p className="text-foreground font-semibold text-sm sm:text-base mb-0.5">
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="mb-0.5 text-sm font-semibold text-foreground sm:text-base">
                     Send Message
                   </p>
-                  <p className="text-muted-foreground text-xs">
+                  <p className="text-xs text-muted-foreground">
                     {createConversationMutation.isPending
                       ? "Starting conversation..."
                       : "Chat with seller through AztecList"}

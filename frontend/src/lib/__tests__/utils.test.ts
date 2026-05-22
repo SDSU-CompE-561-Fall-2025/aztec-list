@@ -22,7 +22,7 @@ describe("utils.ts", () => {
 
     it("should handle conditional classes", () => {
       expect(cn("base-class", true && "conditional-class", false && "hidden-class")).toBe(
-        "base-class conditional-class"
+        "base-class conditional-class",
       );
     });
 
@@ -32,7 +32,7 @@ describe("utils.ts", () => {
 
     it("should handle arrays and objects", () => {
       expect(cn(["class1", "class2"], { class3: true, class4: false })).toBe(
-        "class1 class2 class3"
+        "class1 class2 class3",
       );
     });
   });
