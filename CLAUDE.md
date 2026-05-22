@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Git conventions
+
+- **Commits: title only.** No body/description, no `Co-Authored-By` trailer. One concise subject line.
+- **Never open pull requests.** Do not run `gh pr create` (or any PR-opening command). Commit and push only; the user opens PRs themselves.
+
 ## Workspace layout — run commands in the right directory
 
 Monorepo with two **independent** workspaces. There is no root-level package manager project; tooling is per-workspace.
