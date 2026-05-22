@@ -213,3 +213,6 @@ aztec_list.db
 uploads/
 backend/uploads/
 frontend/uploads/
+
+# Claude Code personal/local settings (shared settings.json may be committed)
+**/.claude/settings.local.json
