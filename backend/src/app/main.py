@@ -1,3 +1,4 @@
+import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -15,9 +16,11 @@ from app.core.middleware import RequestLoggingMiddleware, add_cache_headers_midd
 from app.core.rate_limiter import limiter
 from app.core.settings import settings
 from app.routes.websocket_messages import websocket_router
+from app.services.vector_store import vector_store
 
 # Configure logging from settings
 configure_logging(settings.logging)
+logger = logging.getLogger(__name__)
 
 # Create upload directory with absolute path
 upload_dir = Path(__file__).parent.parent.parent / "uploads"
@@ -29,8 +32,19 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
     # Startup: Create database tables and upload directory
     Base.metadata.create_all(bind=engine)
     upload_dir.mkdir(parents=True, exist_ok=True)
+
+    # Ensure the vector search collection exists when AI features are enabled
+    if settings.ai.enabled:
+        try:
+            vector_store.ensure_collection()
+        except Exception:  # app must still start if Qdrant is unavailable
+            logger.exception("Failed to initialize vector store collection")
+
     yield
-    # Shutdown: cleanup tasks can go here if needed
+
+    # Shutdown: release the vector store client (frees the embedded Qdrant lock)
+    if settings.ai.enabled:
+        vector_store.close()
 
 
 app = FastAPI(

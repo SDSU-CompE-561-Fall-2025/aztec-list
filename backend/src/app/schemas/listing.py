@@ -54,6 +54,13 @@ class ListingSearchParams(BaseModel):
     max_price: Decimal | None = Field(None, ge=0, description="Maximum price filter")
     condition: Condition | None = Field(None, description="Filter by condition")
     seller_id: uuid.UUID | None = Field(None, description="Filter by seller UUID")
+    semantic: bool = Field(
+        default=False,
+        description=(
+            "Use AI semantic search over title/description (requires search_text and AI "
+            "enabled; ignores `sort` since results are ranked by relevance)"
+        ),
+    )
     limit: int = Field(20, ge=1, le=100, description="Page size (max 100)")
     offset: int = Field(0, ge=0, description="Number of records to skip")
     sort: ListingSortOrder = Field(ListingSortOrder.RECENT, description="Sort order")
@@ -105,5 +112,9 @@ class ListingSummary(ListingBase):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    relevance_score: float | None = Field(
+        default=None,
+        description="Semantic relevance (cosine) when AI search is used; null for keyword search",
+    )
 
     model_config = {"from_attributes": True}
