@@ -43,7 +43,17 @@ def search_listings(  # noqa: PLR0913 - each parameter is part of the tool's sch
     condition: str | None = None,
     limit: int = 10,
 ) -> list[dict]:
-    """Keyword search over active listings, with optional category, price, and condition filters."""
+    """
+    Keyword search over active listings by exact text and structural filters.
+
+    Matches only listings whose title or description literally contains the query
+    text (substring match), plus optional category, price, and condition filters.
+    Use this when the shopper gives concrete terms or filters (for example
+    "desk under $50" or "electronics in good condition"). It will NOT match
+    abbreviations, synonyms, or paraphrases (for example "GTA" will not find
+    "Grand Theft Auto V"). For vague, abbreviated, or meaning-based queries, use
+    semantic_search_listings instead.
+    """
     params = ListingSearchParams(
         search_text=query,
         category=category,
@@ -62,7 +72,17 @@ def search_listings(  # noqa: PLR0913 - each parameter is part of the tool's sch
 
 @mcp.tool()
 def semantic_search_listings(query: str, limit: int = 10) -> list[dict]:
-    """Meaning-based search over active listings (requires AI features to be enabled)."""
+    """
+    Meaning-based (semantic) search over active listings.
+
+    Finds listings by meaning, so it matches abbreviations, synonyms, and
+    paraphrases that keyword search misses (for example "GTA" finds "Grand Theft
+    Auto V", and "something to listen to music" finds headphones). Prefer this for
+    vague, natural-language, or abbreviated queries. It does not take category,
+    price, or condition filters, so use search_listings when the shopper specifies
+    those. Requires AI features to be enabled; if unavailable it falls back to
+    keyword matching.
+    """
     params = ListingSearchParams(search_text=query, semantic=True, limit=limit)
     db = SessionLocal()
     try:
