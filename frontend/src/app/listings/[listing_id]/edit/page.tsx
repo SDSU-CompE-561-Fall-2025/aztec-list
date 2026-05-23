@@ -355,6 +355,50 @@ function EditForm({
             <p className="mt-1 text-xs text-muted-foreground">{title.length}/100 characters</p>
           </div>
 
+          {/* Category */}
+          <div>
+            <Label htmlFor="category" className="text-foreground">
+              Category <span className="text-red-500">*</span>
+            </Label>
+            <select
+              id="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value as Category)}
+              onBlur={(e) => handleBlur("category", e.target.value)}
+              className="mt-1 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+            >
+              <option value="">Select a category</option>
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {formatCategoryLabel(cat)}
+                </option>
+              ))}
+            </select>
+            {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
+          </div>
+
+          {/* Condition */}
+          <div>
+            <Label htmlFor="condition" className="text-foreground">
+              Condition <span className="text-red-500">*</span>
+            </Label>
+            <select
+              id="condition"
+              value={condition}
+              onChange={(e) => setCondition(e.target.value as Condition)}
+              onBlur={(e) => handleBlur("condition", e.target.value)}
+              className="mt-1 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+            >
+              <option value="">Select a condition</option>
+              {CONDITIONS.map((cond) => (
+                <option key={cond} value={cond}>
+                  {formatConditionLabel(cond)}
+                </option>
+              ))}
+            </select>
+            {errors.condition && <p className="mt-1 text-sm text-red-500">{errors.condition}</p>}
+          </div>
+
           {/* Description */}
           <div>
             <div className="flex items-center justify-between">
@@ -366,7 +410,12 @@ function EditForm({
                 size="sm"
                 variant="ghost"
                 onClick={() => generateDescriptionMutation.mutate()}
-                disabled={!title.trim() || generateDescriptionMutation.isPending}
+                disabled={
+                  !title.trim() || !category || !condition || generateDescriptionMutation.isPending
+                }
+                title={
+                  !category || !condition ? "Add a title, category, and condition first" : undefined
+                }
                 className="h-7 gap-1 px-2 text-xs text-purple-600 hover:text-purple-700 dark:text-purple-300"
               >
                 {generateDescriptionMutation.isPending ? (
@@ -417,50 +466,6 @@ function EditForm({
               />
             </div>
             {errors.price && <p className="mt-1 text-sm text-red-500">{errors.price}</p>}
-          </div>
-
-          {/* Category */}
-          <div>
-            <Label htmlFor="category" className="text-foreground">
-              Category <span className="text-red-500">*</span>
-            </Label>
-            <select
-              id="category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value as Category)}
-              onBlur={(e) => handleBlur("category", e.target.value)}
-              className="mt-1 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
-            >
-              <option value="">Select a category</option>
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {formatCategoryLabel(cat)}
-                </option>
-              ))}
-            </select>
-            {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
-          </div>
-
-          {/* Condition */}
-          <div>
-            <Label htmlFor="condition" className="text-foreground">
-              Condition <span className="text-red-500">*</span>
-            </Label>
-            <select
-              id="condition"
-              value={condition}
-              onChange={(e) => setCondition(e.target.value as Condition)}
-              onBlur={(e) => handleBlur("condition", e.target.value)}
-              className="mt-1 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
-            >
-              <option value="">Select a condition</option>
-              {CONDITIONS.map((cond) => (
-                <option key={cond} value={cond}>
-                  {formatConditionLabel(cond)}
-                </option>
-              ))}
-            </select>
-            {errors.condition && <p className="mt-1 text-sm text-red-500">{errors.condition}</p>}
           </div>
 
           {/* Active Toggle */}
