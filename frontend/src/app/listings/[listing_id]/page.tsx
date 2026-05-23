@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { createOrGetConversation } from "@/lib/messaging-api";
+import { SimilarListings } from "@/components/listings/SimilarListings";
 import { toast } from "sonner";
 
 const CONDITION_LABELS = {
@@ -542,6 +543,8 @@ export default function ListingDetailPage() {
             </div>
           </div>
         </div>
+
+        <SimilarListings listingId={listingId} />
 
         {/* Contact Dialog */}
         <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>

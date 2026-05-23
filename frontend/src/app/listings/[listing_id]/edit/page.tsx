@@ -20,14 +20,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ImageUpload } from "@/components/listings/ImageUpload";
-import { getListing, updateListing, deleteListingImage } from "@/lib/api";
+import {
+  getListing,
+  updateListing,
+  deleteListingImage,
+  generateListingDescription,
+} from "@/lib/api";
 import { CATEGORIES, Category } from "@/types/listing/filters/category";
 import { CONDITIONS, Condition } from "@/types/listing/filters/condition";
 import { formatCategoryLabel, formatConditionLabel } from "@/lib/utils";
 import { toast } from "sonner";
 import { showErrorToast } from "@/lib/errorHandling";
 import { ProtectedRoute } from "@/components/custom/ProtectedRoute";
-import { Loader2, ChevronLeft, Check } from "lucide-react";
+import { Loader2, ChevronLeft, Check, Sparkles } from "lucide-react";
 import type { ImagePublic, ListingPublic } from "@/types/listing/listing";
 
 export default function EditListingPage() {
@@ -261,6 +266,21 @@ function EditForm({
     },
   });
 
+  const generateDescriptionMutation = useMutation({
+    mutationFn: () =>
+      generateListingDescription({
+        title,
+        category: category || undefined,
+        condition: condition || undefined,
+      }),
+    onSuccess: (data) => {
+      setDescription(data.description.slice(0, 500));
+      setErrors((prev) => ({ ...prev, description: "" }));
+      toast.success("Description generated. Feel free to edit it.");
+    },
+    onError: (error) => showErrorToast(error, "Failed to generate description"),
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
@@ -337,9 +357,26 @@ function EditForm({
 
           {/* Description */}
           <div>
-            <Label htmlFor="description" className="text-foreground">
-              Description <span className="text-red-500">*</span>
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="description" className="text-foreground">
+                Description <span className="text-red-500">*</span>
+              </Label>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => generateDescriptionMutation.mutate()}
+                disabled={!title.trim() || generateDescriptionMutation.isPending}
+                className="h-7 gap-1 px-2 text-xs text-purple-600 hover:text-purple-700 dark:text-purple-300"
+              >
+                {generateDescriptionMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                Generate
+              </Button>
+            </div>
             <Textarea
               id="description"
               value={description}

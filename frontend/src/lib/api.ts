@@ -1,6 +1,11 @@
 import { ListingsParams } from "@/types/listing/listingParams";
 import { UserListingsParams } from "@/types/listing/userListingsParams";
-import { ListingSearchResponse, ListingPublic, ImagePublic } from "@/types/listing/listing";
+import {
+  ListingSearchResponse,
+  ListingPublic,
+  ImagePublic,
+  ListingSummary,
+} from "@/types/listing/listing";
 import { UserPublic } from "@/types/user";
 import { API_BASE_URL } from "@/lib/constants";
 import { getAuthToken } from "@/lib/auth";
@@ -226,6 +231,57 @@ export const createListing = async (data: {
   }
 
   return responseData as ListingPublic;
+};
+
+// AI listing helpers (require AI features enabled on the backend)
+
+export const generateListingDescription = async (data: {
+  title: string;
+  category?: string;
+  condition?: string;
+  keywords?: string;
+}): Promise<{ description: string }> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/ai/generate-description`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: "Failed to generate description" }));
+    throw new Error(error.detail || "Failed to generate description");
+  }
+
+  return res.json();
+};
+
+export const getSimilarListings = async (
+  listingId: string,
+  limit = 6,
+): Promise<ListingSummary[]> => {
+  const url = new URL(`${API_BASE_URL}/listings/${listingId}/similar`);
+  url.searchParams.set("limit", String(limit));
+
+  const res = await fetch(url.toString());
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to fetch similar listings: ${res.status} ${errorText}`);
+  }
+
+  const data = await res.json();
+  if (!Array.isArray(data)) {
+    throw new Error("Invalid response format from API");
+  }
+
+  return data as ListingSummary[];
 };
 
 export const uploadListingImage = async (listingId: string, file: File): Promise<ImagePublic> => {
