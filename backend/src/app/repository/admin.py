@@ -13,6 +13,7 @@ from sqlalchemy.orm import aliased
 
 from app.core.enums import AdminActionType
 from app.models.admin import AdminAction
+from app.models.listing import Listing
 from app.models.user import User
 
 if TYPE_CHECKING:
@@ -165,6 +166,44 @@ class AdminActionRepository:
         return list(db.scalars(query).all())
 
     @staticmethod
+    def get_flagged_listings(
+        db: Session, limit: int = 20, offset: int = 0
+    ) -> list[tuple[AdminAction, Listing]]:
+        """
+        Return (flag_action, listing) pairs for listings auto-flagged for review.
+
+        Inner-joins to listings so removed listings drop out of the queue automatically.
+
+        Args:
+            db: Database session
+            limit: Maximum number of pairs to return
+            offset: Number of pairs to skip
+
+        Returns:
+            list[tuple[AdminAction, Listing]]: Flag action and its listing, newest first
+        """
+        query = (
+            select(AdminAction, Listing)
+            .join(Listing, AdminAction.target_listing_id == Listing.id)
+            .where(AdminAction.action_type == AdminActionType.FLAG.value)
+            .order_by(AdminAction.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        return [(row[0], row[1]) for row in db.execute(query).all()]
+
+    @staticmethod
+    def count_flagged_listings(db: Session) -> int:
+        """Count listings currently auto-flagged for review."""
+        subquery = (
+            select(AdminAction.id)
+            .join(Listing, AdminAction.target_listing_id == Listing.id)
+            .where(AdminAction.action_type == AdminActionType.FLAG.value)
+            .subquery()
+        )
+        return db.scalar(select(func.count()).select_from(subquery)) or 0
+
+    @staticmethod
     def get_all(
         db: Session,
         limit: int = 20,
@@ -275,7 +314,7 @@ class AdminActionRepository:
         return count if count is not None else 0
 
     @staticmethod
-    def create(db: Session, admin_id: uuid.UUID, action: AdminActionCreate) -> AdminAction:
+    def create(db: Session, admin_id: uuid.UUID | None, action: AdminActionCreate) -> AdminAction:
         """
         Create a new admin action and commit immediately.
 
@@ -302,7 +341,7 @@ class AdminActionRepository:
 
     @staticmethod
     def create_no_commit(
-        db: Session, admin_id: uuid.UUID, action: AdminActionCreate
+        db: Session, admin_id: uuid.UUID | None, action: AdminActionCreate
     ) -> AdminAction:
         """
         Create a new admin action without committing (for transactional operations).

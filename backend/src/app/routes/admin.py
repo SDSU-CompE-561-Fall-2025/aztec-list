@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -18,9 +18,13 @@ from app.schemas.admin import (
     AdminActionStrikeResponse,
     AdminListingRemoval,
     AdminListingRemovalResponse,
+    AdminListingRestoreResponse,
     AdminUserVerification,
     AdminUserVerificationResponse,
+    FlaggedListingPublic,
+    FlaggedListingsResponse,
 )
+from app.schemas.listing import ListingSummary
 from app.services.admin import admin_action_service
 from app.services.user import user_service
 
@@ -254,6 +258,74 @@ async def remove_listing(
         status="removed",
         admin_action=AdminActionPublic.model_validate(admin_action),
     )
+
+
+@admin_router.get(
+    "/flagged-listings",
+    summary="List listings auto-flagged for review",
+)
+async def list_flagged_listings(
+    db: Annotated[Session, Depends(get_db)],
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> FlaggedListingsResponse:
+    """
+    List listings flagged by automated AI review, newest first.
+
+    **Requires:** Admin privileges
+
+    Args:
+        db: Database session
+        limit: Maximum number of results (1-100, default 20)
+        offset: Number of results to skip
+
+    Returns:
+        FlaggedListingsResponse: Flagged listings with reasons and total count
+    """
+    flagged, count = admin_action_service.get_flagged_listings(db, limit, offset)
+    return FlaggedListingsResponse(
+        items=[
+            FlaggedListingPublic(
+                action_id=item["action_id"],
+                reason=item["reason"],
+                flagged_at=item["flagged_at"],
+                listing=ListingSummary.model_validate(item["listing"]),
+            )
+            for item in flagged
+        ],
+        count=count,
+    )
+
+
+@admin_router.post(
+    "/listings/{listing_id}/approve",
+    summary="Approve a flagged listing (clear flags, reactivate)",
+    status_code=status.HTTP_200_OK,
+)
+@limiter.limit("10/minute;50/hour")
+async def approve_flagged_listing(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
+    listing_id: uuid.UUID,
+    db: Annotated[Session, Depends(get_db)],
+) -> AdminListingRestoreResponse:
+    """
+    Approve a flagged listing: delete its FLAG actions and set it active again.
+
+    **Requires:** Admin privileges
+
+    Args:
+        request: FastAPI request object (required for rate limiting)
+        listing_id: ID of the flagged listing to approve
+        db: Database session
+
+    Returns:
+        AdminListingRestoreResponse: Confirms the listing was approved
+
+    Raises:
+        HTTPException: 401 if not authenticated, 403 if not admin, 404 if listing not found
+    """
+    admin_action_service.approve_flagged_listing(db, listing_id)
+    return AdminListingRestoreResponse(listing_id=listing_id, status="approved")
 
 
 @admin_router.patch(

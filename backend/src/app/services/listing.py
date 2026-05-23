@@ -17,6 +17,7 @@ from app.core.security import ensure_resource_owner
 from app.core.settings import settings
 from app.core.storage import delete_listing_images
 from app.repository.listing import ListingRepository
+from app.services.embeddings import listing_to_text
 from app.services.vector_store import ListingFilter, vector_store
 
 if TYPE_CHECKING:
@@ -62,6 +63,44 @@ class ListingService:
                 detail=f"Listing with ID {listing_id} not found",
             )
         return listing
+
+    def get_similar(self, db: Session, listing_id: uuid.UUID, limit: int = 6) -> list[Listing]:
+        """
+        Return active listings similar to the given one, ranked by embedding similarity.
+
+        Reuses the semantic index: the listing's own text is embedded and matched against
+        other active listings. Returns an empty list when AI is disabled or the vector
+        search fails, so callers can treat "no recommendations" uniformly.
+
+        Args:
+            db: Database session
+            listing_id: Listing to find neighbours for
+            limit: Maximum number of similar listings to return
+
+        Returns:
+            list[Listing]: Similar active listings (excluding the given one), best match first
+
+        Raises:
+            HTTPException: 404 if the listing does not exist
+        """
+        listing = self.get_by_id(db, listing_id)
+        if not settings.ai.enabled:
+            return []
+        try:
+            # Pull one extra candidate: the listing matches itself and is dropped below.
+            hits = vector_store.search(
+                listing_to_text(listing.title, listing.description),
+                limit=limit + 1,
+                score_threshold=settings.vector.score_floor,
+                listing_filter=ListingFilter(),
+            )
+        except Exception:  # degrade to "no recommendations" rather than failing the page
+            logger.exception("Similar-listings search failed for %s", sanitize_log(listing_id))
+            return []
+        scores = {lid: score for lid, score in hits if lid != listing_id}
+        matches = ListingRepository.get_by_ids(db, list(scores))
+        matches.sort(key=lambda m: scores.get(m.id, 0.0), reverse=True)
+        return matches[:limit]
 
     def get_by_seller(
         self, db: Session, seller_id: uuid.UUID, params: UserListingsParams
