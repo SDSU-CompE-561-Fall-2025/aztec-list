@@ -5,6 +5,7 @@ import { ReactNode, useState } from "react";
 import { ThemeProvider } from "next-themes";
 import { QUERY_RETRY_COUNT } from "@/lib/constants";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AssistantSheet } from "@/components/ai/AssistantSheet";
 import { isBannedError, handleBannedUser } from "@/lib/errorHandling";
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -39,7 +40,10 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <AssistantSheet />
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

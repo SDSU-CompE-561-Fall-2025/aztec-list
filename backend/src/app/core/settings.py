@@ -272,6 +272,33 @@ class VectorStoreSettings(BaseModel):
     )
 
 
+class LLMSettings(BaseModel):
+    """Generative LLM configuration (provider abstraction for the AI assistant)."""
+
+    provider: str = Field(
+        default="ollama",
+        description="Chat model provider: 'ollama' (local, default, no key) or 'anthropic' (Claude).",
+    )
+    ollama_model: str = Field(default="qwen2.5:7b", description="Ollama chat model name")
+    ollama_base_url: str = Field(default="http://localhost:11434", description="Ollama server URL")
+    anthropic_model: str = Field(
+        default="claude-haiku-4-5-20251001", description="Anthropic model id (provider=anthropic)"
+    )
+    anthropic_api_key: str = Field(
+        default="", description="Anthropic API key (required when provider=anthropic)"
+    )
+    temperature: float = Field(
+        default=0.2, ge=0.0, le=2.0, description="Sampling temperature (lower = steadier)"
+    )
+    retrieval_k: int = Field(
+        default=6, ge=1, le=20, description="How many listings to ground the assistant with"
+    )
+    expand_queries: bool = Field(
+        default=True,
+        description="Use the LLM to expand vague searches into product keywords before embedding.",
+    )
+
+
 class Settings(BaseSettings):
     """
     Application settings loaded from environment variables.
@@ -303,6 +330,7 @@ class Settings(BaseSettings):
     ai: AISettings = Field(default_factory=AISettings)
     embedding: EmbeddingSettings = Field(default_factory=EmbeddingSettings)
     vector: VectorStoreSettings = Field(default_factory=VectorStoreSettings)
+    llm: LLMSettings = Field(default_factory=LLMSettings)
 
 
 @lru_cache

@@ -10,9 +10,10 @@ import { ImageIcon } from "lucide-react";
 interface ListingCardProps {
   listing: ListingSummary;
   topMatch?: boolean;
+  priority?: boolean;
 }
 
-export function ListingCard({ listing, topMatch = false }: ListingCardProps) {
+export function ListingCard({ listing, topMatch = false, priority = false }: ListingCardProps) {
   const hasImage = listing.thumbnail_url;
 
   // Build image URL safely
@@ -48,6 +49,7 @@ export function ListingCard({ listing, topMatch = false }: ListingCardProps) {
               src={imageUrl}
               alt={listing.title}
               fill
+              priority={priority}
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-cover"
             />

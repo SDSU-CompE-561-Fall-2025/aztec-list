@@ -86,6 +86,12 @@ Architecture, the model benchmark, and tuning rationale (why `bge-small`, why no
 the cutoff was calibrated) live in
 [docs/06-semantic-search.md](../docs/06-semantic-search.md).
 
+The **AI shopping assistant** (RAG over listings) is available when `AI__ENABLED=true` and an LLM
+is configured. The default provider is local Ollama (`ollama serve` + `ollama pull qwen2.5:7b`);
+set `LLM__PROVIDER=anthropic` and `LLM__ANTHROPIC_API_KEY` to use Claude instead. Endpoints:
+`POST /api/v1/ai/chat` (streamed via SSE) and `GET /api/v1/ai/conversations`. Design and tuning:
+[docs/07-ai-assistant.md](../docs/07-ai-assistant.md).
+
 ## Development
 
 ### Testing

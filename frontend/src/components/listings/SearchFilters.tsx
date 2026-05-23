@@ -9,6 +9,13 @@ import { formatCategoryLabel, formatConditionLabel, formatSortLabel } from "@/li
 import { LISTINGS_BASE_URL, DEFAULT_SORT } from "@/lib/constants";
 import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const PRICE_ERROR_MESSAGE = "Min price must be less than max price";
@@ -181,18 +188,22 @@ export function SearchFilters() {
       {/* Category Section */}
       <div>
         <h3 className="mb-3 text-sm font-semibold text-foreground">Category</h3>
-        <select
-          value={selectedCategory}
-          onChange={(e) => handleCategoryChange(e.target.value)}
-          className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+        <Select
+          value={selectedCategory || "all"}
+          onValueChange={(value) => handleCategoryChange(value === "all" ? "" : value)}
         >
-          <option value="">All Categories</option>
-          {CATEGORIES.map((cat) => (
-            <option key={cat} value={cat}>
-              {formatCategoryLabel(cat)}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="h-9 w-full bg-transparent dark:bg-input/30">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {CATEGORIES.map((cat) => (
+              <SelectItem key={cat} value={cat}>
+                {formatCategoryLabel(cat)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Price Range Section */}
@@ -254,17 +265,18 @@ export function SearchFilters() {
             Sorted by relevance while Smart search is on.
           </p>
         ) : (
-          <select
-            value={selectedSort}
-            onChange={(e) => handleSortChange(e.target.value)}
-            className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
-          >
-            {SORT_OPTIONS.map((sort) => (
-              <option key={sort} value={sort}>
-                {formatSortLabel(sort)}
-              </option>
-            ))}
-          </select>
+          <Select value={selectedSort} onValueChange={handleSortChange}>
+            <SelectTrigger className="h-9 w-full bg-transparent dark:bg-input/30">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((sort) => (
+                <SelectItem key={sort} value={sort}>
+                  {formatSortLabel(sort)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
       </div>
 

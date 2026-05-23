@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import HTTPException, status
 
+from app.core.llm import expand_query
 from app.core.logging_safe import sanitize_log
 from app.core.security import ensure_resource_owner
 from app.core.settings import settings
@@ -119,7 +120,7 @@ class ListingService:
         )
         try:
             hits = vector_store.search(
-                params.search_text or "",
+                expand_query(params.search_text or ""),
                 limit=SEMANTIC_CANDIDATE_LIMIT,
                 score_threshold=settings.vector.score_floor,
                 listing_filter=listing_filter,
@@ -129,16 +130,14 @@ class ListingService:
             listings = ListingRepository.get_filtered(db, params)
             return listings, ListingRepository.count_filtered(db, params)
 
-        # Relative cutoff: keep only listings within `relative_margin` of the best hit, so the
-        # weak tail is dropped regardless of the query's absolute score scale.
-        if hits:
-            cutoff = hits[0][1] - settings.vector.relative_margin
-            hits = [(listing_id, score) for listing_id, score in hits if score >= cutoff]
-
-        # Resolve to real, active listings first - this drops any stale/orphan vectors (deleted
-        # or deactivated listings still in the index) so the count matches what is shown.
+        # Resolve to real, active listings first - this drops stale/orphan vectors (deleted or
+        # deactivated listings still in the index) so they cannot skew the cutoff or the count.
         scores = dict(hits)
         matches = ListingRepository.get_by_ids(db, list(scores))
+        # Relative cutoff against the best REAL hit: keep listings within `relative_margin` of it.
+        if matches:
+            cutoff = scores[matches[0].id] - settings.vector.relative_margin
+            matches = [m for m in matches if scores[m.id] >= cutoff]
         total = len(matches)
         page = matches[params.offset : params.offset + params.limit]
         for listing in page:

@@ -96,6 +96,11 @@ vector search, no external API or key. It is **off by default**; enable with
 Setup, the embedding-model benchmark, and the tuning rationale are documented in
 [docs/06-semantic-search.md](docs/06-semantic-search.md).
 
+There is also an **AI shopping assistant**: a conversational helper (RAG over listings, streamed)
+behind the floating "Ask AI" button. It uses the same local-first stack (Ollama by default, or
+Claude) and is gated on `AI__ENABLED` plus a configured LLM. See
+[docs/07-ai-assistant.md](docs/07-ai-assistant.md).
+
 ## Security & DevSecOps
 
 The repository ships with an automated security pipeline that runs on every push and pull request to `main`, plus a weekly scheduled scan.

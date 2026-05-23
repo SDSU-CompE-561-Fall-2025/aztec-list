@@ -89,3 +89,10 @@ class TicketStatus(str, enum.Enum):
     IN_PROGRESS = "in_progress"
     RESOLVED = "resolved"
     CLOSED = "closed"
+
+
+class AIMessageRole(str, enum.Enum):
+    """Role of a message in an AI assistant conversation."""
+
+    USER = "user"
+    ASSISTANT = "assistant"
