@@ -29,7 +29,7 @@ behaves exactly as it does today when AI is off or a provider is down.
 | B1 | Auto-description | 1 (shipped) |
 | C1 | Similar listings | 1 (shipped) |
 | E3 | Admin review queue (lean) | 1 (shipped) |
-| A2 | Image moderation | 2 |
+| A2 | Image moderation | 2 (shipped) |
 | E1 | Support ticket triage | 2 |
 
 **Deferred / out of scope:**

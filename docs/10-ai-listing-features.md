@@ -1,6 +1,6 @@
-# AI Listing Features (Phase 1)
+# AI Listing Features
 
-Three AI features that build on the existing stack (local embeddings + Qdrant, the LLM provider
+AI features that build on the existing stack (local embeddings + Qdrant, the LLM provider
 factory, and `AdminAction` moderation). They are opt-in, reuse the service layer, and degrade to
 the pre-AI behaviour when `AI__ENABLED` is off. Plan and rationale: `docs/09-ai-roadmap.md`.
 
@@ -8,7 +8,8 @@ the pre-AI behaviour when `AI__ENABLED` is off. Plan and rationale: `docs/09-ai-
 | :--- | :--- | :--- |
 | Auto-description (B1) | Drafts a listing description from the title and any details | `POST /ai/generate-description`; "Generate" button on the create/edit form |
 | Similar listings (C1) | "More like this" on a listing page, ranked by meaning | `GET /listings/{id}/similar`; section on the listing detail page |
-| Listing moderation + review queue (A1 + E3) | Flags borderline new listings for human review | create flow + `GET /admin/flagged-listings`, `POST /admin/listings/{id}/approve` |
+| Listing moderation + review queue (A1 + E3) | Flags borderline new listings for human review | create flow + admin "Flagged" tab (`GET /admin/flagged-listings`, `POST /admin/listings/{id}/approve`) |
+| Image moderation (A2) | Flags listing photos with prohibited content via Claude vision | image upload flow; flags to the same review queue |
 
 ## Provider routing (hybrid)
 
@@ -65,6 +66,15 @@ The review queue reuses the admin surface:
 
 Enforcement is synchronous today (a fast model with fail-open), which adds a little latency to
 creation when enabled; moving it to a background task is a future option.
+
+## Image moderation (A2)
+
+`moderation_service.review_listing_image` runs after a photo is saved (the `services/listing_image.py`
+upload flow). It reads the stored image, sends it to Claude vision (`get_structured_vision_model`)
+with a safety prompt, and on a violation flags the listing into the same review queue as A1
+(deactivate + FLAG action). It is gated by `MODERATION__AI_IMAGE_REVIEW_ENABLED`, skips admins, runs
+synchronously, and fails open (a vision outage never blocks the upload). Vision always uses
+Anthropic, so it needs `LLM__ANTHROPIC_API_KEY` regardless of `LLM__ASSIST_PROVIDER`.
 
 ## Configuration
 
