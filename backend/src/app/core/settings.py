@@ -55,6 +55,13 @@ class ModerationSettings(BaseModel):
             "(requires AI__ENABLED). The keyword filter still hard-blocks known violations."
         ),
     )
+    ai_image_review_enabled: bool = Field(
+        default=False,
+        description=(
+            "Enable AI image moderation on listing photo uploads (requires AI__ENABLED and an "
+            "Anthropic API key for Claude vision). Flags borderline images to the review queue."
+        ),
+    )
 
 
 class ListingSettings(BaseModel):

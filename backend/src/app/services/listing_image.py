@@ -15,6 +15,7 @@ from app.core.settings import settings
 from app.core.storage import delete_file, save_upload_file
 from app.repository.listing import ListingRepository
 from app.repository.listing_image import ListingImageRepository
+from app.services.moderation import moderation_service
 
 if TYPE_CHECKING:
     import uuid
@@ -115,6 +116,9 @@ class ListingImageService:
 
         if should_be_thumbnail:
             ListingImageRepository.update_listing_thumbnail_url(db, listing_id, url_path)
+
+        # A2: AI image moderation (no-op when disabled; fails open).
+        await moderation_service.review_listing_image(db, current_user, listing, url_path)
 
         return db_image
 
