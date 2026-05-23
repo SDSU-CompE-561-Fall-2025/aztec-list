@@ -48,6 +48,13 @@ class ModerationSettings(BaseModel):
         ge=1,
         description="Number of strikes before automatic permanent ban",
     )
+    ai_review_enabled: bool = Field(
+        default=False,
+        description=(
+            "Enable the AI second-pass that flags borderline new listings for human review "
+            "(requires AI__ENABLED). The keyword filter still hard-blocks known violations."
+        ),
+    )
 
 
 class ListingSettings(BaseModel):
@@ -279,7 +286,15 @@ class LLMSettings(BaseModel):
         default="ollama",
         description="Chat model provider: 'ollama' (local, default, no key) or 'anthropic' (Claude).",
     )
-    ollama_model: str = Field(default="qwen2.5:7b", description="Ollama chat model name")
+    assist_provider: str = Field(
+        default="",
+        description=(
+            "Provider for assist and moderation tasks (auto-description, auto-categorize, "
+            "listing moderation). Empty falls back to `provider`. Set 'anthropic' to power "
+            "these with Claude while the chat assistant stays on another provider."
+        ),
+    )
+    ollama_model: str = Field(default="qwen3.5:4b", description="Ollama chat model name")
     ollama_base_url: str = Field(default="http://localhost:11434", description="Ollama server URL")
     anthropic_model: str = Field(
         default="claude-haiku-4-5-20251001", description="Anthropic model id (provider=anthropic)"
