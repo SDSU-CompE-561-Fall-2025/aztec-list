@@ -10,6 +10,7 @@ dependencies = [
     "langchain-anthropic>=1.4.3",
     "langchain-ollama>=1.1.0",
     "langgraph>=1.2.1",
+    "mcp>=1.27.1",
     "pillow>=12.2.0",
     "psycopg2-binary>=2.9.12",
     "pwdlib[argon2]>=0.3.0",
