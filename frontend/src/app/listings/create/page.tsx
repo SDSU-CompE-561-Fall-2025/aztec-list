@@ -149,6 +149,7 @@ function CreateListingContent() {
         title,
         category: category || undefined,
         condition: condition || undefined,
+        keywords: description.trim() || undefined,
       }),
     onSuccess: (data) => {
       setDescription(data.description.slice(0, 500));
