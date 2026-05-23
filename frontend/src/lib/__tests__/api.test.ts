@@ -2,7 +2,13 @@
  * Unit tests for the AI listing API helpers (B1 description, B2 category, C1 similar).
  */
 
-import { generateListingDescription, getSimilarListings } from "../api";
+import {
+  generateListingDescription,
+  getSimilarListings,
+  getFlaggedListings,
+  approveFlaggedListing,
+  adminRemoveListing,
+} from "../api";
 import { setAuthToken } from "../auth";
 import { mockFetch, mockFetchError, cleanupMocks } from "@/test-utils";
 
@@ -66,6 +72,52 @@ describe("AI listing api helpers", () => {
       mockFetch({ not: "an array" });
 
       await expect(getSimilarListings("listing-1")).rejects.toThrow("Invalid response format");
+    });
+  });
+
+  describe("admin moderation", () => {
+    it("getFlaggedListings returns the review queue", async () => {
+      setAuthToken("test-token");
+      mockFetch({
+        items: [{ action_id: "a1", reason: "scam", flagged_at: "now", listing: { id: "l1" } }],
+        count: 1,
+      });
+
+      const result = await getFlaggedListings();
+
+      expect(result.count).toBe(1);
+      expect(result.items[0].listing.id).toBe("l1");
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/admin/flagged-listings"),
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: "Bearer test-token" }),
+        }),
+      );
+    });
+
+    it("approveFlaggedListing posts to the approve endpoint", async () => {
+      setAuthToken("test-token");
+      mockFetch({ listing_id: "l1", status: "approved" });
+
+      await approveFlaggedListing("l1");
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/admin/listings/l1/approve"),
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+
+    it("adminRemoveListing surfaces the backend error detail", async () => {
+      setAuthToken("test-token");
+      mockFetchError("Cannot remove a listing posted by an admin", 403);
+
+      await expect(adminRemoveListing("l1", "spam")).rejects.toThrow(
+        "Cannot remove a listing posted by an admin",
+      );
+    });
+
+    it("getFlaggedListings throws when not authenticated", async () => {
+      await expect(getFlaggedListings()).rejects.toThrow("Authentication required");
     });
   });
 });

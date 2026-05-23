@@ -618,3 +618,70 @@ export const removeProfilePicture = async () => {
 
   return response.json();
 };
+
+// Admin moderation API functions
+
+export interface FlaggedListing {
+  action_id: string;
+  reason: string | null;
+  flagged_at: string;
+  listing: ListingSummary;
+}
+
+export interface FlaggedListingsResponse {
+  items: FlaggedListing[];
+  count: number;
+}
+
+export const getFlaggedListings = async (): Promise<FlaggedListingsResponse> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/admin/flagged-listings`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to fetch flagged listings: ${res.status} ${errorText}`);
+  }
+
+  return res.json();
+};
+
+export const approveFlaggedListing = async (listingId: string): Promise<void> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/admin/listings/${listingId}/approve`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to approve listing: ${res.status} ${errorText}`);
+  }
+};
+
+export const adminRemoveListing = async (listingId: string, reason: string): Promise<void> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/admin/listings/${listingId}/remove`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ reason }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: "Failed to remove listing" }));
+    throw new Error(error.detail || "Failed to remove listing");
+  }
+};
