@@ -48,12 +48,31 @@ services:
       - LOGGING__FORMAT=${LOGGING__FORMAT:-"%(asctime)s - %(name)s - %(levelname)s - %(message)s"}
       - EMAIL__RESEND_API_KEY=${EMAIL__RESEND_API_KEY:-}
       - EMAIL__FROM_EMAIL=${EMAIL__FROM_EMAIL:-noreply@azteclist.com}
+      # AI / semantic search / assistant. Qdrant and Ollama run as sibling services.
+      - AI__ENABLED=${AI__ENABLED:-true}
+      - EMBEDDING__MODEL=${EMBEDDING__MODEL:-BAAI/bge-small-en-v1.5}
+      - VECTOR__QDRANT_URL=${VECTOR__QDRANT_URL:-http://qdrant:6333}
+      - VECTOR__COLLECTION=${VECTOR__COLLECTION:-listings}
+      - VECTOR__SCORE_FLOOR=${VECTOR__SCORE_FLOOR:-0.40}
+      - VECTOR__RELATIVE_MARGIN=${VECTOR__RELATIVE_MARGIN:-0.05}
+      - LLM__PROVIDER=${LLM__PROVIDER:-ollama}
+      - LLM__OLLAMA_MODEL=${LLM__OLLAMA_MODEL:-qwen2.5:7b}
+      - LLM__OLLAMA_BASE_URL=${LLM__OLLAMA_BASE_URL:-http://ollama:11434}
+      - LLM__ANTHROPIC_MODEL=${LLM__ANTHROPIC_MODEL:-claude-haiku-4-5-20251001}
+      - LLM__ANTHROPIC_API_KEY=${LLM__ANTHROPIC_API_KEY:-}
+      - LLM__TEMPERATURE=${LLM__TEMPERATURE:-0.2}
+      - LLM__RETRIEVAL_K=${LLM__RETRIEVAL_K:-6}
+      - LLM__EXPAND_QUERIES=${LLM__EXPAND_QUERIES:-true}
     volumes:
       - ./backend/uploads:/app/uploads
       - ./backend/src:/app/src # Mount source code for hot reload
     depends_on:
       postgres:
         condition: service_healthy
+      qdrant:
+        condition: service_started
+      ollama:
+        condition: service_started
     networks:
       - aztec-list-network
     restart: unless-stopped
@@ -77,9 +96,38 @@ services:
       - aztec-list-network
     restart: unless-stopped
 
+  # Qdrant vector database (semantic search)
+  qdrant:
+    image: qdrant/qdrant
+    container_name: aztec-list-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - aztec-list-network
+    restart: unless-stopped
+
+  # Ollama (local LLM for the AI assistant)
+  # First run only: pull the model with
+  #   docker compose exec ollama ollama pull qwen2.5:7b
+  ollama:
+    image: ollama/ollama
+    container_name: aztec-list-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - aztec-list-network
+    restart: unless-stopped
+
 networks:
   aztec-list-network:
     driver: bridge
 
 volumes:
   postgres_data:
+  qdrant_data:
+  ollama_data:
