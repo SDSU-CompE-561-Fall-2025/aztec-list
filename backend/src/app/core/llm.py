@@ -49,6 +49,9 @@ def _build_chat_model(provider: str, *, temperature: float | None = None) -> Bas
         model=settings.llm.ollama_model,
         base_url=settings.llm.ollama_base_url,
         temperature=temp,
+        # Disable Qwen3.x "thinking" mode: we want fast, direct output, not hidden chain-of-thought
+        # that stalls streaming and pollutes one-shot responses. Harmless on non-reasoning models.
+        reasoning=False,
     )
 
 
@@ -73,6 +76,24 @@ def get_structured_model[SchemaT: BaseModel](
 ) -> Runnable[LanguageModelInput, SchemaT]:
     """Return an assist model that emits validated ``schema`` instances (structured output)."""
     return get_assist_model().with_structured_output(schema)
+
+
+def get_vision_model() -> BaseChatModel:
+    """Build a vision-capable chat model (Claude) for image understanding and moderation."""
+    from langchain_anthropic import ChatAnthropic  # noqa: PLC0415 - deferred heavy import
+
+    return ChatAnthropic(
+        model=settings.llm.anthropic_model,
+        api_key=settings.llm.anthropic_api_key,
+        temperature=settings.llm.temperature,
+    )
+
+
+def get_structured_vision_model[SchemaT: BaseModel](
+    schema: type[SchemaT],
+) -> Runnable[LanguageModelInput, SchemaT]:
+    """Return a vision model that emits validated ``schema`` instances (image classification)."""
+    return get_vision_model().with_structured_output(schema)
 
 
 def expand_query(query: str) -> str:
