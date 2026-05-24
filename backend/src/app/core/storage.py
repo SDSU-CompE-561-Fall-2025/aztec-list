@@ -328,6 +328,34 @@ def delete_file(url_path: str) -> None:
         logger.warning("Failed to delete file %s: %s", sanitize_log(url_path), exc)
 
 
+def read_listing_image(url_path: str) -> bytes | None:
+    """
+    Read a saved listing image's bytes from disk by its URL path.
+
+    Args:
+        url_path: URL path like "/uploads/images/{listing_id}/{filename}".
+
+    Returns:
+        bytes | None: The file contents, or None if the path is invalid or missing.
+    """
+    if not url_path:
+        return None
+    try:
+        path_parts = Path(url_path).parts
+        if (
+            len(path_parts) < MIN_PATH_PARTS
+            or path_parts[1] != "uploads"
+            or path_parts[2] != "images"
+        ):
+            return None
+        file_path = _resolve_within(Path(settings.storage.upload_dir), path_parts[3], path_parts[4])
+        if file_path.exists() and file_path.is_file():
+            return file_path.read_bytes()
+    except (OSError, ValueError, IndexError, HTTPException) as exc:
+        logger.warning("Failed to read image %s: %s", sanitize_log(url_path), exc)
+    return None
+
+
 def delete_listing_images(listing_id: uuid.UUID) -> None:
     """
     Delete all images for a listing by removing its directory.

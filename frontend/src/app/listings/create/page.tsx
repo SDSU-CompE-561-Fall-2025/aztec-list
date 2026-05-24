@@ -9,14 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/listings/ImageUpload";
-import { createListing } from "@/lib/api";
+import { createListing, generateListingDescription } from "@/lib/api";
 import { CATEGORIES, Category } from "@/types/listing/filters/category";
 import { CONDITIONS, Condition } from "@/types/listing/filters/condition";
 import { formatCategoryLabel, formatConditionLabel } from "@/lib/utils";
 import { toast } from "sonner";
 import { showErrorToast } from "@/lib/errorHandling";
 import { ProtectedRoute } from "@/components/custom/ProtectedRoute";
-import { Loader2, ChevronLeft } from "lucide-react";
+import { Loader2, ChevronLeft, Sparkles } from "lucide-react";
 import type { ImagePublic } from "@/types/listing/listing";
 
 export default function CreateListingPage() {
@@ -143,6 +143,22 @@ function CreateListingContent() {
     },
   });
 
+  const generateDescriptionMutation = useMutation({
+    mutationFn: () =>
+      generateListingDescription({
+        title,
+        category: category || undefined,
+        condition: condition || undefined,
+        keywords: description.trim() || undefined,
+      }),
+    onSuccess: (data) => {
+      setDescription(data.description.slice(0, 500));
+      setErrors((prev) => ({ ...prev, description: "" }));
+      toast.success("Description generated. Feel free to edit it.");
+    },
+    onError: (error) => showErrorToast(error, "Failed to generate description"),
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
@@ -204,55 +220,6 @@ function CreateListingContent() {
             <p className="mt-1 text-xs text-muted-foreground">{title.length}/100 characters</p>
           </div>
 
-          {/* Description */}
-          <div>
-            <Label htmlFor="description" className="text-foreground">
-              Description <span className="text-red-500">*</span>
-            </Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              onBlur={(e) => handleBlur("description", e.target.value)}
-              placeholder="Describe your item..."
-              rows={4}
-              maxLength={500}
-              disabled={!!createdListingId}
-              className={`mt-1 resize-none ${errors.description ? "border-red-500" : ""}`}
-            />
-            {errors.description && (
-              <p className="mt-1 text-sm text-red-500">{errors.description}</p>
-            )}
-            <p className="mt-1 text-xs text-muted-foreground">
-              {description.length}/500 characters
-            </p>
-          </div>
-
-          {/* Price */}
-          <div>
-            <Label htmlFor="price" className="text-foreground">
-              Price <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative mt-1">
-              <span className="absolute top-1/2 left-3 -translate-y-1/2 text-lg text-muted-foreground">
-                $
-              </span>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                min="0.01"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                onBlur={handlePriceBlur}
-                placeholder="0.00"
-                disabled={!!createdListingId}
-                className={`h-12 pl-8 text-lg ${errors.price ? "border-red-500" : ""}`}
-              />
-            </div>
-            {errors.price && <p className="mt-1 text-sm text-red-500">{errors.price}</p>}
-          </div>
-
           {/* Category */}
           <div>
             <Label htmlFor="category" className="text-foreground">
@@ -301,6 +268,81 @@ function CreateListingContent() {
               ))}
             </select>
             {errors.condition && <p className="mt-1 text-sm text-red-500">{errors.condition}</p>}
+          </div>
+
+          {/* Description */}
+          <div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="description" className="text-foreground">
+                Description <span className="text-red-500">*</span>
+              </Label>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => generateDescriptionMutation.mutate()}
+                disabled={
+                  !title.trim() ||
+                  !category ||
+                  !condition ||
+                  !!createdListingId ||
+                  generateDescriptionMutation.isPending
+                }
+                title={
+                  !category || !condition ? "Add a title, category, and condition first" : undefined
+                }
+                className="h-7 gap-1 px-2 text-xs text-purple-600 hover:text-purple-700 dark:text-purple-300"
+              >
+                {generateDescriptionMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                Generate
+              </Button>
+            </div>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              onBlur={(e) => handleBlur("description", e.target.value)}
+              placeholder="Describe your item..."
+              rows={4}
+              maxLength={500}
+              disabled={!!createdListingId}
+              className={`mt-1 resize-none ${errors.description ? "border-red-500" : ""}`}
+            />
+            {errors.description && (
+              <p className="mt-1 text-sm text-red-500">{errors.description}</p>
+            )}
+            <p className="mt-1 text-xs text-muted-foreground">
+              {description.length}/500 characters
+            </p>
+          </div>
+
+          {/* Price */}
+          <div>
+            <Label htmlFor="price" className="text-foreground">
+              Price <span className="text-red-500">*</span>
+            </Label>
+            <div className="relative mt-1">
+              <span className="absolute top-1/2 left-3 -translate-y-1/2 text-lg text-muted-foreground">
+                $
+              </span>
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                onBlur={handlePriceBlur}
+                placeholder="0.00"
+                disabled={!!createdListingId}
+                className={`h-12 pl-8 text-lg ${errors.price ? "border-red-500" : ""}`}
+              />
+            </div>
+            {errors.price && <p className="mt-1 text-sm text-red-500">{errors.price}</p>}
           </div>
 
           {/* Active Status */}

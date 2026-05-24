@@ -411,6 +411,61 @@ class AdminActionService:
 
             return removal_record
 
+    def get_flagged_listings(
+        self, db: Session, limit: int = 20, offset: int = 0
+    ) -> tuple[list[dict], int]:
+        """
+        Get listings auto-flagged for moderator review, with their flag reason.
+
+        Args:
+            db: Database session
+            limit: Maximum number of results
+            offset: Number of results to skip
+
+        Returns:
+            tuple[list[dict], int]: Flagged-listing dicts and the total count
+        """
+        pairs = AdminActionRepository.get_flagged_listings(db, limit, offset)
+        count = AdminActionRepository.count_flagged_listings(db)
+        items = [
+            {
+                "action_id": action.id,
+                "reason": action.reason,
+                "flagged_at": action.created_at,
+                "listing": listing,
+            }
+            for action, listing in pairs
+        ]
+        return items, count
+
+    def approve_flagged_listing(self, db: Session, listing_id: uuid.UUID) -> None:
+        """
+        Clear automated flags on a listing: reactivate it and delete its FLAG actions.
+
+        Args:
+            db: Database session
+            listing_id: Listing to approve
+
+        Raises:
+            HTTPException: 404 if the listing does not exist
+        """
+        listing = ListingRepository.get_by_id(db, listing_id)
+        if not listing:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Listing {listing_id} not found",
+            )
+        try:
+            actions = AdminActionRepository.get_by_target_listing_id(db, listing_id)
+            for action in actions:
+                if action.action_type == AdminActionType.FLAG:
+                    AdminActionRepository.delete_no_commit(db, action)
+            listing.is_active = True
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+
 
 # Create a singleton instance
 admin_action_service = AdminActionService()

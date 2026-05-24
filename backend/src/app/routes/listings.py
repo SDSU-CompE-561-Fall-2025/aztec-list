@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -79,7 +79,11 @@ async def create_listing(
         )
 
     # Create the listing
-    return listing_service.create(db, current_user.id, listing)
+    new_listing = listing_service.create(db, current_user.id, listing)
+
+    # AI second-pass: flag borderline content for human review (no-op when disabled).
+    await moderation_service.review_new_listing(db, current_user, new_listing)
+    return new_listing
 
 
 @listing_router.get(
@@ -106,6 +110,36 @@ async def get_listing_by_id(
         HTTPException: 404 if listing not found
     """
     return listing_service.get_by_id(db, listing_id)
+
+
+@listing_router.get(
+    "/{listing_id}/similar",
+    summary="Get listings similar to a given one (AI)",
+    response_model=list[ListingSummary],
+    status_code=status.HTTP_200_OK,
+)
+async def get_similar_listings(
+    listing_id: uuid.UUID,
+    db: Annotated[Session, Depends(get_db)],
+    limit: Annotated[int, Query(ge=1, le=20)] = 6,
+) -> list[Listing]:
+    """
+    Retrieve active listings similar to the given one, ranked by AI relevance.
+
+    Returns an empty list when AI features are disabled or no similar listings are found.
+
+    Args:
+        listing_id: Listing to find similar items for
+        db: Database session
+        limit: Maximum number of similar listings to return (1-20, default 6)
+
+    Returns:
+        list[ListingSummary]: Similar active listings, best match first (empty if none)
+
+    Raises:
+        HTTPException: 404 if the listing not found
+    """
+    return listing_service.get_similar(db, listing_id, limit)
 
 
 @listing_router.patch(

@@ -1,6 +1,11 @@
 import { ListingsParams } from "@/types/listing/listingParams";
 import { UserListingsParams } from "@/types/listing/userListingsParams";
-import { ListingSearchResponse, ListingPublic, ImagePublic } from "@/types/listing/listing";
+import {
+  ListingSearchResponse,
+  ListingPublic,
+  ImagePublic,
+  ListingSummary,
+} from "@/types/listing/listing";
 import { UserPublic } from "@/types/user";
 import { API_BASE_URL } from "@/lib/constants";
 import { getAuthToken } from "@/lib/auth";
@@ -226,6 +231,57 @@ export const createListing = async (data: {
   }
 
   return responseData as ListingPublic;
+};
+
+// AI listing helpers (require AI features enabled on the backend)
+
+export const generateListingDescription = async (data: {
+  title: string;
+  category?: string;
+  condition?: string;
+  keywords?: string;
+}): Promise<{ description: string }> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/ai/generate-description`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: "Failed to generate description" }));
+    throw new Error(error.detail || "Failed to generate description");
+  }
+
+  return res.json();
+};
+
+export const getSimilarListings = async (
+  listingId: string,
+  limit = 6,
+): Promise<ListingSummary[]> => {
+  const url = new URL(`${API_BASE_URL}/listings/${listingId}/similar`);
+  url.searchParams.set("limit", String(limit));
+
+  const res = await fetch(url.toString());
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to fetch similar listings: ${res.status} ${errorText}`);
+  }
+
+  const data = await res.json();
+  if (!Array.isArray(data)) {
+    throw new Error("Invalid response format from API");
+  }
+
+  return data as ListingSummary[];
 };
 
 export const uploadListingImage = async (listingId: string, file: File): Promise<ImagePublic> => {
@@ -561,4 +617,71 @@ export const removeProfilePicture = async () => {
   }
 
   return response.json();
+};
+
+// Admin moderation API functions
+
+export interface FlaggedListing {
+  action_id: string;
+  reason: string | null;
+  flagged_at: string;
+  listing: ListingSummary;
+}
+
+export interface FlaggedListingsResponse {
+  items: FlaggedListing[];
+  count: number;
+}
+
+export const getFlaggedListings = async (): Promise<FlaggedListingsResponse> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/admin/flagged-listings`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to fetch flagged listings: ${res.status} ${errorText}`);
+  }
+
+  return res.json();
+};
+
+export const approveFlaggedListing = async (listingId: string): Promise<void> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/admin/listings/${listingId}/approve`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to approve listing: ${res.status} ${errorText}`);
+  }
+};
+
+export const adminRemoveListing = async (listingId: string, reason: string): Promise<void> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/admin/listings/${listingId}/remove`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ reason }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: "Failed to remove listing" }));
+    throw new Error(error.detail || "Failed to remove listing");
+  }
 };

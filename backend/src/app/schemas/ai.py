@@ -5,7 +5,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from app.core.enums import AIMessageRole
+from app.core.enums import AIMessageRole, Category, Condition
 
 
 class AIChatRequest(BaseModel):
@@ -49,3 +49,20 @@ class AIConversationPublic(AIConversationSummary):
     """A conversation with its full message history."""
 
     messages: list[AIMessagePublic]
+
+
+class GenerateDescriptionRequest(BaseModel):
+    """Inputs for AI listing-description generation."""
+
+    title: str = Field(..., min_length=1, max_length=200, description="Listing title")
+    category: Category | None = Field(None, description="Selected category, if any")
+    condition: Condition | None = Field(None, description="Selected condition, if any")
+    keywords: str | None = Field(
+        None, max_length=500, description="Optional seller notes/details to weave in"
+    )
+
+
+class GenerateDescriptionResponse(BaseModel):
+    """A generated listing description."""
+
+    description: str

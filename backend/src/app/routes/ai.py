@@ -1,5 +1,6 @@
 """AI shopping-assistant routes (RAG chat over listings)."""
 
+import logging
 import uuid
 from typing import Annotated
 
@@ -14,8 +15,17 @@ from app.core.settings import settings
 from app.models.ai_conversation import AIConversation
 from app.models.user import User
 from app.repository.ai_conversation import AIConversationRepository
-from app.schemas.ai import AIChatRequest, AIConversationPublic, AIConversationSummary
+from app.schemas.ai import (
+    AIChatRequest,
+    AIConversationPublic,
+    AIConversationSummary,
+    GenerateDescriptionRequest,
+    GenerateDescriptionResponse,
+)
 from app.services.ai_assistant import ai_assistant_service
+from app.services.ai_listing_assist import ai_listing_assist_service
+
+logger = logging.getLogger(__name__)
 
 ai_router = APIRouter(prefix="/ai", tags=["AI Assistant"])
 
@@ -44,6 +54,29 @@ async def chat(
     _ensure_ai_enabled()
     stream = ai_assistant_service.stream_chat(db, current_user, body)
     return StreamingResponse(stream, media_type="text/event-stream")
+
+
+@ai_router.post(
+    "/generate-description",
+    summary="Generate a listing description (AI)",
+)
+@limiter.limit("10/minute;100/hour")
+async def generate_description(
+    request: Request,  # noqa: ARG001 - required by slowapi for rate limiting
+    body: GenerateDescriptionRequest,
+    current_user: Annotated[User, Depends(get_current_user)],  # noqa: ARG001 - auth gate
+) -> GenerateDescriptionResponse:
+    """Draft a listing description from the title and any seller-provided details."""
+    _ensure_ai_enabled()
+    try:
+        description = await ai_listing_assist_service.generate_description(body)
+    except Exception as exc:
+        logger.exception("AI description generation failed")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Could not generate a description right now. Please try again or write your own.",
+        ) from exc
+    return GenerateDescriptionResponse(description=description)
 
 
 @ai_router.get(

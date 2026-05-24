@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle } from "lucide-react";
 import { SupportTicketsView } from "@/components/admin/SupportTicketsView";
+import { FlaggedListingsView } from "@/components/admin/FlaggedListingsView";
 
 // Constants - moved outside component for performance
 const ACTION_TYPE_CONFIG = {
@@ -101,7 +102,7 @@ export default function AdminDashboard() {
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<
-    "actions" | "strike" | "ban" | "remove" | "verify" | "support"
+    "actions" | "strike" | "ban" | "remove" | "flagged" | "verify" | "support"
   >("actions");
   const [targetUserId, setTargetUserId] = useState("");
   const [listingId, setListingId] = useState("");
@@ -384,6 +385,16 @@ export default function AdminDashboard() {
           }`}
         >
           Remove Listing
+        </button>
+        <button
+          onClick={() => setActiveTab("flagged")}
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "flagged"
+              ? "border-b-2 border-purple-500 text-purple-400"
+              : "text-gray-400 hover:text-gray-200"
+          }`}
+        >
+          Flagged
         </button>
         <button
           onClick={() => setActiveTab("verify")}
@@ -943,6 +954,16 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Flagged Listings Tab */}
+      {activeTab === "flagged" && (
+        <div className="mx-auto max-w-4xl">
+          <h2 className="mb-4 text-lg font-semibold text-foreground sm:text-xl">
+            Flagged for Review
+          </h2>
+          <FlaggedListingsView />
+        </div>
       )}
 
       {/* Support Tickets Tab */}

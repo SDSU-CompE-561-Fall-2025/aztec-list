@@ -10,6 +10,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 from app.core.enums import AdminActionType
+from app.schemas.listing import ListingSummary
 
 
 class AdminActionBase(BaseModel):
@@ -35,7 +36,7 @@ class AdminActionPublic(BaseModel):
     """Schema for admin action response."""
 
     id: uuid.UUID
-    admin_id: uuid.UUID
+    admin_id: uuid.UUID | None = Field(None, description="Admin who acted; null for system actions")
     admin_username: str | None = Field(None, description="Username of admin who performed action")
     target_user_id: uuid.UUID
     target_username: str | None = Field(None, description="Username of user receiving action")
@@ -128,6 +129,24 @@ class AdminActionFilters(BaseModel):
     offset: int = Field(0, ge=0, description="Number of results to skip")
 
     model_config = {"populate_by_name": True}
+
+
+class FlaggedListingPublic(BaseModel):
+    """A listing auto-flagged for moderator review."""
+
+    action_id: uuid.UUID = Field(..., description="The FLAG admin-action record id")
+    reason: str | None = Field(None, description="Why the listing was flagged")
+    flagged_at: datetime
+    listing: ListingSummary
+
+    model_config = {"from_attributes": True}
+
+
+class FlaggedListingsResponse(BaseModel):
+    """Paginated list of flagged listings awaiting review."""
+
+    items: list[FlaggedListingPublic]
+    count: int
 
 
 class AdminUserVerification(BaseModel):

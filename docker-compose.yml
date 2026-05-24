@@ -56,7 +56,7 @@ services:
       - VECTOR__SCORE_FLOOR=${VECTOR__SCORE_FLOOR:-0.40}
       - VECTOR__RELATIVE_MARGIN=${VECTOR__RELATIVE_MARGIN:-0.05}
       - LLM__PROVIDER=${LLM__PROVIDER:-ollama}
-      - LLM__OLLAMA_MODEL=${LLM__OLLAMA_MODEL:-qwen2.5:7b}
+      - LLM__OLLAMA_MODEL=${LLM__OLLAMA_MODEL:-qwen3.5:4b}
       - LLM__OLLAMA_BASE_URL=${LLM__OLLAMA_BASE_URL:-http://ollama:11434}
       - LLM__ANTHROPIC_MODEL=${LLM__ANTHROPIC_MODEL:-claude-haiku-4-5-20251001}
       - LLM__ANTHROPIC_API_KEY=${LLM__ANTHROPIC_API_KEY:-}
@@ -111,7 +111,7 @@ services:
 
   # Ollama (local LLM for the AI assistant)
   # First run only: pull the model with
-  #   docker compose exec ollama ollama pull qwen2.5:7b
+  #   docker compose exec ollama ollama pull qwen3.5:4b
   ollama:
     image: ollama/ollama
     container_name: aztec-list-ollama

@@ -56,6 +56,7 @@ class AdminActionType(str, enum.Enum):
     STRIKE = "strike"
     BAN = "ban"
     LISTING_REMOVAL = "listing_removal"
+    FLAG = "flag"
 
 
 class UserRole(str, enum.Enum):

@@ -30,7 +30,7 @@ LLM settings (nested `__` env vars, see `backend/.env.example`):
 | :--- | :--- | :--- |
 | `AI__ENABLED` | `false` | Master switch (shared with semantic search). |
 | `LLM__PROVIDER` | `ollama` | `ollama` (local, free) or `anthropic` (Claude). |
-| `LLM__OLLAMA_MODEL` | `qwen2.5:7b` | Local model. `ollama serve` + `ollama pull qwen2.5:7b`. |
+| `LLM__OLLAMA_MODEL` | `qwen3.5:4b` | Local model. `ollama serve` + `ollama pull qwen3.5:4b`. |
 | `LLM__OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL. |
 | `LLM__ANTHROPIC_MODEL` | `claude-haiku-4-5-20251001` | Used when provider is anthropic. |
 | `LLM__ANTHROPIC_API_KEY` | `""` | Required when provider is anthropic. |
@@ -58,7 +58,8 @@ These came out of heavy iteration; they are the interesting part for a reviewer.
 
 - **The generation model is the quality ceiling.** `qwen2.5:3b` conflated listings (invented an
   "Airpod Pro" by merging two), recommended unrelated items (dumbbells for music), and ordered
-  poorly. `qwen2.5:7b` (or Claude) fixed these with no other change. The default is `qwen2.5:7b`.
+  poorly. `qwen2.5:7b` (or Claude) fixed these with no other change. The default is now
+  `qwen3.5:4b` (newer and lighter than the 7b it replaced); re-test generation quality if you swap models.
 - **Let the LLM judge relevance, not cosine.** On short titles the embedder cannot separate
   "Headset" from "Dumbbells" for a music query (measured in 06-semantic-search.md). So grounding
   is generous and the LLM filters, and only recommended listings are cited.
@@ -74,8 +75,9 @@ These came out of heavy iteration; they are the interesting part for a reviewer.
 
 ## Limitations and future work
 
-- Quality depends on the generation model. Small local models can still wander; use
-  `qwen2.5:7b` or larger, or `LLM__PROVIDER=anthropic`, for reliable results.
+- Quality depends on the generation model. Small local models can still wander; the default
+  `qwen3.5:4b` is a reasonable floor, and `qwen3.5:9b` or larger (or `LLM__PROVIDER=anthropic`)
+  are steadier.
 - Conversation history is persisted per user and exposed via the API, but the UI shows only the
   current session (no history browser yet).
 - Query expansion adds one LLM call per smart search. It falls back to the raw query if the LLM
