@@ -31,6 +31,7 @@ from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 
 from app.core import database
+from app.core.logging_safe import sanitize_log
 from app.core.settings import settings
 from app.core.websocket import authenticate_websocket_user
 from app.schemas.message import MessageCreate, MessagePublic
@@ -390,7 +391,10 @@ async def _receive_loop(
             if not should_continue:
                 return
         except TimeoutError:
-            logger.info("Closing idle WebSocket for conversation %s", conversation_id)
+            # Sanitize the path-param-derived id before logging to keep CodeQL's
+            # log-injection check happy (FastAPI's UUID coercion already blocks it,
+            # but the taint analysis can't see that).
+            logger.info("Closing idle WebSocket for conversation %s", sanitize_log(conversation_id))
             with suppress(RuntimeError, OSError):
                 await websocket.close(code=1001, reason="Idle timeout")
             return
