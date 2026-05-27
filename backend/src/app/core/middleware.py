@@ -211,3 +211,34 @@ async def add_cache_headers_middleware(request: Request, call_next: Callable) ->
         response.headers["Vary"] = "Accept-Encoding"
 
     return response
+
+
+# Baseline CSP: tight by default since the API only serves JSON + uploaded images.
+# `connect-src 'self'` is sufficient because the frontend is a separate origin and is
+# already allowlisted via CORS. Browsers ignore CSP on JSON responses but it still
+# applies to /docs (Swagger UI) and any error pages.
+_SECURITY_HEADERS: dict[str, str] = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        "img-src 'self' data: blob:; "
+        "style-src 'self' 'unsafe-inline'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "object-src 'none'; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'"
+    ),
+    # Harmless over plain HTTP; browsers only act on it when the response is HTTPS.
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+}
+
+
+async def add_security_headers_middleware(request: Request, call_next: Callable) -> Response:
+    """Attach baseline security headers to every response."""
+    response = await call_next(request)
+    for name, value in _SECURITY_HEADERS.items():
+        response.headers.setdefault(name, value)
+    return response
