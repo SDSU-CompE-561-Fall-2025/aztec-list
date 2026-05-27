@@ -508,3 +508,36 @@ class TestWebSocketDisconnection:
             ws1.send_json({"content": "Message after user 2 disconnected"})
             msg = ws1.receive_json()
             assert msg["content"] == "Message after user 2 disconnected"
+
+
+class TestWebSocketRateLimit:
+    """Per-(conversation, user) sliding-window rate limit on inbound messages."""
+
+    def test_rate_limit_rejects_burst(
+        self,
+        client: TestClient,
+        test_conversation: Conversation,
+        test_user: User,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        """A burst that exceeds the configured cap is rejected with an error frame."""
+        from app.core.settings import settings
+        from app.routes.websocket_messages import rate_buckets
+
+        monkeypatch.setattr(settings.websocket, "rate_limit_messages", 2)
+        monkeypatch.setattr(settings.websocket, "rate_limit_window_seconds", 60.0)
+        rate_buckets.clear()
+
+        token = create_access_token({"sub": str(test_user.id)})
+        with client.websocket_connect(f"/ws/conversations/{test_conversation.id}") as websocket:
+            websocket.send_json({"type": "auth", "token": token})
+            websocket.receive_json()
+
+            websocket.send_json({"content": "first"})
+            websocket.receive_json()
+            websocket.send_json({"content": "second"})
+            websocket.receive_json()
+
+            websocket.send_json({"content": "third over the cap"})
+            response = websocket.receive_json()
+            assert response.get("error") == "Rate limit exceeded"

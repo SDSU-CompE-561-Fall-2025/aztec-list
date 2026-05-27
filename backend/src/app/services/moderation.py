@@ -12,6 +12,7 @@ Two layers protect the marketplace:
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import logging
 from dataclasses import dataclass
@@ -62,6 +63,9 @@ _IMAGE_MIME = {
     ".gif": "image/gif",
     ".webp": "image/webp",
 }
+
+# Claude vision rejects images over ~5MB; skip moderation rather than pay for a guaranteed failure.
+_MAX_VISION_BYTES = 5 * 1024 * 1024
 
 
 def _image_mime(url: str) -> str:
@@ -155,8 +159,14 @@ class ModerationService:
             return
         prompt = f"Title: {listing.title}\nDescription: {listing.description}"
         try:
-            verdict = await get_structured_model(_ListingVerdict).ainvoke(
-                [SystemMessage(content=_REVIEW_SYSTEM), HumanMessage(content=prompt)]
+            # wait_for catches the case where a slow/hung provider would otherwise
+            # block listing creation indefinitely. TimeoutError is an Exception, so
+            # the broad except below covers both the timeout and any provider error.
+            verdict = await asyncio.wait_for(
+                get_structured_model(_ListingVerdict).ainvoke(
+                    [SystemMessage(content=_REVIEW_SYSTEM), HumanMessage(content=prompt)]
+                ),
+                timeout=settings.llm.request_timeout_seconds,
             )
         except Exception:  # fail open: a review outage must not block listing creation
             logger.exception(
@@ -189,6 +199,13 @@ class ModerationService:
         image_bytes = read_listing_image(image_url)
         if not image_bytes:
             return
+        if len(image_bytes) > _MAX_VISION_BYTES:
+            logger.warning(
+                "Skipping AI image moderation for listing %s: image %d bytes exceeds vision limit",
+                sanitize_log(listing.id),
+                len(image_bytes),
+            )
+            return
         data_uri = f"data:{_image_mime(image_url)};base64,{base64.b64encode(image_bytes).decode()}"
         messages = [
             SystemMessage(content=_IMAGE_REVIEW_SYSTEM),
@@ -200,7 +217,10 @@ class ModerationService:
             ),
         ]
         try:
-            verdict = await get_structured_vision_model(_ListingVerdict).ainvoke(messages)
+            verdict = await asyncio.wait_for(
+                get_structured_vision_model(_ListingVerdict).ainvoke(messages),
+                timeout=settings.llm.request_timeout_seconds,
+            )
         except Exception:  # fail open: a vision outage must not block uploads
             logger.exception(
                 "AI image moderation failed for listing %s; leaving it active",

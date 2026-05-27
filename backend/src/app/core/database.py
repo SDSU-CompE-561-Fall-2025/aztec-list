@@ -1,17 +1,36 @@
 from collections.abc import Generator
+from typing import Any
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.core.settings import settings
 
-# Create database engine with configuration from settings
+
+def _engine_kwargs(database_url: str) -> dict[str, Any]:
+    """
+    Pick pool + connect args based on the dialect.
+
+    SQLite uses ``check_same_thread=False`` and its default pool because
+    pool_size/max_overflow/pool_recycle do not apply (single file, no network).
+    Network-backed engines (Postgres, MySQL, etc.) get sane pool defaults plus
+    ``pool_pre_ping`` so stale connections are discarded instead of returning
+    a broken session to a request.
+    """
+    if database_url.startswith("sqlite"):
+        return {"connect_args": {"check_same_thread": False}}
+    return {
+        "pool_pre_ping": True,
+        "pool_size": settings.db.pool_size,
+        "max_overflow": settings.db.max_overflow,
+        "pool_recycle": settings.db.pool_recycle_seconds,
+    }
+
+
 engine = create_engine(
     settings.db.database_url,
     echo=settings.db.echo,
-    connect_args=(
-        {"check_same_thread": False} if settings.db.database_url.startswith("sqlite") else {}
-    ),
+    **_engine_kwargs(settings.db.database_url),
 )
 
 

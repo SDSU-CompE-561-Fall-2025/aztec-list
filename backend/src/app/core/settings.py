@@ -12,6 +12,26 @@ class AppMeta(BaseModel):
     version: str = "0.1.0"
     docs_url: str | None = "/docs"
     redoc_url: str | None = "/redoc"
+    environment: str = Field(
+        default="development",
+        description=(
+            "Deployment environment. Set to 'production' to disable interactive API docs "
+            "(/docs, /redoc, /openapi.json) regardless of the docs_url/redoc_url settings."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def _hide_docs_in_prod(self) -> "AppMeta":
+        """In production, force-disable interactive docs even if explicitly set."""
+        if self.environment.lower() == "production":
+            self.docs_url = None
+            self.redoc_url = None
+        return self
+
+    @property
+    def is_production(self) -> bool:
+        """Whether the app is running in a production deployment."""
+        return self.environment.lower() == "production"
 
 
 class JWTSettings(BaseModel):
@@ -25,7 +45,10 @@ class JWTSettings(BaseModel):
         description="The algorithm used for JWT",
     )
     access_token_expire_minutes: int = Field(
-        default=30,
+        # 8h = a full work session. Long enough that buyers/sellers don't have to log
+        # back in mid-task, short enough that a stolen token from a public machine has
+        # a finite lifetime. Tighten for higher-risk environments.
+        default=480,
         ge=1,
         description="Access token expiration time in minutes",
     )
@@ -39,6 +62,26 @@ class DatabaseSettings(BaseModel):
     echo: bool = Field(
         default=False,
         description="Echo SQL statements to console (useful for debugging)",
+    )
+    pool_size: int = Field(
+        default=10,
+        ge=1,
+        le=100,
+        description="SQLAlchemy connection pool size (ignored for SQLite).",
+    )
+    max_overflow: int = Field(
+        default=10,
+        ge=0,
+        le=100,
+        description="Extra connections allowed beyond pool_size under bursty load.",
+    )
+    pool_recycle_seconds: int = Field(
+        default=1800,
+        ge=60,
+        description=(
+            "Recycle connections after this many seconds to avoid stale handles "
+            "after upstream proxy/idle timeouts (ignored for SQLite)."
+        ),
     )
 
 
@@ -180,7 +223,7 @@ class LoggingSettings(BaseModel):
         description="Logging level for Uvicorn error logs",
     )
     excluded_paths: list[str] = Field(
-        default=["/health", "/docs", "/redoc", "/openapi.json"],
+        default=["/health", "/ready", "/docs", "/redoc", "/openapi.json"],
         description="Paths to exclude from detailed request logging",
     )
 
@@ -215,12 +258,59 @@ class RateLimitSettings(BaseModel):
     )
 
 
+class WebSocketSettings(BaseModel):
+    """Real-time messaging WebSocket guardrails."""
+
+    rate_limit_messages: int = Field(
+        default=20,
+        ge=1,
+        description="Max messages a single user can send through one conversation per window.",
+    )
+    rate_limit_window_seconds: float = Field(
+        default=10.0,
+        ge=1.0,
+        description="Rolling window length (seconds) for the per-user/per-conversation rate limit.",
+    )
+    max_connections_per_user: int = Field(
+        default=8,
+        ge=1,
+        description="Maximum concurrent WebSocket connections a single user may hold.",
+    )
+    idle_timeout_seconds: float = Field(
+        default=300.0,
+        ge=10.0,
+        description="Close any WebSocket that has not received a frame within this many seconds.",
+    )
+
+
 class TestSettings(BaseModel):
     """Test mode configuration."""
 
     test_mode: bool = Field(
         default=False,
         description="Enable test-only endpoints (NEVER enable in production)",
+    )
+
+
+class SentrySettings(BaseModel):
+    """Optional Sentry error tracking. A complete no-op when ``dsn`` is empty."""
+
+    dsn: str = Field(
+        default="",
+        description="Sentry DSN. Leave empty in dev/tests; set in prod to enable error reporting.",
+    )
+    environment: str = Field(
+        default="",
+        description=(
+            "Sentry environment tag (e.g. 'production', 'staging'). Empty falls back to "
+            "APP__ENVIRONMENT so you only set it in one place."
+        ),
+    )
+    traces_sample_rate: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Performance trace sample rate (0.0 disables tracing; 0.1 = 10% of requests).",
     )
 
 
@@ -319,6 +409,15 @@ class LLMSettings(BaseModel):
         default=True,
         description="Use the LLM to expand vague searches into product keywords before embedding.",
     )
+    request_timeout_seconds: float = Field(
+        default=25.0,
+        ge=1.0,
+        le=120.0,
+        description=(
+            "Per-request timeout for one-shot LLM/vision calls (moderation, auto-description). "
+            "On timeout the call fails open so a slow provider does not hang the API."
+        ),
+    )
 
 
 class Settings(BaseSettings):
@@ -348,11 +447,13 @@ class Settings(BaseSettings):
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
     email: EmailSettings = Field(default_factory=EmailSettings)
     rate_limit: RateLimitSettings = Field(default_factory=RateLimitSettings)
+    websocket: WebSocketSettings = Field(default_factory=WebSocketSettings)
     test: TestSettings = Field(default_factory=TestSettings)
     ai: AISettings = Field(default_factory=AISettings)
     embedding: EmbeddingSettings = Field(default_factory=EmbeddingSettings)
     vector: VectorStoreSettings = Field(default_factory=VectorStoreSettings)
     llm: LLMSettings = Field(default_factory=LLMSettings)
+    sentry: SentrySettings = Field(default_factory=SentrySettings)
 
 
 @lru_cache

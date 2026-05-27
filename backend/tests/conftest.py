@@ -76,6 +76,10 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
     """
     Create a test client with overridden database dependency.
 
+    Also redirects ``app.core.database.SessionLocal`` at the WS module's reference
+    so the WebSocket endpoint's per-message ``SessionLocal()`` resolves to the
+    in-memory test database instead of the on-disk dev SQLite/Postgres.
+
     Args:
         db_session: Test database session
 
@@ -91,10 +95,31 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
 
     app.dependency_overrides[get_db] = override_get_db
 
-    with TestClient(app) as test_client:
-        yield test_client
+    # Patch the SessionLocal factory the WS endpoint resolves through.
+    # The endpoint expects a fresh session per call and calls .close() when done,
+    # so we hand out a thin wrapper that proxies to the shared test session but
+    # swallows close() (the fixture itself owns the lifecycle).
+    from app.core import database as _database
 
-    app.dependency_overrides.clear()
+    class _SharedSessionProxy:
+        def __init__(self, session: Session) -> None:
+            self._session = session
+
+        def __getattr__(self, name: str):
+            return getattr(self._session, name)
+
+        def close(self) -> None:
+            pass
+
+    original_session_local = _database.SessionLocal
+    _database.SessionLocal = lambda: _SharedSessionProxy(db_session)
+
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        _database.SessionLocal = original_session_local
+        app.dependency_overrides.clear()
 
 
 # ============================================================================

@@ -139,6 +139,39 @@ async def test_vision_failure_fails_open(
 
 
 @pytest.mark.integration
+async def test_image_over_size_limit_is_skipped(
+    db_session: Session, test_user: User, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Images larger than the vision provider's byte cap should skip moderation entirely."""
+    _enable(monkeypatch, tmp_path)
+    # Force the byte cap below the test image's size so the guard short-circuits.
+    monkeypatch.setattr("app.services.moderation._MAX_VISION_BYTES", 16)
+
+    called = False
+
+    class _ShouldNotRun:
+        async def ainvoke(self, _messages: object) -> object:
+            nonlocal called
+            called = True
+            return SimpleNamespace(is_violation=True, reason="should not be called")
+
+    monkeypatch.setattr(
+        "app.services.moderation.get_structured_vision_model", lambda _schema: _ShouldNotRun()
+    )
+    listing = _make_listing(db_session, test_user.id)
+    # `_write_image` writes 16 bytes ("fake-image-bytes"); the guard checks `>`, so we
+    # need it strictly larger than the cap.
+    monkeypatch.setattr("app.services.moderation._MAX_VISION_BYTES", 8)
+    url = _write_image(tmp_path, listing.id)
+
+    await moderation_service.review_listing_image(db_session, test_user, listing, url)
+
+    db_session.refresh(listing)
+    assert listing.is_active is True
+    assert called is False, "vision provider should not be called when image exceeds size limit"
+
+
+@pytest.mark.integration
 async def test_admin_upload_bypasses(
     db_session: Session, test_admin: User, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
