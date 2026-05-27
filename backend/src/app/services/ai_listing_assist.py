@@ -6,9 +6,13 @@ Generates a listing description from seller-provided text, reusing the assist LL
 treated strictly as data to describe, never as instructions to the model.
 """
 
+import asyncio
+
+from fastapi import HTTPException, status
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from app.core.llm import get_assist_model
+from app.core.settings import settings
 from app.schemas.ai import GenerateDescriptionRequest
 
 _DESCRIPTION_SYSTEM = (
@@ -41,7 +45,16 @@ class AIListingAssistService:
             SystemMessage(content=_DESCRIPTION_SYSTEM),
             HumanMessage(content="\n".join(details)),
         ]
-        response = await get_assist_model(temperature=0.4).ainvoke(messages)
+        try:
+            response = await asyncio.wait_for(
+                get_assist_model(temperature=0.4).ainvoke(messages),
+                timeout=settings.llm.request_timeout_seconds,
+            )
+        except TimeoutError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail="Description generation timed out. Please try again.",
+            ) from exc
         content = response.content
         return (content if isinstance(content, str) else str(content)).strip()
 

@@ -35,6 +35,19 @@ class _BoomModel:
         raise RuntimeError("llm down")
 
 
+class _HangingModel:
+    """Stand-in whose ainvoke sleeps past the configured timeout."""
+
+    def __init__(self, sleep_seconds: float = 5.0) -> None:
+        self._sleep_seconds = sleep_seconds
+
+    async def ainvoke(self, _messages: object) -> object:
+        import asyncio
+
+        await asyncio.sleep(self._sleep_seconds)
+        return SimpleNamespace(is_violation=True, reason="should never see this")
+
+
 def _enable_ai_review(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings.ai, "enabled", True)
     monkeypatch.setattr(settings.moderation, "ai_review_enabled", True)
@@ -122,6 +135,25 @@ def test_ai_review_fails_open(
     response = authenticated_client.post(LISTINGS_URL, json=valid_listing_data)
 
     assert response.status_code == 201
+    assert response.json()["is_active"] is True
+
+
+@pytest.mark.integration
+def test_ai_review_timeout_fails_open(
+    authenticated_client: TestClient, valid_listing_data: dict, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A provider that hangs past the timeout must not block listing creation."""
+    _enable_ai_review(monkeypatch)
+    monkeypatch.setattr(settings.llm, "request_timeout_seconds", 0.05)
+    monkeypatch.setattr(
+        "app.services.moderation.get_structured_model",
+        lambda _schema: _HangingModel(sleep_seconds=2.0),
+    )
+
+    response = authenticated_client.post(LISTINGS_URL, json=valid_listing_data)
+
+    assert response.status_code == 201
+    # Fail-open: the slow provider must leave the listing active rather than blocking.
     assert response.json()["is_active"] is True
 
 
