@@ -93,7 +93,8 @@ describe("profile-picture.ts", () => {
       const result = getProfilePictureUrl(path, updatedAt);
 
       expect(result).toContain(path);
-      expect(result.startsWith(FALLBACK_BASE_URL)).toBe(true);
+      expect(result).not.toBeNull();
+      expect(result!.startsWith(FALLBACK_BASE_URL)).toBe(true);
     });
   });
 });
