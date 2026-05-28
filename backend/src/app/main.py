@@ -32,20 +32,22 @@ logger = logging.getLogger(__name__)
 # the integrations can hook into request/response lifecycle.
 init_sentry()
 
-# Create upload directory with absolute path
+# Resolve the upload directory and ensure it exists before mounting StaticFiles below.
+# StaticFiles raises at construction time if the directory is missing, and the mount
+# call runs at import. Creating it lazily in `lifespan` is too late (e.g. fresh CI
+# checkouts have no uploads/ and would crash before lifespan ever fires).
 upload_dir = Path(__file__).parent.parent.parent / "uploads"
+upload_dir.mkdir(parents=True, exist_ok=True)
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
     """Application lifespan manager - runs on startup and shutdown."""
-    # Startup: create tables (dev/test only) and ensure the upload dir exists.
-    # In production the schema is managed by Alembic (`alembic upgrade head`);
-    # `create_all` is a convenience for SQLite + tests, where there are no
-    # migrations to apply.
+    # Startup: create tables (dev/test only). In production the schema is managed
+    # by Alembic (`alembic upgrade head`); `create_all` is a convenience for SQLite
+    # + tests, where there are no migrations to apply.
     if not settings.app.is_production:
         Base.metadata.create_all(bind=engine)
-    upload_dir.mkdir(parents=True, exist_ok=True)
 
     # Ensure the vector search collection exists when AI features are enabled
     if settings.ai.enabled:
