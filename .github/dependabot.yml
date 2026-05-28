@@ -1,8 +1,8 @@
 version: 2
 
 updates:
-  # Backend Python dependencies (uv / pip)
-  - package-ecosystem: "pip"
+  # Backend Python dependencies (uv-managed; updates pyproject.toml AND uv.lock)
+  - package-ecosystem: "uv"
     directory: "/backend"
     schedule:
       interval: "weekly"
