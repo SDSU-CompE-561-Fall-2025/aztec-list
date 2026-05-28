@@ -9,6 +9,8 @@
  * - Action type badges and formatting
  */
 
+// Stub tests in this file accept Playwright fixtures (`page`, `context`) they don't
+// always use yet, so silence the param warning at file scope.
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { test, expect, Page } from "@playwright/test";
@@ -17,7 +19,6 @@ import {
   generateUsername,
   generatePassword,
   createAdminUser,
-  createTestUser,
 } from "./helpers/test-helpers";
 
 test.describe("Admin Actions History", () => {

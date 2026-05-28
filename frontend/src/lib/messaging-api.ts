@@ -55,7 +55,7 @@ export async function createOrGetConversation(otherUserId: string): Promise<Conv
   });
 
   if (!response.ok) {
-    let errorDetail = "Unknown error";
+    let errorDetail: string;
     try {
       const errorData = await response.json();
       errorDetail = errorData.detail || JSON.stringify(errorData);

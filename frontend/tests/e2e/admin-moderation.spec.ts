@@ -10,16 +10,12 @@
  * - Auto-ban after 3 strikes
  */
 
+// Stub tests in this file accept Playwright fixtures (`page`, `context`) they don't
+// always use yet, so silence the param warning at file scope.
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { test, expect, Page } from "@playwright/test";
-import {
-  generateTestEmail,
-  generateUsername,
-  generatePassword,
-  createAdminUser,
-  createTestUser,
-} from "./helpers/test-helpers";
+import { createAdminUser } from "./helpers/test-helpers";
 
 test.describe("Admin Moderation Actions", () => {
   async function waitForAdminDashboard(page: Page) {
