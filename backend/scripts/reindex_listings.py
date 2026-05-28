@@ -23,7 +23,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from sqlalchemy import select
 
-from app.core.database import SessionLocal
+# Import the module (not the attribute) so SessionLocal lookups stay live, even
+# if test fixtures monkeypatch it. Matches the pattern used elsewhere.
+from app.core import database
 from app.models.listing import Listing
 from app.services.vector_store import vector_store
 
@@ -39,7 +41,7 @@ logger = logging.getLogger("reindex_listings")
 def main() -> None:
     """Drop the collection and re-embed every listing (clean rebuild)."""
     vector_store.reset_collection()
-    db = SessionLocal()
+    db = database.SessionLocal()
     try:
         listings = list(db.scalars(select(Listing)))
         for listing in listings:

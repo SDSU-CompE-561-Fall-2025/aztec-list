@@ -13,7 +13,9 @@ from typing import TYPE_CHECKING
 
 from mcp.server.fastmcp import FastMCP
 
-from app.core.database import SessionLocal
+# Import the module (not the attribute) so SessionLocal lookups stay live with
+# any conftest test-time monkeypatching — same pattern as websocket_messages.
+from app.core import database
 from app.core.enums import Category
 from app.schemas.listing import ListingPublic, ListingSearchParams, ListingSummary
 from app.services.listing import listing_service
@@ -62,7 +64,7 @@ def search_listings(  # noqa: PLR0913 - each parameter is part of the tool's sch
         condition=condition,
         limit=limit,
     )
-    db = SessionLocal()
+    db = database.SessionLocal()
     try:
         listings, _count = listing_service.get_filtered(db, params)
         return _summaries(listings)
@@ -84,7 +86,7 @@ def semantic_search_listings(query: str, limit: int = 10) -> list[dict]:
     keyword matching.
     """
     params = ListingSearchParams(search_text=query, semantic=True, limit=limit)
-    db = SessionLocal()
+    db = database.SessionLocal()
     try:
         listings, _count = listing_service.get_filtered(db, params)
         return _summaries(listings)
@@ -95,7 +97,7 @@ def semantic_search_listings(query: str, limit: int = 10) -> list[dict]:
 @mcp.tool()
 def get_listing(listing_id: str) -> dict:
     """Get one listing with full details (including images) by its id."""
-    db = SessionLocal()
+    db = database.SessionLocal()
     try:
         listing = listing_service.get_by_id(db, uuid.UUID(listing_id))
         return ListingPublic.model_validate(listing).model_dump(mode="json")

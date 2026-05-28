@@ -1,27 +1,14 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Integration tests for listing workflows
  * Tests browsing, searching, filtering listings
  */
 
-import { screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { renderWithProviders, mockFetch } from "@/test-utils";
-import { QueryClient } from "@tanstack/react-query";
+import { mockFetch } from "@/test-utils";
 
 describe("Listing Flow Integration Tests", () => {
-  let queryClient: QueryClient;
-
   beforeEach(() => {
     localStorage.clear();
     jest.clearAllMocks();
-
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: { retry: false },
-        mutations: { retry: false },
-      },
-    });
   });
 
   describe("Browse listings flow", () => {
@@ -164,8 +151,6 @@ describe("Listing Flow Integration Tests", () => {
 
   describe("Create listing flow", () => {
     it("should successfully create a new listing", async () => {
-      const user = userEvent.setup();
-
       const mockUser = {
         id: "seller-1",
         email: "seller@sdsu.edu",
