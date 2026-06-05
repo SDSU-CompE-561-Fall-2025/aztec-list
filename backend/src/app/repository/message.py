@@ -22,6 +22,11 @@ class MessageRepository:
     """Repository for message data access."""
 
     @staticmethod
+    def get_by_id(db: Session, message_id: uuid.UUID) -> Message | None:
+        """Fetch a single message by id, or None if it does not exist."""
+        return db.get(Message, message_id)
+
+    @staticmethod
     def get_by_conversation(
         db: Session, conversation_id: uuid.UUID, limit: int = 20, offset: int = 0
     ) -> list[Message]:

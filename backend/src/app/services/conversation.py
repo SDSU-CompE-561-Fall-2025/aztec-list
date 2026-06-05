@@ -13,6 +13,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.repository.conversation import ConversationRepository
 from app.repository.user import UserRepository
+from app.services.user_block import user_block_service
 
 if TYPE_CHECKING:
     import uuid
@@ -82,6 +83,14 @@ class ConversationService:
                 detail="Cannot create conversation with yourself",
             )
 
+        # Block gate: neither party may start a DM if either has blocked the other.
+        # Generic message so a blocked user is not told they were blocked.
+        if user_block_service.is_blocked_either_way(db, current_user_id, other_user_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can no longer message this user.",
+            )
+
         # Check if conversation already exists
         existing_conversation = ConversationRepository.get_by_participants(
             db, current_user_id, other_user_id
@@ -117,7 +126,18 @@ class ConversationService:
         Returns:
             list[Conversation]: List of user's conversations
         """
-        return ConversationRepository.get_user_conversations(db, user_id)
+        conversations = ConversationRepository.get_user_conversations(db, user_id)
+        # Hide conversations the current user has blocked the other party in (the
+        # blocked party still sees the thread; only the blocker hides it).
+        return [
+            conv
+            for conv in conversations
+            if not user_block_service.is_blocked(
+                db,
+                user_id,
+                conv.user_2_id if conv.user_1_id == user_id else conv.user_1_id,
+            )
+        ]
 
     def verify_participant(
         self, db: Session, conversation_id: uuid.UUID, user_id: uuid.UUID

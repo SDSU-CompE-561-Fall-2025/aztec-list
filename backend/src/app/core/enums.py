@@ -97,3 +97,28 @@ class AIMessageRole(str, enum.Enum):
 
     USER = "user"
     ASSISTANT = "assistant"
+
+
+class MessageReportCategory(str, enum.Enum):
+    """Why a user reported a direct message."""
+
+    SPAM = "spam"
+    HARASSMENT = "harassment"
+    SCAM = "scam"
+    HATE = "hate"
+    NUDITY = "nudity"
+    OTHER = "other"
+
+
+class MessageReportStatus(str, enum.Enum):
+    """
+    Lifecycle of a user-submitted message report.
+
+    - OPEN: Awaiting moderator review
+    - DISMISSED: Reviewed, no action taken (false positive / not a violation)
+    - UPHELD: Reviewed and actioned (a STRIKE was issued to the message author)
+    """
+
+    OPEN = "open"
+    DISMISSED = "dismissed"
+    UPHELD = "upheld"

@@ -38,6 +38,8 @@ importlib.import_module("app.models.message")
 importlib.import_module("app.models.admin")
 importlib.import_module("app.models.support_ticket")
 importlib.import_module("app.models.ai_conversation")
+importlib.import_module("app.models.message_report")
+importlib.import_module("app.models.user_block")
 
 config = context.config
 

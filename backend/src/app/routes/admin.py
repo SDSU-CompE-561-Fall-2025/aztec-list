@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_admin, require_not_banned
+from app.core.enums import MessageReportStatus
 from app.core.rate_limiter import limiter
 from app.models.admin import AdminAction
 from app.models.user import User
@@ -25,7 +26,14 @@ from app.schemas.admin import (
     FlaggedListingsResponse,
 )
 from app.schemas.listing import ListingSummary
+from app.schemas.message_report import (
+    MessageReportQueueItem,
+    MessageReportQueueResponse,
+    MessageReportResolveRequest,
+    MessageReportUpheldResponse,
+)
 from app.services.admin import admin_action_service
+from app.services.message_report import message_report_service
 from app.services.user import user_service
 
 admin_router = APIRouter(
@@ -376,4 +384,85 @@ async def update_user_verification(
         user_id=user_id,
         is_verified=user.is_verified,
         message=f"User {action} successfully by admin {admin.username}",
+    )
+
+
+@admin_router.get(
+    "/message-reports",
+    summary="List user-submitted message reports for review",
+)
+async def list_message_reports(
+    db: Annotated[Session, Depends(get_db)],
+    report_status: Annotated[MessageReportStatus, Query(alias="status")] = MessageReportStatus.OPEN,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> MessageReportQueueResponse:
+    """
+    List message reports in the given status (default: open), newest first.
+
+    **Requires:** Admin privileges
+    """
+    items, count = message_report_service.list_queue(db, report_status, limit, offset)
+    return MessageReportQueueResponse(
+        items=[MessageReportQueueItem.model_validate(item) for item in items],
+        count=count,
+    )
+
+
+@admin_router.post(
+    "/message-reports/{report_id}/dismiss",
+    summary="Dismiss a message report (no action against the author)",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+@limiter.limit("10/minute;50/hour")
+async def dismiss_message_report(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
+    report_id: uuid.UUID,
+    admin: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> None:
+    """
+    Mark a report dismissed (reviewed, no violation found).
+
+    **Requires:** Admin privileges
+
+    Raises:
+        HTTPException: 404 if the report is missing, 409 if already reviewed.
+    """
+    message_report_service.dismiss(db, report_id, admin.id)
+
+
+@admin_router.post(
+    "/message-reports/{report_id}/uphold",
+    summary="Uphold a message report and strike the message author",
+    status_code=status.HTTP_200_OK,
+)
+@limiter.limit("10/minute;50/hour")
+async def uphold_message_report(
+    request: Request,  # noqa: ARG001 - Required by slowapi for rate limiting
+    report_id: uuid.UUID,
+    resolution: MessageReportResolveRequest,
+    admin: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> MessageReportUpheldResponse:
+    """
+    Uphold a report: mark it upheld and issue a STRIKE to the message author.
+
+    Reuses the strike / auto-ban pipeline. If the author's account is gone or already
+    banned, the report is still upheld but no new strike is issued.
+
+    **Requires:** Admin privileges
+
+    Raises:
+        HTTPException: 404 if missing, 409 if already reviewed, 403 if the author is an admin.
+    """
+    report, _strike, strike_count, auto_ban = message_report_service.uphold(
+        db, report_id, admin.id, resolution.reason
+    )
+    return MessageReportUpheldResponse(
+        report_id=report.id,
+        status=report.status,
+        strike_issued=_strike is not None,
+        strike_count=strike_count,
+        auto_ban_triggered=auto_ban,
     )
