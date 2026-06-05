@@ -12,6 +12,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 
 from app.repository.conversation import ConversationRepository
+from app.repository.message import MessageRepository
 from app.repository.user import UserRepository
 from app.services.user_block import user_block_service
 
@@ -113,23 +114,24 @@ class ConversationService:
             # If still not found, something else went wrong
             raise
 
-    def get_user_conversations(self, db: Session, user_id: uuid.UUID) -> list[Conversation]:
+    def get_user_conversations(self, db: Session, user_id: uuid.UUID) -> list[dict]:
         """
-        Get all conversations for a user.
+        Get all conversations for a user, each with a last-message preview.
 
-        Returns conversations ordered by creation date (most recent first).
+        Conversations are newest-first. Threads the current user has blocked the other
+        party in are hidden (the blocked party still sees the thread; only the blocker
+        hides it). Each item carries ``last_message`` / ``last_message_at`` for the
+        inbox preview, or None when the conversation has no messages yet.
 
         Args:
             db: Database session
             user_id: User UUID
 
         Returns:
-            list[Conversation]: List of user's conversations
+            list[dict]: Conversation fields plus the last-message preview.
         """
         conversations = ConversationRepository.get_user_conversations(db, user_id)
-        # Hide conversations the current user has blocked the other party in (the
-        # blocked party still sees the thread; only the blocker hides it).
-        return [
+        visible = [
             conv
             for conv in conversations
             if not user_block_service.is_blocked(
@@ -138,6 +140,22 @@ class ConversationService:
                 conv.user_2_id if conv.user_1_id == user_id else conv.user_1_id,
             )
         ]
+
+        latest = MessageRepository.get_latest_message_map(db, [conv.id for conv in visible])
+        result = []
+        for conv in visible:
+            preview = latest.get(conv.id)
+            result.append(
+                {
+                    "id": conv.id,
+                    "user_1_id": conv.user_1_id,
+                    "user_2_id": conv.user_2_id,
+                    "created_at": conv.created_at,
+                    "last_message": preview[0] if preview else None,
+                    "last_message_at": preview[1] if preview else None,
+                }
+            )
+        return result
 
     def verify_participant(
         self, db: Session, conversation_id: uuid.UUID, user_id: uuid.UUID

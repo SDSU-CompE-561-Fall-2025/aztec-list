@@ -5,6 +5,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createMessagesQueryOptions } from "@/queryOptions/createMessagingQueryOptions";
 import { Message } from "@/types/message";
@@ -229,23 +230,29 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
     <div className="flex h-full flex-1 flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 border-b bg-background p-4">
-        <Avatar className="h-10 w-10">
-          <AvatarImage
-            src={
-              getProfilePictureUrl(
-                otherUserProfile?.profile_picture_url,
-                otherUserProfile?.profile_picture_updated_at,
-              ) || undefined
-            }
-            alt={otherUserName}
-            loading="lazy"
-          />
-          <AvatarFallback>{otherUserName[0]?.toUpperCase()}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <h2 className="font-semibold">{otherUserName}</h2>
-          {isBlocked && <p className="text-xs text-muted-foreground">Blocked</p>}
-        </div>
+        <Link
+          href={`/profile/${otherUserId}`}
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-md transition-colors hover:opacity-80 focus:ring-2 focus:ring-primary focus:outline-none"
+          aria-label={`View ${otherUserName}'s profile`}
+        >
+          <Avatar className="h-10 w-10">
+            <AvatarImage
+              src={
+                getProfilePictureUrl(
+                  otherUserProfile?.profile_picture_url,
+                  otherUserProfile?.profile_picture_updated_at,
+                ) || undefined
+              }
+              alt={otherUserName}
+              loading="lazy"
+            />
+            <AvatarFallback>{otherUserName[0]?.toUpperCase()}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <h2 className="truncate font-semibold hover:underline">{otherUserName}</h2>
+            {isBlocked && <p className="text-xs text-muted-foreground">Blocked</p>}
+          </div>
+        </Link>
 
         {/* Conversation actions: block / unblock */}
         <DropdownMenu>

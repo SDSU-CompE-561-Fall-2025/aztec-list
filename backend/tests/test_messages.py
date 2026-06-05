@@ -215,6 +215,29 @@ class TestGetConversations:
         assert isinstance(data, list)
         assert len(data) == 1
         assert data[0]["id"] == str(test_conversation.id)
+        # A conversation with no messages reports a null preview.
+        assert data[0]["last_message"] is None
+        assert data[0]["last_message_at"] is None
+
+    def test_get_conversations_includes_last_message_preview(
+        self,
+        client: TestClient,
+        db_session: Session,
+        test_user: User,
+        test_conversation: Conversation,
+        test_user2: User,
+        auth_headers: dict[str, str],
+    ):
+        """The inbox preview reflects the newest message in each conversation."""
+        MessageRepository.create(db_session, test_conversation.id, test_user.id, "first message")
+        MessageRepository.create(db_session, test_conversation.id, test_user2.id, "latest message")
+
+        response = client.get("/api/v1/messages/conversations", headers=auth_headers)
+
+        assert response.status_code == status.HTTP_200_OK
+        item = response.json()[0]
+        assert item["last_message"] == "latest message"
+        assert item["last_message_at"] is not None
 
     def test_get_conversations_multiple(
         self,
