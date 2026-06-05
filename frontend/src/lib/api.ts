@@ -685,3 +685,99 @@ export const adminRemoveListing = async (listingId: string, reason: string): Pro
     throw new Error(error.detail || "Failed to remove listing");
   }
 };
+
+// Message report moderation API functions
+
+export interface MessageReportUser {
+  id: string;
+  username: string;
+}
+
+export interface ReportedMessage {
+  id: string;
+  conversation_id: string;
+  content: string;
+  created_at: string;
+}
+
+export interface MessageReport {
+  report_id: string;
+  category: string;
+  reason_text: string | null;
+  status: string;
+  created_at: string;
+  reporter: MessageReportUser | null;
+  target_user: MessageReportUser | null;
+  message: ReportedMessage | null;
+  message_excerpt: string | null;
+}
+
+export interface MessageReportsResponse {
+  items: MessageReport[];
+  count: number;
+}
+
+export const getMessageReports = async (
+  reportStatus: "open" | "dismissed" | "upheld" = "open",
+): Promise<MessageReportsResponse> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/admin/message-reports?status=${reportStatus}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(`Failed to fetch message reports: ${res.status} ${errorText}`);
+  }
+
+  return res.json();
+};
+
+export const dismissMessageReport = async (reportId: string): Promise<void> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/admin/message-reports/${reportId}/dismiss`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: "Failed to dismiss report" }));
+    throw new Error(error.detail || "Failed to dismiss report");
+  }
+};
+
+export interface UpholdReportResult {
+  report_id: string;
+  status: string;
+  strike_issued: boolean;
+  strike_count: number;
+  auto_ban_triggered: boolean;
+}
+
+export const upholdMessageReport = async (reportId: string): Promise<UpholdReportResult> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/admin/message-reports/${reportId}/uphold`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({}),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: "Failed to uphold report" }));
+    throw new Error(error.detail || "Failed to uphold report");
+  }
+
+  return res.json();
+};

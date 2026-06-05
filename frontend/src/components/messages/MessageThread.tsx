@@ -5,19 +5,39 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createMessagesQueryOptions } from "@/queryOptions/createMessagingQueryOptions";
 import { Message } from "@/types/message";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { MessageInput } from "./MessageInput";
+import { ReportMessageDialog } from "./ReportMessageDialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, AlertCircle } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Loader2, AlertCircle, MoreVertical, Flag, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
 import { API_BASE_URL } from "@/lib/constants";
 import { toast } from "sonner";
+import { showErrorToast } from "@/lib/errorHandling";
+import { blockUser, unblockUser, listMyBlocks } from "@/lib/messaging-api";
 
 interface MessageThreadProps {
   conversationId: string;
@@ -34,6 +54,38 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
   // State is automatically reset when component remounts (via key prop)
   const [offset, setOffset] = useState(0);
   const [allMessages, setAllMessages] = useState<Message[]>([]);
+
+  // Report-message dialog: which message id is being reported (null = closed).
+  const [reportMessageId, setReportMessageId] = useState<string | null>(null);
+
+  // Whether the current user has blocked the other participant.
+  const { data: blockedUsers } = useQuery({
+    queryKey: ["blockedUsers"],
+    queryFn: listMyBlocks,
+    enabled: !!user,
+    staleTime: 1000 * 30,
+  });
+  const isBlocked = (blockedUsers ?? []).some((b) => b.blocked_user_id === otherUserId);
+
+  const blockMutation = useMutation({
+    mutationFn: () => blockUser(otherUserId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blockedUsers"] });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      toast.success(`You blocked ${otherUserName}. They can no longer message you.`);
+    },
+    onError: (error) => showErrorToast(error, "Failed to block user"),
+  });
+
+  const unblockMutation = useMutation({
+    mutationFn: () => unblockUser(otherUserId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blockedUsers"] });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      toast.success(`You unblocked ${otherUserName}.`);
+    },
+    onError: (error) => showErrorToast(error, "Failed to unblock user"),
+  });
 
   const {
     data: messages,
@@ -192,7 +244,55 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
         </Avatar>
         <div className="flex-1">
           <h2 className="font-semibold">{otherUserName}</h2>
+          {isBlocked && <p className="text-xs text-muted-foreground">Blocked</p>}
         </div>
+
+        {/* Conversation actions: block / unblock */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Conversation options">
+              <MoreVertical className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {isBlocked ? (
+              <DropdownMenuItem onClick={() => unblockMutation.mutate()}>
+                <Ban className="mr-2 h-4 w-4" />
+                Unblock {otherUserName}
+              </DropdownMenuItem>
+            ) : (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem
+                    onSelect={(e) => e.preventDefault()}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Ban className="mr-2 h-4 w-4" />
+                    Block {otherUserName}
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Block {otherUserName}?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      They will no longer be able to message you, and this conversation will be
+                      hidden from your inbox. You can unblock them at any time.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => blockMutation.mutate()}
+                      className="text-destructive-foreground bg-destructive hover:bg-destructive/90"
+                    >
+                      Block
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Messages */}
@@ -253,13 +353,26 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
                     isOwnMessage ? "items-end" : "items-start",
                   )}
                 >
-                  <div
-                    className={cn(
-                      "rounded-lg px-4 py-2 break-words",
-                      isOwnMessage ? "bg-primary text-primary-foreground" : "bg-muted",
+                  <div className="group flex items-center gap-1">
+                    <div
+                      className={cn(
+                        "rounded-lg px-4 py-2 break-words",
+                        isOwnMessage ? "bg-primary text-primary-foreground" : "bg-muted",
+                      )}
+                    >
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    </div>
+                    {!isOwnMessage && (
+                      <button
+                        type="button"
+                        onClick={() => setReportMessageId(message.id)}
+                        aria-label="Report message"
+                        title="Report message"
+                        className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive focus:opacity-100"
+                      >
+                        <Flag className="h-3.5 w-3.5" />
+                      </button>
                     )}
-                  >
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                   </div>
                   <span className="mt-1 text-xs text-muted-foreground">{timeString}</span>
                 </div>
@@ -291,6 +404,14 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
         onSendMessage={handleSendMessage}
         disabled={!isConnected}
         placeholder={isConnected ? "Type a message..." : "Connecting..."}
+      />
+
+      <ReportMessageDialog
+        messageId={reportMessageId}
+        open={reportMessageId !== null}
+        onOpenChange={(open) => {
+          if (!open) setReportMessageId(null);
+        }}
       />
     </div>
   );
