@@ -345,6 +345,13 @@ class VectorStoreSettings(BaseModel):
             "on-disk Qdrant at `path` is used (single-process, development only)."
         ),
     )
+    qdrant_api_key: str = Field(
+        default="",
+        description=(
+            "API key for a managed Qdrant server (e.g. Qdrant Cloud). Only used when "
+            "`qdrant_url` is set; leave empty for a local/unauthenticated server."
+        ),
+    )
     path: str = Field(
         default="./qdrant_data",
         description="On-disk path for the embedded Qdrant used when no server URL is set",

@@ -71,7 +71,10 @@ class VectorStoreService:
         if self._location is not None:
             return QdrantClient(location=self._location)
         if settings.vector.qdrant_url:
-            return QdrantClient(url=settings.vector.qdrant_url)
+            # Pass the API key only when one is configured (managed Qdrant Cloud);
+            # a bare local server needs no auth.
+            api_key = settings.vector.qdrant_api_key or None
+            return QdrantClient(url=settings.vector.qdrant_url, api_key=api_key)
         return QdrantClient(path=settings.vector.path)
 
     @property

@@ -1,0 +1,60 @@
+# Fly.io configuration for the Aztec List backend.
+#
+# First-time setup (see docs/09-deployment.md for the full walkthrough):
+#   fly launch --no-deploy            # create the app from this file
+#   fly volumes create uploads --size 3 --region sjc
+#   fly secrets set JWT__SECRET_KEY=... DB__DATABASE_URL=... (etc.)
+#   fly deploy
+#
+# Secrets (JWT key, DB URL, API keys) are set with `fly secrets set` and injected as
+# env vars at runtime; only non-sensitive defaults live in [env] below.
+
+app = "aztec-list-backend"
+primary_region = "sjc" # San Jose; pick the region nearest your users and database
+
+[build]
+  dockerfile = "Dockerfile"
+
+[deploy]
+  # Apply database migrations in a one-off machine before the new release goes live.
+  release_command = "alembic upgrade head"
+
+[env]
+  APP__ENVIRONMENT = "production"
+  LOGGING__USE_JSON = "true"
+  LOGGING__LEVEL = "INFO"
+  STORAGE__UPLOAD_DIR = "uploads/images"
+  # Prod LLM: drop the Ollama sibling, use Anthropic (Claude). The API key is a secret.
+  LLM__PROVIDER = "anthropic"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  # Always-on: WebSocket connections must persist, so do not auto-stop the machine.
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "connections"
+    soft_limit = 200
+    hard_limit = 250
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/health"
+
+# Interim persistent volume for uploaded images on a single machine. Remove this once
+# uploads move to Cloudflare R2 (issue #104); object storage is the multi-instance fix.
+[mounts]
+  source = "uploads"
+  destination = "/app/uploads"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  # 2GB headroom for the in-process fastembed/onnxruntime model used by vector search.
+  # Drop to 1GB if you run with AI__ENABLED=false.
+  memory = "2gb"
