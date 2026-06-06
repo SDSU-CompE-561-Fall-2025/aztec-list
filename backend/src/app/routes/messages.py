@@ -70,7 +70,7 @@ async def create_conversation(
 async def get_conversations(
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
-) -> list[Conversation]:
+) -> list[dict]:
     """
     Get all conversations where the current user is a participant.
 

@@ -6,6 +6,7 @@ export interface UserPublic {
   id: string;
   username: string;
   is_verified: boolean;
+  role: "user" | "admin";
   created_at: string;
 }
 

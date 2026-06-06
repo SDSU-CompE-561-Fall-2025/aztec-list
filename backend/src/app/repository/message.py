@@ -6,9 +6,10 @@ This module provides data access layer for message operations.
 
 from __future__ import annotations
 
+from datetime import datetime  # noqa: TC003 - used in a runtime return annotation
 from typing import TYPE_CHECKING
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.models.message import Message
 
@@ -20,6 +21,47 @@ if TYPE_CHECKING:
 
 class MessageRepository:
     """Repository for message data access."""
+
+    @staticmethod
+    def get_by_id(db: Session, message_id: uuid.UUID) -> Message | None:
+        """Fetch a single message by id, or None if it does not exist."""
+        return db.get(Message, message_id)
+
+    @staticmethod
+    def get_latest_message_map(
+        db: Session, conversation_ids: list[uuid.UUID]
+    ) -> dict[uuid.UUID, tuple[str, datetime]]:
+        """
+        Return the newest message per conversation as ``{id: (content, created_at)}``.
+
+        Uses a single window-function query (row_number over each conversation, newest
+        first) so building an inbox preview never becomes an N+1 of per-conversation
+        lookups. Conversations with no messages are simply absent from the map.
+        """
+        if not conversation_ids:
+            return {}
+        row_number = (
+            func.row_number()
+            .over(
+                partition_by=Message.conversation_id,
+                order_by=(Message.created_at.desc(), Message.id.desc()),
+            )
+            .label("rn")
+        )
+        ranked = (
+            select(
+                Message.conversation_id.label("conversation_id"),
+                Message.content.label("content"),
+                Message.created_at.label("created_at"),
+                row_number,
+            )
+            .where(Message.conversation_id.in_(conversation_ids))
+            .subquery()
+        )
+        query = select(ranked.c.conversation_id, ranked.c.content, ranked.c.created_at).where(
+            ranked.c.rn == 1
+        )
+        return {row[0]: (row[1], row[2]) for row in db.execute(query).all()}
 
     @staticmethod
     def get_by_conversation(

@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
 import { API_BASE_URL } from "@/lib/constants";
-import { getAuthToken } from "@/lib/auth";
 import { NewConversationDialog } from "./NewConversationDialog";
 
 interface ConversationListProps {
@@ -174,39 +173,14 @@ function ConversationListItem({
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Check if conversation has messages
-  const { data: hasMessages } = useQuery({
-    queryKey: ["conversationHasMessages", conversation.id],
-    queryFn: async () => {
-      try {
-        const token = getAuthToken();
-        if (!token) return false;
-
-        const response = await fetch(
-          `${API_BASE_URL}/messages/conversations/${conversation.id}/messages?limit=1`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-        if (!response.ok) return false;
-        const messages = await response.json();
-        return Array.isArray(messages) && messages.length > 0;
-      } catch {
-        return false;
-      }
-    },
-    enabled: !!conversation.id && !conversation.last_message,
-    staleTime: 1000 * 60, // 1 minute
-  });
-
   const displayName = otherUser?.username || "Unknown User";
-  const createdAt = new Date(conversation.created_at);
-  const timeString = createdAt.toLocaleDateString([], {
+  // Prefer the last message time for the inbox timestamp; fall back to created date.
+  const stampSource = conversation.last_message_at ?? conversation.created_at;
+  const timeString = new Date(stampSource).toLocaleDateString([], {
     month: "short",
     day: "numeric",
   });
+  const hasLastMessage = !!conversation.last_message && conversation.last_message.trim() !== "";
 
   return (
     <button
@@ -238,11 +212,7 @@ function ConversationListItem({
           <span className="shrink-0 text-xs text-muted-foreground">{timeString}</span>
         </div>
         <p className="truncate text-sm text-muted-foreground">
-          {conversation.last_message && conversation.last_message.trim() !== ""
-            ? conversation.last_message
-            : hasMessages
-              ? "Continue conversation"
-              : "Start a conversation"}
+          {hasLastMessage ? conversation.last_message : "No messages yet"}
         </p>
       </div>
 

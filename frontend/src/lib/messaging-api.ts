@@ -6,6 +6,29 @@ import { API_BASE_URL } from "@/lib/constants";
 import { getAuthToken } from "@/lib/auth";
 import { Conversation, Message, ConversationCreate } from "@/types/message";
 
+/** Reasons a user can pick when reporting a message. Matches the backend enum. */
+export const MESSAGE_REPORT_CATEGORIES = [
+  { value: "spam", label: "Spam" },
+  { value: "harassment", label: "Harassment" },
+  { value: "scam", label: "Scam or fraud" },
+  { value: "hate", label: "Hate speech" },
+  { value: "nudity", label: "Nudity or sexual content" },
+  { value: "other", label: "Something else" },
+] as const;
+
+export type MessageReportCategory = (typeof MESSAGE_REPORT_CATEGORIES)[number]["value"];
+
+export interface BlockedUser {
+  blocked_user_id: string;
+  blocked_username: string | null;
+  created_at: string;
+}
+
+interface BlockedUserListResponse {
+  items: BlockedUser[];
+  count: number;
+}
+
 /**
  * Get all conversations for the authenticated user
  */
@@ -106,4 +129,99 @@ export async function getMessages(
   }
 
   return response.json();
+}
+
+/** Read the auth token or throw the standard "not signed in" error. */
+function requireToken(): string {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+  return token;
+}
+
+/** Pull a human-readable `detail` (or status text) out of a failed response. */
+async function errorDetail(response: Response, fallback: string): Promise<string> {
+  try {
+    const data = await response.json();
+    return data.detail || JSON.stringify(data);
+  } catch {
+    return response.text().catch(() => fallback);
+  }
+}
+
+/**
+ * Report a message for moderator review.
+ */
+export async function reportMessage(
+  messageId: string,
+  category: MessageReportCategory,
+  reasonText?: string,
+): Promise<void> {
+  const token = requireToken();
+
+  const response = await fetch(`${API_BASE_URL}/messages/${messageId}/report`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ category, reason_text: reasonText || null }),
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) throw new Error("SESSION_EXPIRED");
+    throw new Error(await errorDetail(response, "Failed to report message"));
+  }
+}
+
+/**
+ * Block another user (idempotent). The blocked user can no longer start a new
+ * conversation with, or send new messages to, the current user.
+ */
+export async function blockUser(userId: string): Promise<void> {
+  const token = requireToken();
+
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/block`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) throw new Error("SESSION_EXPIRED");
+    throw new Error(await errorDetail(response, "Failed to block user"));
+  }
+}
+
+/**
+ * Unblock a user (idempotent).
+ */
+export async function unblockUser(userId: string): Promise<void> {
+  const token = requireToken();
+
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/block`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) throw new Error("SESSION_EXPIRED");
+    throw new Error(await errorDetail(response, "Failed to unblock user"));
+  }
+}
+
+/**
+ * List the users the current user has blocked.
+ */
+export async function listMyBlocks(): Promise<BlockedUser[]> {
+  const token = requireToken();
+
+  const response = await fetch(`${API_BASE_URL}/users/me/blocks`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) throw new Error("SESSION_EXPIRED");
+    throw new Error(await errorDetail(response, "Failed to load blocked users"));
+  }
+
+  const data: BlockedUserListResponse = await response.json();
+  return data.items;
 }

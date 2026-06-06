@@ -23,5 +23,11 @@ class ConversationPublic(BaseModel):
     user_1_id: uuid.UUID
     user_2_id: uuid.UUID
     created_at: datetime
+    last_message: str | None = Field(
+        None, description="Preview text of the most recent message, if any"
+    )
+    last_message_at: datetime | None = Field(
+        None, description="Timestamp of the most recent message, if any"
+    )
 
     model_config = {"from_attributes": True}

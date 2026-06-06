@@ -34,15 +34,34 @@ from app.core import database
 from app.core.logging_safe import sanitize_log
 from app.core.settings import settings
 from app.core.websocket import authenticate_websocket_user
+from app.repository.conversation import ConversationRepository
 from app.schemas.message import MessageCreate, MessagePublic
 from app.services.conversation import conversation_service
 from app.services.message import message_service
+from app.services.user_block import user_block_service
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
 logger = logging.getLogger(__name__)
 websocket_router = APIRouter()
+
+
+class MessageBlockedError(Exception):
+    """Raised when a send is refused because the recipient has blocked the sender."""
+
+
+def _other_participant(
+    db: Session, conversation_id: uuid.UUID, user_id: uuid.UUID
+) -> uuid.UUID | None:
+    """Return the id of the conversation participant who is not ``user_id``."""
+    conversation = ConversationRepository.get_by_id(db, conversation_id)
+    if conversation is None:
+        return None
+    if conversation.user_1_id == user_id:
+        return conversation.user_2_id
+    return conversation.user_1_id
+
 
 # Active WebSocket connections: {conversation_id: [WebSocket, WebSocket, ...]}
 # NOTE: For production with multiple backend instances, replace with Redis pub/sub
@@ -218,8 +237,11 @@ async def verify_conversation_access(
         conversation_service.verify_participant(db, conversation_id, user_id)
     except (ValueError, LookupError, HTTPException):
         return False
-    else:
-        return True
+
+    # Fail the handshake fast if the other participant has blocked this user. The
+    # per-message gate in handle_websocket_message still covers blocks placed later.
+    other_id = _other_participant(db, conversation_id, user_id)
+    return not (other_id is not None and user_block_service.is_blocked(db, other_id, user_id))
 
 
 async def handle_websocket_message(
@@ -244,6 +266,13 @@ async def handle_websocket_message(
     except (ValueError, TypeError) as e:
         msg = f"Invalid message content: {e}"
         raise ValueError(msg) from e
+
+    # Block gate: refuse to persist or broadcast if the recipient has blocked the
+    # sender. Checked here (not just at handshake) so a block placed mid-session
+    # takes effect on the next message.
+    recipient_id = _other_participant(db, conversation_id, user_id)
+    if recipient_id is not None and user_block_service.is_blocked(db, recipient_id, user_id):
+        raise MessageBlockedError
 
     message = message_service.create(db, conversation_id, user_id, validated_content)
     message_public = MessagePublic.model_validate(message)
@@ -331,6 +360,11 @@ async def process_websocket_message(
     try:
         with _db_session() as db:
             await handle_websocket_message(db, conversation_id, user_id, content)
+    except MessageBlockedError:
+        # Generic frame: never reveal to the sender that they were blocked.
+        await websocket.send_json(
+            {"type": "error", "code": "BLOCKED", "detail": "Message could not be delivered."}
+        )
     except ValueError as e:
         await websocket.send_json({"error": "Validation error", "detail": str(e)})
 
