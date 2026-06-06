@@ -13,11 +13,14 @@ import { getProfilePictureUrl } from "@/lib/profile-picture";
 import type { ListingSummary } from "@/types/listing/listing";
 import { Suspense } from "react";
 import { UserListingCard } from "@/components/listings/UserListingCard";
+import { useAuth } from "@/contexts/AuthContext";
+import { BlockUserButton } from "@/components/messages/BlockUserButton";
 
 function UserProfileContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user: currentUser } = useAuth();
   const userId = params.user_id as string;
 
   const offset = parseInt(searchParams.get("offset") ?? "0", 10) || 0;
@@ -116,6 +119,9 @@ function UserProfileContent() {
 
   const listings = listingsData?.items ?? [];
   const totalCount = listingsData?.count ?? 0;
+  // Offer blocking only when signed in, viewing someone else, and the target is not
+  // an admin (admins must stay reachable; the backend rejects blocking them anyway).
+  const canBlock = !!currentUser && currentUser.id !== userId && user.role !== "admin";
 
   return (
     <div className="min-h-screen bg-background">
@@ -193,6 +199,11 @@ function UserProfileContent() {
                 )}
               </div>
             </div>
+            {canBlock && (
+              <div className="flex-shrink-0">
+                <BlockUserButton userId={userId} userName={user.username} />
+              </div>
+            )}
           </div>
         </div>
 

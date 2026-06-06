@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createMessagesQueryOptions } from "@/queryOptions/createMessagingQueryOptions";
 import { Message } from "@/types/message";
 import { useWebSocket } from "@/hooks/useWebSocket";
@@ -37,8 +37,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getProfilePictureUrl } from "@/lib/profile-picture";
 import { API_BASE_URL } from "@/lib/constants";
 import { toast } from "sonner";
-import { showErrorToast } from "@/lib/errorHandling";
-import { blockUser, unblockUser, listMyBlocks } from "@/lib/messaging-api";
+import { useBlockUser } from "@/hooks/useBlockUser";
 
 interface MessageThreadProps {
   conversationId: string;
@@ -59,34 +58,8 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
   // Report-message dialog: which message id is being reported (null = closed).
   const [reportMessageId, setReportMessageId] = useState<string | null>(null);
 
-  // Whether the current user has blocked the other participant.
-  const { data: blockedUsers } = useQuery({
-    queryKey: ["blockedUsers"],
-    queryFn: listMyBlocks,
-    enabled: !!user,
-    staleTime: 1000 * 30,
-  });
-  const isBlocked = (blockedUsers ?? []).some((b) => b.blocked_user_id === otherUserId);
-
-  const blockMutation = useMutation({
-    mutationFn: () => blockUser(otherUserId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["blockedUsers"] });
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      toast.success(`You blocked ${otherUserName}. They can no longer message you.`);
-    },
-    onError: (error) => showErrorToast(error, "Failed to block user"),
-  });
-
-  const unblockMutation = useMutation({
-    mutationFn: () => unblockUser(otherUserId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["blockedUsers"] });
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      toast.success(`You unblocked ${otherUserName}.`);
-    },
-    onError: (error) => showErrorToast(error, "Failed to unblock user"),
-  });
+  // Block/unblock state for the other participant (shared with the profile page).
+  const { isBlocked, block, unblock } = useBlockUser(otherUserId, otherUserName);
 
   const {
     data: messages,
@@ -263,7 +236,7 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {isBlocked ? (
-              <DropdownMenuItem onClick={() => unblockMutation.mutate()}>
+              <DropdownMenuItem onClick={unblock}>
                 <Ban className="mr-2 h-4 w-4" />
                 Unblock {otherUserName}
               </DropdownMenuItem>
@@ -289,7 +262,7 @@ export function MessageThread({ conversationId, otherUserId, otherUserName }: Me
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => blockMutation.mutate()}
+                      onClick={block}
                       className="text-destructive-foreground bg-destructive hover:bg-destructive/90"
                     >
                       Block
