@@ -1,0 +1,10 @@
+name: "CodeQL config"
+
+# Alembic migration scripts under alembic/versions are generated from a template.
+# They define module-level globals (revision, down_revision, branch_labels,
+# depends_on) that Alembic reads by name at runtime, so CodeQL's quality query
+# py/unused-global-variable flags them as unused. Renaming or removing them would
+# break Alembic, so exclude the generated migrations from analysis. (paths-ignore
+# is honoured for interpreted languages built with build-mode: none.)
+paths-ignore:
+  - backend/alembic/versions
