@@ -8,9 +8,18 @@ venv/
 ENV/
 env/
 .pytest_cache
+.ruff_cache
 *.log
 .DS_Store
 *.md
 .git
 .gitignore
 swagger.yaml
+
+# Local dev artifacts that must never ship in the image
+*.db
+qdrant_data/
+uploads/
+htmlcov/
+.coverage
+tests/
