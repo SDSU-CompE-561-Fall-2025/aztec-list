@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { createListingQueryOptions } from "@/queryOptions/createListingQueryOptions";
@@ -9,7 +10,7 @@ import { ErrorState } from "@/components/custom/ErrorState";
 import { DEFAULT_SORT, DEFAULT_LIMIT } from "@/lib/constants";
 import { ListingsParams } from "@/types/listing/listingParams";
 
-export default function HomePage() {
+function HomeContent() {
   const searchParams = useSearchParams();
 
   // Use default parameters for landing page, but read offset from URL for pagination
@@ -59,5 +60,19 @@ export default function HomePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      }
+    >
+      <HomeContent />
+    </Suspense>
   );
 }
