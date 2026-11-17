@@ -23,6 +23,7 @@ import {
   AUTH_USER_UPDATED_EVENT,
   AUTH_SESSION_ENDED_EVENT,
   EMAIL_SEND_FAILED_KEY,
+  BANNED_HANDLED_KEY,
   type AuthSessionEndedDetail,
 } from "@/lib/auth";
 import { AuthContextType, LoginCredentials, SignupData, User } from "@/types/auth";
@@ -113,6 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear cached data from any previous session
       queryClient.clear();
 
+      // New session: let a ban on this account be handled again
+      sessionStorage.removeItem(BANNED_HANDLED_KEY);
+
       notifyAuthListeners();
     } catch (error) {
       throw error;
@@ -152,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Clear banned handler flag to allow it to trigger for a different account
     if (typeof window !== "undefined") {
-      window.sessionStorage.removeItem("banned_handler_called");
+      window.sessionStorage.removeItem(BANNED_HANDLED_KEY);
     }
 
     notifyAuthListeners();

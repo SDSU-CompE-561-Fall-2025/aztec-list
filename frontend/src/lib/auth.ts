@@ -17,6 +17,12 @@ export const AUTH_USER_UPDATED_EVENT = "auth-user-updated" as const;
 export const EMAIL_SEND_FAILED_KEY = "email_send_failed" as const;
 
 /**
+ * sessionStorage flag set once a banned-account error has been handled, so concurrent failing
+ * requests don't each toast and redirect. Cleared on login and logout.
+ */
+export const BANNED_HANDLED_KEY = "banned_handler_called" as const;
+
+/**
  * Authenticate user and return access token.
  *
  * @param credentials - User login credentials (username/email and password)

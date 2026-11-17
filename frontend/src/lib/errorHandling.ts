@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { endSession, removeAuthToken, removeStoredUser } from "@/lib/auth";
+import { BANNED_HANDLED_KEY, endSession, removeAuthToken, removeStoredUser } from "@/lib/auth";
 
 /**
  * Check if an error message indicates a banned account.
@@ -15,6 +15,10 @@ export function isBannedError(errorMessage: string): boolean {
  */
 export function handleBannedUser() {
   if (typeof window === "undefined") return;
+
+  // Handle once per session: several in-flight requests can fail with the ban at once
+  if (window.sessionStorage.getItem(BANNED_HANDLED_KEY)) return;
+  window.sessionStorage.setItem(BANNED_HANDLED_KEY, "true");
 
   // The toaster lives in the root layout, so this stays visible across the navigation
   toast.error("Your account has been banned. Contact support for assistance.", {

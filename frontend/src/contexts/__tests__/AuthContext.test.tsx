@@ -5,7 +5,7 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { AuthProvider, useAuth, resetAuthState } from "../AuthContext";
 import { mockFetch, mockFetchError, cleanupMocks } from "@/test-utils";
-import { endSession } from "@/lib/auth";
+import { BANNED_HANDLED_KEY, endSession } from "@/lib/auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 
@@ -117,6 +117,30 @@ describe("AuthContext", () => {
       expect(result.current.user).toEqual(mockResponse.user);
       expect(localStorage.getItem("auth_token")).toBe("test-token");
       expect(localStorage.getItem("user")).toBe(JSON.stringify(mockResponse.user));
+    });
+
+    it("should clear the banned-handled flag on successful login", async () => {
+      sessionStorage.setItem(BANNED_HANDLED_KEY, "true");
+      mockFetch({
+        access_token: "test-token",
+        token_type: "bearer",
+        user: {
+          id: "123",
+          email: "test@sdsu.edu",
+          username: "testuser",
+          role: "user",
+          is_verified: true,
+          created_at: "2024-01-01T00:00:00Z",
+        },
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await act(async () => {
+        await result.current.login({ username: "test@sdsu.edu", password: "password123" });
+      });
+
+      expect(sessionStorage.getItem(BANNED_HANDLED_KEY)).toBeNull();
     });
 
     it("should handle login failure", async () => {
@@ -328,8 +352,8 @@ describe("AuthContext", () => {
       expect(clearSpy).toHaveBeenCalled();
     });
 
-    it("should clear banned_handler_called flag", () => {
-      sessionStorage.setItem("banned_handler_called", "true");
+    it("should clear the banned-handled flag", () => {
+      sessionStorage.setItem(BANNED_HANDLED_KEY, "true");
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -337,7 +361,7 @@ describe("AuthContext", () => {
         result.current.logout();
       });
 
-      expect(sessionStorage.getItem("banned_handler_called")).toBeNull();
+      expect(sessionStorage.getItem(BANNED_HANDLED_KEY)).toBeNull();
     });
   });
 

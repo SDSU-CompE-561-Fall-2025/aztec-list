@@ -4,7 +4,7 @@
 
 import { toast } from "sonner";
 import { handleBannedUser, isBannedError, showErrorToast } from "../errorHandling";
-import { AUTH_SESSION_ENDED_EVENT, type AuthSessionEndedDetail } from "../auth";
+import { AUTH_SESSION_ENDED_EVENT, BANNED_HANDLED_KEY, type AuthSessionEndedDetail } from "../auth";
 
 jest.mock("sonner", () => ({
   toast: { error: jest.fn() },
@@ -20,6 +20,7 @@ describe("errorHandling.ts", () => {
   beforeEach(() => {
     jest.useFakeTimers();
     jest.clearAllMocks();
+    sessionStorage.clear();
     localStorage.setItem("auth_token", "test-token");
     localStorage.setItem("user", JSON.stringify({ id: "123" }));
     sessionEnded = jest.fn();
@@ -30,6 +31,7 @@ describe("errorHandling.ts", () => {
     window.removeEventListener(AUTH_SESSION_ENDED_EVENT, onSessionEnded);
     jest.useRealTimers();
     localStorage.clear();
+    sessionStorage.clear();
   });
 
   describe("isBannedError", () => {
@@ -54,6 +56,24 @@ describe("errorHandling.ts", () => {
       jest.advanceTimersByTime(1000);
 
       expect(sessionEnded).toHaveBeenCalledWith({ redirectTo: "/login" });
+      expect(sessionStorage.getItem(BANNED_HANDLED_KEY)).toBe("true");
+    });
+
+    it("handles a ban only once until the flag is cleared", () => {
+      handleBannedUser();
+      handleBannedUser();
+      jest.advanceTimersByTime(1000);
+
+      expect(toast.error).toHaveBeenCalledTimes(1);
+      expect(sessionEnded).toHaveBeenCalledTimes(1);
+
+      // Cleared on the next login/logout: the next ban is handled again
+      sessionStorage.removeItem(BANNED_HANDLED_KEY);
+      handleBannedUser();
+      jest.advanceTimersByTime(1000);
+
+      expect(toast.error).toHaveBeenCalledTimes(2);
+      expect(sessionEnded).toHaveBeenCalledTimes(2);
     });
   });
 
