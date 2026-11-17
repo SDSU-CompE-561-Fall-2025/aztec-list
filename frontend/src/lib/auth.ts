@@ -11,6 +11,12 @@ import { AuthToken, LoginCredentials, SignupData, User } from "@/types/auth";
 export const AUTH_USER_UPDATED_EVENT = "auth-user-updated" as const;
 
 /**
+ * sessionStorage flag set by signup when the verification email failed to send;
+ * read and cleared once by the signup success page.
+ */
+export const EMAIL_SEND_FAILED_KEY = "email_send_failed" as const;
+
+/**
  * Authenticate user and return access token.
  *
  * @param credentials - User login credentials (username/email and password)

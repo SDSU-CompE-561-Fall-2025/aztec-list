@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useSyncExternalStore, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ConversationList } from "@/components/messages/ConversationList";
 import { MessageThread } from "@/components/messages/MessageThread";
@@ -13,18 +13,14 @@ import { ChevronLeft, MessageSquare } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { createUserQueryOptions } from "@/queryOptions/createUserQueryOptions";
+import { useIsHydrated } from "@/hooks/use-hydrated";
 
 function MessagesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
 
-  // Use useSyncExternalStore for proper hydration detection without effect setState
-  const isHydrated = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
+  const isHydrated = useIsHydrated();
 
   // Initialize state from URL params directly to avoid effect setState
   const conversationFromUrl = searchParams.get("conversation");

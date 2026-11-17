@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun, Monitor } from "lucide-react";
 import {
@@ -10,17 +9,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { useIsHydrated } from "@/hooks/use-hydrated";
 
 export function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  // The theme is unknown on the server; render a neutral icon until hydrated
+  const isHydrated = useIsHydrated();
 
-  // Avoid hydration mismatch - standard pattern for next-themes
-  useEffect(() => {
-    setMounted(true); // eslint-disable-line
-  }, []);
-
-  if (!mounted) {
+  if (!isHydrated) {
     return (
       <Button variant="ghost" size="icon" className="h-9 w-9">
         <Sun className="h-4 w-4" />

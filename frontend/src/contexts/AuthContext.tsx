@@ -8,6 +8,7 @@ import {
   useSyncExternalStore,
   ReactNode,
 } from "react";
+import { useIsHydrated } from "@/hooks/use-hydrated";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -21,6 +22,7 @@ import {
   removeStoredUser,
   AUTH_USER_UPDATED_EVENT,
   AUTH_SESSION_ENDED_EVENT,
+  EMAIL_SEND_FAILED_KEY,
   type AuthSessionEndedDetail,
 } from "@/lib/auth";
 import { AuthContextType, LoginCredentials, SignupData, User } from "@/types/auth";
@@ -61,19 +63,9 @@ function getServerAuthSnapshot(): User | null {
   return null;
 }
 
-// Hydration flag: false while rendering on the server and during hydration,
-// true on the client afterwards. Nothing to subscribe to; it never changes.
-const subscribeToNothing = () => () => {};
-const getIsHydratedSnapshot = () => true;
-const getIsHydratedServerSnapshot = () => false;
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const user = useSyncExternalStore(subscribeToAuth, getAuthSnapshot, getServerAuthSnapshot);
-  const isHydrated = useSyncExternalStore(
-    subscribeToNothing,
-    getIsHydratedSnapshot,
-    getIsHydratedServerSnapshot,
-  );
+  const isHydrated = useIsHydrated();
 
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -136,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Store email sending status in sessionStorage for success page
       if (result.verification_email_sent === false) {
-        sessionStorage.setItem("email_send_failed", "true");
+        sessionStorage.setItem(EMAIL_SEND_FAILED_KEY, "true");
       }
 
       await login({

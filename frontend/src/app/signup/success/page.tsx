@@ -1,16 +1,14 @@
 "use client";
 
-import { useState, useEffect, useSyncExternalStore } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Mail, CheckCircle2, Loader2, AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { API_BASE_URL } from "@/lib/constants";
-
-const EMAIL_SEND_FAILED_KEY = "email_send_failed";
-
-const subscribeToNothing = () => () => {};
+import { EMAIL_SEND_FAILED_KEY } from "@/lib/auth";
+import { useIsHydrated } from "@/hooks/use-hydrated";
 
 /**
  * Warning shown when signup could not send the verification email. The flag is
@@ -53,11 +51,7 @@ export default function SignupSuccessPage() {
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
   const [resendError, setResendError] = useState("");
-  const isHydrated = useSyncExternalStore(
-    subscribeToNothing,
-    () => true,
-    () => false,
-  );
+  const isHydrated = useIsHydrated();
 
   const handleResendEmail = async () => {
     setIsResending(true);

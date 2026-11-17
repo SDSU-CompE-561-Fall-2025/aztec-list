@@ -126,15 +126,6 @@ export const waitFor = async (callback: () => void, timeout = 1000) => {
   callback(); // Final attempt that will throw if still failing
 };
 
-/**
- * Wait for AuthContext to finish hydrating from localStorage
- * This ensures isLoading becomes false before assertions
- */
-export async function waitForAuthHydration() {
-  // Wait a tick for useEffect to run and set isHydrated to true
-  await new Promise((resolve) => setTimeout(resolve, 0));
-}
-
 // Re-export everything from React Testing Library
 export * from "@testing-library/react";
 export { default as userEvent } from "@testing-library/user-event";
