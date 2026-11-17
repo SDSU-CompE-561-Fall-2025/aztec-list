@@ -83,13 +83,18 @@ export function NewConversationDialog({
     }
   }, [searchQuery, currentUser?.id]);
 
-  // Debounced search effect - automatically search as user types
-  useEffect(() => {
-    if (!searchQuery.trim()) {
+  // Typing: an emptied query clears the previous results right away
+  const handleQueryChange = (value: string) => {
+    setSearchQuery(value);
+    if (!value.trim()) {
       setSearchResults([]);
       setHasSearched(false);
-      return;
     }
+  };
+
+  // Debounced search effect - automatically search as user types
+  useEffect(() => {
+    if (!searchQuery.trim()) return;
 
     const debounceTimer = setTimeout(() => {
       handleSearch();
@@ -111,6 +116,7 @@ export function NewConversationDialog({
       setSearchQuery("");
       setSelectedUser(null);
       setSearchResults([]);
+      setHasSearched(false);
 
       if (onConversationCreated) {
         onConversationCreated(conversation.id, otherUserId);
@@ -145,7 +151,7 @@ export function NewConversationDialog({
               <Input
                 id="search"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleQueryChange(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 placeholder="Enter username or email..."
                 aria-label="Search for users"
@@ -183,6 +189,7 @@ export function NewConversationDialog({
                     setSelectedUser(user);
                     setSearchResults([]);
                     setSearchQuery("");
+                    setHasSearched(false);
                   }}
                 />
               ))}

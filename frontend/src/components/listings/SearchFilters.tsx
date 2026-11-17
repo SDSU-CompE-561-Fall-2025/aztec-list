@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { CATEGORIES, Category } from "@/types/listing/filters/category";
 import { CONDITIONS, Condition } from "@/types/listing/filters/condition";
 import { SORT_OPTIONS, Sort } from "@/types/listing/filters/sort";
@@ -56,18 +56,27 @@ export function SearchFilters() {
     urlCondition ? [urlCondition] : [],
   );
 
-  // Sync local state with URL changes (e.g., browser back/forward, or after applying filters)
-  useEffect(() => {
+  // Re-sync pending state whenever the URL value changes (browser back/forward, after
+  // applying filters). Compared against the last URL value seen, during render, so the
+  // URL stays the source of truth without an extra effect pass:
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [syncedUrlCondition, setSyncedUrlCondition] = useState(urlCondition);
+  if (urlCondition !== syncedUrlCondition) {
+    setSyncedUrlCondition(urlCondition);
     setSelectedConditions(urlCondition ? [urlCondition] : []);
-  }, [urlCondition]);
+  }
 
-  useEffect(() => {
+  const [syncedUrlCategory, setSyncedUrlCategory] = useState(urlCategory);
+  if (urlCategory !== syncedUrlCategory) {
+    setSyncedUrlCategory(urlCategory);
     setSelectedCategory(urlCategory);
-  }, [urlCategory]);
+  }
 
-  useEffect(() => {
+  const [syncedUrlSort, setSyncedUrlSort] = useState(urlSort);
+  if (urlSort !== syncedUrlSort) {
+    setSyncedUrlSort(urlSort);
     setSelectedSort(urlSort);
-  }, [urlSort]);
+  }
 
   const updateURL = (updates: Record<string, string | undefined>) => {
     const params = new URLSearchParams(searchParams.toString());

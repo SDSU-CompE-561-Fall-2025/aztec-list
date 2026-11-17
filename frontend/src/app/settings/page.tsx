@@ -80,36 +80,32 @@ function SettingsContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  // Profile form state
-  const [formName, setFormName] = useState("");
-  const [formCampus, setFormCampus] = useState("");
-  const [formPhone, setFormPhone] = useState("");
+  // Fetch existing profile data using React Query
+  const { data: profile, isLoading: isProfileFetching } = useQuery(
+    createProfileQueryOptions(user?.id),
+  );
+  // Skeleton until the first fetch settles; later refetches keep data, so this stays false
+  const isInitialLoading = isProfileFetching;
+
+  // Profile form drafts. null = not edited, so the field shows the saved profile value.
+  const [draftName, setDraftName] = useState<string | null>(null);
+  const [draftCampus, setDraftCampus] = useState<string | null>(null);
+  const [draftPhone, setDraftPhone] = useState<string | null>(null);
+  const formName = draftName ?? (profile?.name || "");
+  const formCampus = draftCampus ?? (profile?.campus || "");
+  const formPhone = draftPhone ?? (profile?.contact_info?.phone || "");
+  const resetProfileDrafts = () => {
+    setDraftName(null);
+    setDraftCampus(null);
+    setDraftPhone(null);
+  };
+
   const [phoneError, setPhoneError] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [stagedPictureFile, setStagedPictureFile] = useState<File | null>(null);
   const [isPictureRemovalStaged, setIsPictureRemovalStaged] = useState(false);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const isInitializedRef = useRef(false);
   const hasRefreshedRef = useRef(false);
-
-  // Fetch existing profile data using React Query
-  const { data: profile, isLoading: isProfileFetching } = useQuery(
-    createProfileQueryOptions(user?.id),
-  );
-
-  // Initialize form state from fetched profile (only once)
-  useEffect(() => {
-    if (!isProfileFetching && profile && !isInitializedRef.current) {
-      isInitializedRef.current = true;
-      setIsInitialLoading(false);
-      setFormName(profile.name || "");
-      setFormCampus(profile.campus || "");
-      setFormPhone(profile.contact_info?.phone || "");
-    } else if (!isProfileFetching && !profile) {
-      setIsInitialLoading(false);
-    }
-  }, [profile, isProfileFetching]);
 
   // Track if profile has changes (memoized to avoid unnecessary recalculations)
   const hasProfileChanges = useMemo(
@@ -214,7 +210,7 @@ function SettingsContent() {
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatPhoneNumber(e.target.value);
-    setFormPhone(formatted);
+    setDraftPhone(formatted);
     validatePhoneNumber(formatted);
   };
 
@@ -281,10 +277,8 @@ function SettingsContent() {
       // This triggers all components using this query to re-render with new updated_at
       queryClient.setQueryData(["profile", user?.id], updatedProfile);
 
-      // Update form fields to match the saved data
-      setFormName(updatedProfile.name || "");
-      setFormCampus(updatedProfile.campus || "");
-      setFormPhone(updatedProfile.contact_info?.phone || "");
+      // Drop drafts so the form shows the saved data now in the cache
+      resetProfileDrafts();
 
       // Clear staged changes
       setPreviewUrl(null);
@@ -359,9 +353,7 @@ function SettingsContent() {
 
   const handleCancelProfileChanges = () => {
     // Reset all profile fields to original values
-    setFormName(profile?.name || "");
-    setFormCampus(profile?.campus || "");
-    setFormPhone(profile?.contact_info?.phone || "");
+    resetProfileDrafts();
     setStagedPictureFile(null);
     setIsPictureRemovalStaged(false);
     setPreviewUrl(null);
@@ -810,7 +802,7 @@ function SettingsContent() {
                           type="text"
                           placeholder="John Doe"
                           value={formName}
-                          onChange={(e) => setFormName(e.target.value)}
+                          onChange={(e) => setDraftName(e.target.value)}
                           disabled={isProfileLoading}
                           className="text-sm placeholder:text-muted-foreground/50"
                         />
@@ -825,7 +817,7 @@ function SettingsContent() {
                           type="text"
                           placeholder="San Diego State University"
                           value={formCampus}
-                          onChange={(e) => setFormCampus(e.target.value)}
+                          onChange={(e) => setDraftCampus(e.target.value)}
                           disabled={isProfileLoading}
                           className="text-sm placeholder:text-muted-foreground/50"
                         />

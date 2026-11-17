@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Mail, CheckCircle2, Loader2, AlertTriangle } from "lucide-react";
 
@@ -8,20 +8,56 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { API_BASE_URL } from "@/lib/constants";
 
+const EMAIL_SEND_FAILED_KEY = "email_send_failed";
+
+const subscribeToNothing = () => () => {};
+
+/**
+ * Warning shown when signup could not send the verification email. The flag is
+ * set in sessionStorage by AuthContext.signup and consumed once here. Only
+ * mounted after hydration, so reading sessionStorage at init can't mismatch the
+ * server HTML.
+ */
+function EmailSendFailedNotice() {
+  const [emailSendFailed] = useState(
+    () => sessionStorage.getItem(EMAIL_SEND_FAILED_KEY) === "true",
+  );
+
+  useEffect(() => {
+    if (emailSendFailed) {
+      sessionStorage.removeItem(EMAIL_SEND_FAILED_KEY);
+    }
+  }, [emailSendFailed]);
+
+  if (!emailSendFailed) return null;
+
+  return (
+    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+      <div className="flex items-start gap-3">
+        <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+        <div className="flex-1 space-y-2">
+          <p className="text-sm font-semibold text-amber-900 dark:text-amber-300">
+            Verification email failed to send
+          </p>
+          <p className="text-sm text-amber-700 dark:text-amber-200/80">
+            Your account was created successfully, but we couldn&apos;t send the verification email.
+            Please use the button below to resend it.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SignupSuccessPage() {
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
   const [resendError, setResendError] = useState("");
-  const [emailSendFailed, setEmailSendFailed] = useState(false);
-
-  useEffect(() => {
-    // Check if email sending failed during signup
-    const failed = sessionStorage.getItem("email_send_failed");
-    if (failed === "true") {
-      setEmailSendFailed(true);
-      sessionStorage.removeItem("email_send_failed");
-    }
-  }, []);
+  const isHydrated = useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false,
+  );
 
   const handleResendEmail = async () => {
     setIsResending(true);
@@ -84,22 +120,7 @@ export default function SignupSuccessPage() {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {emailSendFailed && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
-                <div className="flex-1 space-y-2">
-                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-300">
-                    Verification email failed to send
-                  </p>
-                  <p className="text-sm text-amber-700 dark:text-amber-200/80">
-                    Your account was created successfully, but we couldn&apos;t send the
-                    verification email. Please use the button below to resend it.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+          {isHydrated && <EmailSendFailedNotice />}
 
           <div className="rounded-lg border border-purple-200 bg-purple-50 p-4 dark:border-purple-800 dark:bg-purple-950/30">
             <div className="flex items-start gap-3">

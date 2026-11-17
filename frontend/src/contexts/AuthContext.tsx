@@ -59,17 +59,25 @@ function getServerAuthSnapshot(): User | null {
   return null;
 }
 
+// Hydration flag: false while rendering on the server and during hydration,
+// true on the client afterwards. Nothing to subscribe to; it never changes.
+const subscribeToNothing = () => () => {};
+const getIsHydratedSnapshot = () => true;
+const getIsHydratedServerSnapshot = () => false;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const user = useSyncExternalStore(subscribeToAuth, getAuthSnapshot, getServerAuthSnapshot);
+  const isHydrated = useSyncExternalStore(
+    subscribeToNothing,
+    getIsHydratedSnapshot,
+    getIsHydratedServerSnapshot,
+  );
 
   const [isLoading, setIsLoading] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
   const router = useRouter();
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    setIsHydrated(true);
-
     // Listen for custom auth-user-updated events
     const handleAuthUpdate = () => {
       notifyAuthListeners();
