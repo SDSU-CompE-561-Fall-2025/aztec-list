@@ -52,6 +52,7 @@ ignore = [
     "TD",     # ignore all TODO rules
     "FIX002", # line contains TODO
     "UP042",  # str+Enum -> StrEnum: behavior-changing for DB/API enums, migrate separately
+    "CPY001", # no per-file copyright headers in this project
 ]
 
 [tool.ruff.format]

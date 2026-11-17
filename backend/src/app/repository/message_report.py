@@ -30,7 +30,7 @@ class MessageReportRepository:
     """Repository for message-report data access."""
 
     @staticmethod
-    def create_no_commit(  # noqa: PLR0913 - each field maps 1:1 to a column
+    def create_no_commit(  # noqa: PLR0913, PLR0917 - each field maps 1:1 to a column
         db: Session,
         reporter_id: uuid.UUID,
         target_message_id: uuid.UUID,

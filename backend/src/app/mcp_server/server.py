@@ -37,7 +37,7 @@ def list_categories() -> list[str]:
 
 
 @mcp.tool()
-def search_listings(  # noqa: PLR0913 - each parameter is part of the tool's schema
+def search_listings(  # noqa: PLR0913, PLR0917 - each parameter is part of the tool's schema
     query: str | None = None,
     category: str | None = None,
     min_price: float | None = None,
