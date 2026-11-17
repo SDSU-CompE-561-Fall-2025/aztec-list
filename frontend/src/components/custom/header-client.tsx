@@ -1,24 +1,16 @@
-/* eslint-disable */
-// @ts-nocheck
 "use client";
 
-import { useEffect, useState } from "react";
 import { Header } from "./header";
+import { useIsHydrated } from "@/hooks/use-hydrated";
 
 /**
  * Client-only wrapper for Header to prevent hydration issues.
  * Renders a loading skeleton during SSR, then shows the actual header on client.
- *
- * Note: setMounted in useEffect is intentional for post-mount rendering.
  */
 export function HeaderClient() {
-  const [mounted, setMounted] = useState(false);
+  const isHydrated = useIsHydrated();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
+  if (!isHydrated) {
     return (
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">

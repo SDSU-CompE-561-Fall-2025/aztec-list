@@ -8,6 +8,7 @@ import {
   useSyncExternalStore,
   ReactNode,
 } from "react";
+import { useIsHydrated } from "@/hooks/use-hydrated";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -20,6 +21,10 @@ import {
   getStoredUser,
   removeStoredUser,
   AUTH_USER_UPDATED_EVENT,
+  AUTH_SESSION_ENDED_EVENT,
+  EMAIL_SEND_FAILED_KEY,
+  BANNED_HANDLED_KEY,
+  type AuthSessionEndedDetail,
 } from "@/lib/auth";
 import { AuthContextType, LoginCredentials, SignupData, User } from "@/types/auth";
 
@@ -61,15 +66,13 @@ function getServerAuthSnapshot(): User | null {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const user = useSyncExternalStore(subscribeToAuth, getAuthSnapshot, getServerAuthSnapshot);
+  const isHydrated = useIsHydrated();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
   const router = useRouter();
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    setIsHydrated(true);
-
     // Listen for custom auth-user-updated events
     const handleAuthUpdate = () => {
       notifyAuthListeners();
@@ -82,6 +85,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    // Session ended outside React (endSession: expired token, banned account). Stored
+    // credentials are already gone; drop cached data and navigate client-side.
+    const handleSessionEnded = (event: Event) => {
+      const { redirectTo } = (event as CustomEvent<AuthSessionEndedDetail>).detail;
+      queryClient.cancelQueries();
+      queryClient.clear();
+      notifyAuthListeners();
+      router.push(redirectTo);
+    };
+
+    window.addEventListener(AUTH_SESSION_ENDED_EVENT, handleSessionEnded);
+
+    return () => {
+      window.removeEventListener(AUTH_SESSION_ENDED_EVENT, handleSessionEnded);
+    };
+  }, [queryClient, router]);
+
   const login = async (credentials: LoginCredentials): Promise<void> => {
     try {
       setIsLoading(true);
@@ -92,6 +113,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Clear cached data from any previous session
       queryClient.clear();
+
+      // New session: let a ban on this account be handled again
+      sessionStorage.removeItem(BANNED_HANDLED_KEY);
 
       notifyAuthListeners();
     } catch (error) {
@@ -108,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Store email sending status in sessionStorage for success page
       if (result.verification_email_sent === false) {
-        sessionStorage.setItem("email_send_failed", "true");
+        sessionStorage.setItem(EMAIL_SEND_FAILED_KEY, "true");
       }
 
       await login({
@@ -132,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Clear banned handler flag to allow it to trigger for a different account
     if (typeof window !== "undefined") {
-      window.sessionStorage.removeItem("banned_handler_called");
+      window.sessionStorage.removeItem(BANNED_HANDLED_KEY);
     }
 
     notifyAuthListeners();

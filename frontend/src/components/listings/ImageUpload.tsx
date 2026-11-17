@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useEffectEvent, useRef, useCallback } from "react";
 import { Trash2, Star, Loader2, Upload, Undo2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -25,6 +25,15 @@ interface ImageUploadProps {
   clearNewUploads?: boolean;
   className?: string;
 }
+
+// Stable default so an omitted prop doesn't look like a new image list on every render
+const NO_IMAGES: ImagePublic[] = [];
+
+const imageIdsKey = (list: ImagePublic[]) =>
+  list
+    .map((img) => img.id)
+    .sort()
+    .join(",");
 
 // Client-side validation constants
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
@@ -62,7 +71,7 @@ function validateFile(file: File): { valid: boolean; error?: string } {
 
 export function ImageUpload({
   listingId,
-  existingImages = [],
+  existingImages = NO_IMAGES,
   onImagesChange,
   onPendingDeletions,
   onNewUploads,
@@ -75,7 +84,6 @@ export function ImageUpload({
   const [pendingDeletions, setPendingDeletions] = useState<Set<string>>(new Set());
   const [newUploads, setNewUploads] = useState<Set<string>>(new Set());
   const [uploadedThisSession, setUploadedThisSession] = useState<Set<string>>(new Set());
-  const isInitializedRef = useRef(false);
 
   // Ref to track current images state for concurrent operations
   const imagesRef = useRef<ImagePublic[]>(images);
@@ -83,57 +91,50 @@ export function ImageUpload({
     imagesRef.current = images;
   }, [images]);
 
-  useEffect(() => {
-    if (!isInitializedRef.current) {
-      isInitializedRef.current = true;
-      return;
-    }
-
-    const existingIds = existingImages
-      .map((img) => img.id)
-      .sort()
-      .join(",");
-    const currentIds = images
-      .map((img) => img.id)
-      .sort()
-      .join(",");
-
-    if (existingIds !== currentIds) {
+  // When the parent hands us a new image list with a different set of images (e.g. after a
+  // save), adopt it. Done during render against the last list seen, not in an effect:
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [syncedExistingImages, setSyncedExistingImages] = useState(existingImages);
+  if (existingImages !== syncedExistingImages) {
+    setSyncedExistingImages(existingImages);
+    if (imageIdsKey(existingImages) !== imageIdsKey(images)) {
       setImages(existingImages);
       setNewUploads(new Set());
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [existingImages]);
+  }
+
+  // Parent-driven resets. Applied during render; each settles once its set is empty.
+  if (clearPendingDeletions && pendingDeletions.size > 0) {
+    setPendingDeletions(new Set());
+  }
+
+  if (clearNewUploads && newUploads.size > 0) {
+    setNewUploads(new Set());
+    setUploadedThisSession(new Set());
+  }
+
+  // Report state changes to the parent. Effect events always call the latest callbacks,
+  // so these effects re-run only when the reported state changes.
+  const reportPendingDeletions = useEffectEvent((ids: Set<string>) => {
+    onPendingDeletions?.(Array.from(ids));
+  });
+  const reportNewUploads = useEffectEvent((ids: Set<string>) => {
+    onNewUploads?.(Array.from(ids));
+  });
+  const reportImages = useEffectEvent((list: ImagePublic[]) => {
+    onImagesChange?.(list);
+  });
 
   useEffect(() => {
-    onPendingDeletions?.(Array.from(pendingDeletions));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    reportPendingDeletions(pendingDeletions);
   }, [pendingDeletions]);
 
   useEffect(() => {
-    onNewUploads?.(Array.from(newUploads));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    reportNewUploads(newUploads);
   }, [newUploads]);
 
   useEffect(() => {
-    if (clearPendingDeletions && pendingDeletions.size > 0) {
-      setPendingDeletions(new Set());
-    }
-  }, [clearPendingDeletions, pendingDeletions.size]);
-
-  useEffect(() => {
-    if (clearNewUploads && newUploads.size > 0) {
-      setNewUploads(new Set());
-      setUploadedThisSession(new Set());
-    }
-  }, [clearNewUploads, newUploads.size]);
-
-  // Notify parent of image changes
-  useEffect(() => {
-    if (isInitializedRef.current) {
-      onImagesChange?.(images);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    reportImages(images);
   }, [images]);
 
   const uploadWithProgress = useCallback(

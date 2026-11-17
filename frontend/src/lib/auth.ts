@@ -11,6 +11,18 @@ import { AuthToken, LoginCredentials, SignupData, User } from "@/types/auth";
 export const AUTH_USER_UPDATED_EVENT = "auth-user-updated" as const;
 
 /**
+ * sessionStorage flag set by signup when the verification email failed to send;
+ * read and cleared once by the signup success page.
+ */
+export const EMAIL_SEND_FAILED_KEY = "email_send_failed" as const;
+
+/**
+ * sessionStorage flag set once a banned-account error has been handled, so concurrent failing
+ * requests don't each toast and redirect. Cleared on login and logout.
+ */
+export const BANNED_HANDLED_KEY = "banned_handler_called" as const;
+
+/**
  * Authenticate user and return access token.
  *
  * @param credentials - User login credentials (username/email and password)
@@ -137,6 +149,32 @@ export const removeStoredUser = (): void => {
   if (typeof window !== "undefined") {
     localStorage.removeItem("user");
   }
+};
+
+/**
+ * Custom event fired when the session ends outside React (expired token, banned account).
+ * AuthProvider handles it: clears cached queries, resets auth state, and navigates.
+ */
+export const AUTH_SESSION_ENDED_EVENT = "auth-session-ended" as const;
+
+export interface AuthSessionEndedDetail {
+  /** In-app path to navigate to once the session is cleared. */
+  redirectTo: string;
+}
+
+/**
+ * End the session from non-component code: drop stored credentials and hand off to
+ * AuthProvider for the client-side reset and navigation.
+ *
+ * @param redirectTo - In-app path to navigate to (e.g. "/login")
+ */
+export const endSession = (redirectTo: string): void => {
+  if (typeof window === "undefined") return;
+  removeAuthToken();
+  removeStoredUser();
+  window.dispatchEvent(
+    new CustomEvent<AuthSessionEndedDetail>(AUTH_SESSION_ENDED_EVENT, { detail: { redirectTo } }),
+  );
 };
 
 /**

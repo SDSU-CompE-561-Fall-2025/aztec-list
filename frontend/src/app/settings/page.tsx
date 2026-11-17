@@ -80,36 +80,32 @@ function SettingsContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  // Profile form state
-  const [formName, setFormName] = useState("");
-  const [formCampus, setFormCampus] = useState("");
-  const [formPhone, setFormPhone] = useState("");
+  // Fetch existing profile data using React Query
+  const { data: profile, isLoading: isProfileFetching } = useQuery(
+    createProfileQueryOptions(user?.id),
+  );
+  // Skeleton until the first fetch settles; later refetches keep data, so this stays false
+  const isInitialLoading = isProfileFetching;
+
+  // Profile form drafts. null = not edited, so the field shows the saved profile value.
+  const [draftName, setDraftName] = useState<string | null>(null);
+  const [draftCampus, setDraftCampus] = useState<string | null>(null);
+  const [draftPhone, setDraftPhone] = useState<string | null>(null);
+  const formName = draftName ?? (profile?.name || "");
+  const formCampus = draftCampus ?? (profile?.campus || "");
+  const formPhone = draftPhone ?? (profile?.contact_info?.phone || "");
+  const resetProfileDrafts = () => {
+    setDraftName(null);
+    setDraftCampus(null);
+    setDraftPhone(null);
+  };
+
   const [phoneError, setPhoneError] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [stagedPictureFile, setStagedPictureFile] = useState<File | null>(null);
   const [isPictureRemovalStaged, setIsPictureRemovalStaged] = useState(false);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const isInitializedRef = useRef(false);
   const hasRefreshedRef = useRef(false);
-
-  // Fetch existing profile data using React Query
-  const { data: profile, isLoading: isProfileFetching } = useQuery(
-    createProfileQueryOptions(user?.id),
-  );
-
-  // Initialize form state from fetched profile (only once)
-  useEffect(() => {
-    if (!isProfileFetching && profile && !isInitializedRef.current) {
-      isInitializedRef.current = true;
-      setIsInitialLoading(false);
-      setFormName(profile.name || "");
-      setFormCampus(profile.campus || "");
-      setFormPhone(profile.contact_info?.phone || "");
-    } else if (!isProfileFetching && !profile) {
-      setIsInitialLoading(false);
-    }
-  }, [profile, isProfileFetching]);
 
   // Track if profile has changes (memoized to avoid unnecessary recalculations)
   const hasProfileChanges = useMemo(
@@ -126,8 +122,15 @@ function SettingsContent() {
   const isFormValid = useMemo(() => !phoneError, [phoneError]);
 
   // Account state
-  const [username, setUsername] = useState(user?.username ?? "");
-  const [email, setEmail] = useState(user?.email ?? "");
+  // Account form drafts. null = not edited, so the field shows the current user value.
+  const [draftUsername, setDraftUsername] = useState<string | null>(null);
+  const [draftEmail, setDraftEmail] = useState<string | null>(null);
+  const username = draftUsername ?? user?.username ?? "";
+  const email = draftEmail ?? user?.email ?? "";
+  const resetAccountDrafts = () => {
+    setDraftUsername(null);
+    setDraftEmail(null);
+  };
   const [isAccountLoading, setIsAccountLoading] = useState(false);
 
   // Track if account has changes (memoized)
@@ -151,20 +154,10 @@ function SettingsContent() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
-  const hasInitializedUsernameRef = useRef(false);
 
   // Calculate password strength
   const passwordStrength = getPasswordStrength(newPassword);
   const strengthInfo = getPasswordStrengthInfo(passwordStrength);
-
-  // Initialize username and email from user data (only once)
-  useEffect(() => {
-    if (user?.username && !hasInitializedUsernameRef.current) {
-      hasInitializedUsernameRef.current = true;
-      setUsername(user.username);
-      setEmail(user.email);
-    }
-  }, [user]);
 
   // Refresh user data on mount to ensure we have latest verification status
   useEffect(() => {
@@ -214,7 +207,7 @@ function SettingsContent() {
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatPhoneNumber(e.target.value);
-    setFormPhone(formatted);
+    setDraftPhone(formatted);
     validatePhoneNumber(formatted);
   };
 
@@ -281,10 +274,8 @@ function SettingsContent() {
       // This triggers all components using this query to re-render with new updated_at
       queryClient.setQueryData(["profile", user?.id], updatedProfile);
 
-      // Update form fields to match the saved data
-      setFormName(updatedProfile.name || "");
-      setFormCampus(updatedProfile.campus || "");
-      setFormPhone(updatedProfile.contact_info?.phone || "");
+      // Drop drafts so the form shows the saved data now in the cache
+      resetProfileDrafts();
 
       // Clear staged changes
       setPreviewUrl(null);
@@ -359,9 +350,7 @@ function SettingsContent() {
 
   const handleCancelProfileChanges = () => {
     // Reset all profile fields to original values
-    setFormName(profile?.name || "");
-    setFormCampus(profile?.campus || "");
-    setFormPhone(profile?.contact_info?.phone || "");
+    resetProfileDrafts();
     setStagedPictureFile(null);
     setIsPictureRemovalStaged(false);
     setPreviewUrl(null);
@@ -434,6 +423,8 @@ function SettingsContent() {
 
       // Update localStorage - this will automatically sync AuthContext via custom event
       setStoredUser(updatedUser);
+      // Drop drafts so the fields show the saved values
+      resetAccountDrafts();
 
       // Invalidate all queries that might display the username
       queryClient.invalidateQueries({ queryKey: ["user"] });
@@ -465,8 +456,7 @@ function SettingsContent() {
       }
     } catch (error) {
       // Reset username and email to original values on error
-      setUsername(user?.username ?? "");
-      setEmail(user?.email ?? "");
+      resetAccountDrafts();
       showErrorToast(error, "Failed to update account");
     } finally {
       setIsAccountLoading(false);
@@ -475,8 +465,7 @@ function SettingsContent() {
 
   const handleCancelAccountChanges = () => {
     // Reset username and email to original values
-    setUsername(user?.username ?? "");
-    setEmail(user?.email ?? "");
+    resetAccountDrafts();
     setShowAccountCancelDialog(false);
   };
 
@@ -810,7 +799,7 @@ function SettingsContent() {
                           type="text"
                           placeholder="John Doe"
                           value={formName}
-                          onChange={(e) => setFormName(e.target.value)}
+                          onChange={(e) => setDraftName(e.target.value)}
                           disabled={isProfileLoading}
                           className="text-sm placeholder:text-muted-foreground/50"
                         />
@@ -825,7 +814,7 @@ function SettingsContent() {
                           type="text"
                           placeholder="San Diego State University"
                           value={formCampus}
-                          onChange={(e) => setFormCampus(e.target.value)}
+                          onChange={(e) => setDraftCampus(e.target.value)}
                           disabled={isProfileLoading}
                           className="text-sm placeholder:text-muted-foreground/50"
                         />
@@ -928,7 +917,7 @@ function SettingsContent() {
                       id="username"
                       type="text"
                       value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      onChange={(e) => setDraftUsername(e.target.value)}
                       disabled={isAccountLoading}
                       className="text-sm"
                     />
@@ -942,7 +931,7 @@ function SettingsContent() {
                       id="email"
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => setDraftEmail(e.target.value)}
                       disabled={isAccountLoading}
                       className="text-sm"
                     />

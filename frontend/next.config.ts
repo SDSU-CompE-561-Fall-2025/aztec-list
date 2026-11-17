@@ -1,9 +1,15 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   output: "standalone", // Required for Docker deployment
+  // Pin the project root to frontend/. Otherwise Next infers it from lockfiles, finds the
+  // placeholder package-lock.json at the repo root, and warns on every build.
+  turbopack: {
+    root: path.join(__dirname),
+  },
   images: {
     remotePatterns: [
       {

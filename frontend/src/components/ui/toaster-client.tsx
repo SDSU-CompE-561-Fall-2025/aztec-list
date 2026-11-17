@@ -1,25 +1,17 @@
-/* eslint-disable */
-// @ts-nocheck
 "use client";
 
-import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
+import { useIsHydrated } from "@/hooks/use-hydrated";
 
 /**
  * Client-only wrapper for Sonner Toaster to avoid hydration issues.
- * This component ensures toasts only render on the client side after mount
- * to prevent hydration mismatches with theme detection.
- *
- * Note: setMounted in useEffect is intentional for post-mount rendering.
+ * Toasts only render on the client after hydration, to prevent mismatches
+ * with theme detection.
  */
 export function ToasterClient() {
-  const [mounted, setMounted] = useState(false);
+  const isHydrated = useIsHydrated();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
+  if (!isHydrated) {
     return null;
   }
 

@@ -17,6 +17,8 @@ const config = {
   },
   testMatch: ["**/__tests__/**/*.[jt]s?(x)", "**/?(*.)+(spec|test).[jt]s?(x)"],
   testPathIgnorePatterns: ["<rootDir>/.next/", "<rootDir>/node_modules/", "<rootDir>/tests/e2e/"],
+  // Build output (.next/standalone) carries a copy of package.json; keep it out of the module map
+  modulePathIgnorePatterns: ["<rootDir>/.next/"],
   collectCoverageFrom: [
     "src/**/*.{js,jsx,ts,tsx}",
     "!src/**/*.d.ts",
