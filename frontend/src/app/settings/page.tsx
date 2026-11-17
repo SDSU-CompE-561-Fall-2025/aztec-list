@@ -122,8 +122,15 @@ function SettingsContent() {
   const isFormValid = useMemo(() => !phoneError, [phoneError]);
 
   // Account state
-  const [username, setUsername] = useState(user?.username ?? "");
-  const [email, setEmail] = useState(user?.email ?? "");
+  // Account form drafts. null = not edited, so the field shows the current user value.
+  const [draftUsername, setDraftUsername] = useState<string | null>(null);
+  const [draftEmail, setDraftEmail] = useState<string | null>(null);
+  const username = draftUsername ?? user?.username ?? "";
+  const email = draftEmail ?? user?.email ?? "";
+  const resetAccountDrafts = () => {
+    setDraftUsername(null);
+    setDraftEmail(null);
+  };
   const [isAccountLoading, setIsAccountLoading] = useState(false);
 
   // Track if account has changes (memoized)
@@ -147,20 +154,10 @@ function SettingsContent() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
-  const hasInitializedUsernameRef = useRef(false);
 
   // Calculate password strength
   const passwordStrength = getPasswordStrength(newPassword);
   const strengthInfo = getPasswordStrengthInfo(passwordStrength);
-
-  // Initialize username and email from user data (only once)
-  useEffect(() => {
-    if (user?.username && !hasInitializedUsernameRef.current) {
-      hasInitializedUsernameRef.current = true;
-      setUsername(user.username);
-      setEmail(user.email);
-    }
-  }, [user]);
 
   // Refresh user data on mount to ensure we have latest verification status
   useEffect(() => {
@@ -426,6 +423,8 @@ function SettingsContent() {
 
       // Update localStorage - this will automatically sync AuthContext via custom event
       setStoredUser(updatedUser);
+      // Drop drafts so the fields show the saved values
+      resetAccountDrafts();
 
       // Invalidate all queries that might display the username
       queryClient.invalidateQueries({ queryKey: ["user"] });
@@ -457,8 +456,7 @@ function SettingsContent() {
       }
     } catch (error) {
       // Reset username and email to original values on error
-      setUsername(user?.username ?? "");
-      setEmail(user?.email ?? "");
+      resetAccountDrafts();
       showErrorToast(error, "Failed to update account");
     } finally {
       setIsAccountLoading(false);
@@ -467,8 +465,7 @@ function SettingsContent() {
 
   const handleCancelAccountChanges = () => {
     // Reset username and email to original values
-    setUsername(user?.username ?? "");
-    setEmail(user?.email ?? "");
+    resetAccountDrafts();
     setShowAccountCancelDialog(false);
   };
 
@@ -920,7 +917,7 @@ function SettingsContent() {
                       id="username"
                       type="text"
                       value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      onChange={(e) => setDraftUsername(e.target.value)}
                       disabled={isAccountLoading}
                       className="text-sm"
                     />
@@ -934,7 +931,7 @@ function SettingsContent() {
                       id="email"
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => setDraftEmail(e.target.value)}
                       disabled={isAccountLoading}
                       className="text-sm"
                     />
