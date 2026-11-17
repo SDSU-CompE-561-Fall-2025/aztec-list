@@ -2,7 +2,7 @@
  * Custom hook for making authenticated API requests.
  */
 
-import { getAuthToken, removeAuthToken, removeStoredUser } from "@/lib/auth";
+import { endSession, getAuthToken } from "@/lib/auth";
 
 interface FetchOptions extends RequestInit {
   requiresAuth?: boolean;
@@ -37,16 +37,9 @@ export async function authenticatedFetch(
     headers: requestHeaders,
   });
 
-  // Handle 401 Unauthorized - token expired or invalid
-  if (response.status === 401 && requiresAuth) {
-    // Clear auth data
-    removeAuthToken();
-    removeStoredUser();
-
-    // Redirect to login page
-    if (typeof window !== "undefined") {
-      window.location.href = "/login?redirect=" + encodeURIComponent(window.location.pathname);
-    }
+  // Handle 401 Unauthorized - token expired or invalid: clear auth, then go to login
+  if (response.status === 401 && requiresAuth && typeof window !== "undefined") {
+    endSession("/login?redirect=" + encodeURIComponent(window.location.pathname));
   }
 
   return response;

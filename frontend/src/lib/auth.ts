@@ -140,6 +140,32 @@ export const removeStoredUser = (): void => {
 };
 
 /**
+ * Custom event fired when the session ends outside React (expired token, banned account).
+ * AuthProvider handles it: clears cached queries, resets auth state, and navigates.
+ */
+export const AUTH_SESSION_ENDED_EVENT = "auth-session-ended" as const;
+
+export interface AuthSessionEndedDetail {
+  /** In-app path to navigate to once the session is cleared. */
+  redirectTo: string;
+}
+
+/**
+ * End the session from non-component code: drop stored credentials and hand off to
+ * AuthProvider for the client-side reset and navigation.
+ *
+ * @param redirectTo - In-app path to navigate to (e.g. "/login")
+ */
+export const endSession = (redirectTo: string): void => {
+  if (typeof window === "undefined") return;
+  removeAuthToken();
+  removeStoredUser();
+  window.dispatchEvent(
+    new CustomEvent<AuthSessionEndedDetail>(AUTH_SESSION_ENDED_EVENT, { detail: { redirectTo } }),
+  );
+};
+
+/**
  * Change the current user's password.
  *
  * @param currentPassword - Current password for verification

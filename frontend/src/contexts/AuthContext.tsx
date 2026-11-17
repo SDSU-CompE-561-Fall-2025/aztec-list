@@ -20,6 +20,8 @@ import {
   getStoredUser,
   removeStoredUser,
   AUTH_USER_UPDATED_EVENT,
+  AUTH_SESSION_ENDED_EVENT,
+  type AuthSessionEndedDetail,
 } from "@/lib/auth";
 import { AuthContextType, LoginCredentials, SignupData, User } from "@/types/auth";
 
@@ -89,6 +91,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.removeEventListener(AUTH_USER_UPDATED_EVENT, handleAuthUpdate);
     };
   }, []);
+
+  useEffect(() => {
+    // Session ended outside React (endSession: expired token, banned account). Stored
+    // credentials are already gone; drop cached data and navigate client-side.
+    const handleSessionEnded = (event: Event) => {
+      const { redirectTo } = (event as CustomEvent<AuthSessionEndedDetail>).detail;
+      queryClient.cancelQueries();
+      queryClient.clear();
+      notifyAuthListeners();
+      router.push(redirectTo);
+    };
+
+    window.addEventListener(AUTH_SESSION_ENDED_EVENT, handleSessionEnded);
+
+    return () => {
+      window.removeEventListener(AUTH_SESSION_ENDED_EVENT, handleSessionEnded);
+    };
+  }, [queryClient, router]);
 
   const login = async (credentials: LoginCredentials): Promise<void> => {
     try {

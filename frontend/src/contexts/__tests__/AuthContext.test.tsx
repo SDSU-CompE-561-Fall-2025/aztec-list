@@ -5,6 +5,7 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { AuthProvider, useAuth, resetAuthState } from "../AuthContext";
 import { mockFetch, mockFetchError, cleanupMocks } from "@/test-utils";
+import { endSession } from "@/lib/auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 
@@ -337,6 +338,43 @@ describe("AuthContext", () => {
       });
 
       expect(sessionStorage.getItem("banned_handler_called")).toBeNull();
+    });
+  });
+
+  describe("session ended outside React", () => {
+    it("should clear auth and cached queries, then navigate to the requested path", async () => {
+      const mockUser = {
+        id: "123",
+        email: "test@sdsu.edu",
+        username: "testuser",
+        role: "user" as const,
+        is_verified: true,
+        created_at: "2024-01-01T00:00:00Z",
+      };
+
+      localStorage.setItem("auth_token", "test-token");
+      localStorage.setItem("user", JSON.stringify(mockUser));
+
+      const cancelQueriesSpy = jest.spyOn(queryClient, "cancelQueries");
+      const clearSpy = jest.spyOn(queryClient, "clear");
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isAuthenticated).toBe(true);
+      });
+
+      act(() => {
+        endSession("/login?redirect=%2Fsettings");
+      });
+
+      expect(result.current.isAuthenticated).toBe(false);
+      expect(result.current.user).toBeNull();
+      expect(localStorage.getItem("auth_token")).toBeNull();
+      expect(localStorage.getItem("user")).toBeNull();
+      expect(cancelQueriesSpy).toHaveBeenCalled();
+      expect(clearSpy).toHaveBeenCalled();
+      expect(mockPush).toHaveBeenCalledWith("/login?redirect=%2Fsettings");
     });
   });
 

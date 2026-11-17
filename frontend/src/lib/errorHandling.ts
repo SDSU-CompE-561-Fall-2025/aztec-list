@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { endSession, removeAuthToken, removeStoredUser } from "@/lib/auth";
 
 /**
  * Check if an error message indicates a banned account.
@@ -13,26 +14,22 @@ export function isBannedError(errorMessage: string): boolean {
  * This should be called when a 403 banned error is detected.
  */
 export function handleBannedUser() {
-  // Clear auth data
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("user");
+  if (typeof window === "undefined") return;
 
-    // Show error message
-    toast.error("Your account has been banned. Contact support for assistance.", {
-      style: {
-        background: "rgb(153, 27, 27)",
-        color: "white",
-        border: "1px solid rgb(220, 38, 38)",
-      },
-      duration: 5000,
-    });
+  // The toaster lives in the root layout, so this stays visible across the navigation
+  toast.error("Your account has been banned. Contact support for assistance.", {
+    style: {
+      background: "rgb(153, 27, 27)",
+      color: "white",
+      border: "1px solid rgb(220, 38, 38)",
+    },
+    duration: 5000,
+  });
 
-    // Redirect to login after a short delay
-    setTimeout(() => {
-      window.location.href = "/login";
-    }, 1000);
-  }
+  // Clear auth data, then redirect to login after a short delay
+  removeAuthToken();
+  removeStoredUser();
+  setTimeout(() => endSession("/login"), 1000);
 }
 
 /**
