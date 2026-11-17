@@ -74,7 +74,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             return logging.WARNING  # 4xx - Client errors (user's fault)
         return logging.INFO  # 2xx/3xx - Success or redirects
 
-    def _build_log_context(  # noqa: PLR0913
+    def _build_log_context(  # noqa: PLR0913, PLR0917
         self,
         correlation_id: str,
         request: Request,
