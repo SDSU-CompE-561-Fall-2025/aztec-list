@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useEffectEvent, useRef, useCallback } from "react";
 import { Trash2, Star, Loader2, Upload, Undo2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -113,20 +113,28 @@ export function ImageUpload({
     setUploadedThisSession(new Set());
   }
 
+  // Report state changes to the parent. Effect events always call the latest callbacks,
+  // so these effects re-run only when the reported state changes.
+  const reportPendingDeletions = useEffectEvent((ids: Set<string>) => {
+    onPendingDeletions?.(Array.from(ids));
+  });
+  const reportNewUploads = useEffectEvent((ids: Set<string>) => {
+    onNewUploads?.(Array.from(ids));
+  });
+  const reportImages = useEffectEvent((list: ImagePublic[]) => {
+    onImagesChange?.(list);
+  });
+
   useEffect(() => {
-    onPendingDeletions?.(Array.from(pendingDeletions));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    reportPendingDeletions(pendingDeletions);
   }, [pendingDeletions]);
 
   useEffect(() => {
-    onNewUploads?.(Array.from(newUploads));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    reportNewUploads(newUploads);
   }, [newUploads]);
 
-  // Notify parent of image changes
   useEffect(() => {
-    onImagesChange?.(images);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    reportImages(images);
   }, [images]);
 
   const uploadWithProgress = useCallback(

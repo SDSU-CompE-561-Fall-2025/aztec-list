@@ -77,8 +77,7 @@ function VerifyEmailContent() {
     };
 
     verifyEmail();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, router]);
 
   return (
     <div className="container mx-auto flex min-h-screen items-center justify-center px-4 py-16">
